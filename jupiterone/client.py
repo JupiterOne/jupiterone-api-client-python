@@ -91,7 +91,7 @@ class JupiterOneClient:
         if variables:
             data.update(variables=variables)
 
-        response = requests.post(self.query_endpoint, headers=self.headers, json=data)
+        response = requests.post(self.query_endpoint, headers=self.headers, json=data, timeout=60)
 
         # It is still unclear if all responses will have a status
         # code of 200 or if 429 will eventually be used to 
