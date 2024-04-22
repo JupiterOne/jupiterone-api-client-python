@@ -112,7 +112,10 @@ class JupiterOneClient:
             raise JupiterOneApiError('JupiterOne API query is unauthorized, check credentials.')
 
         elif response.status_code in [429, 503]:
-            raise JupiterOneApiRetryError('JupiterOne API rate limit exceeded')
+            raise JupiterOneApiRetryError('JupiterOne API rate limit exceeded.')
+
+        elif response.status_code in [500]:
+            raise JupiterOneApiRetryError('JupiterOne API internal server error.')
 
         else:
             content = response._content
