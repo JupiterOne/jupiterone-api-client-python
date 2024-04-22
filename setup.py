@@ -1,14 +1,14 @@
 # Copyright (c) 2020-2025 JupiterOne
-
 from setuptools import setup, find_packages
 
 install_reqs = [
     'requests',
-    'retrying'
+    'retrying',
+    'warnings'
 ]
 
 setup(name='jupiterone',
-      version='0.3.0',
+      version='1.0.0',
       description='A Python client for the JupiterOne API',
       license='MIT License',
       author='JupiterOne',
@@ -28,4 +28,4 @@ setup(name='jupiterone',
           'Topic :: Security',
       ],
       packages=find_packages()
-)
+      )
