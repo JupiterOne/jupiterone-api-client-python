@@ -115,7 +115,7 @@ class JupiterOneClient:
             raise JupiterOneApiRetryError('JupiterOne API rate limit exceeded.')
 
         elif response.status_code in [500]:
-            raise JupiterOneApiRetryError('JupiterOne API internal server error.')
+            raise JupiterOneApiError('JupiterOne API internal server error.')
 
         else:
             content = response._content
