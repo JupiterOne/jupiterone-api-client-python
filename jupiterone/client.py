@@ -27,6 +27,7 @@ from jupiterone.constants import (
     CURSOR_QUERY_V1
 )
 
+
 def retry_on_429(exc):
     """ Used to trigger retry on rate limit """
     return isinstance(exc, JupiterOneApiRetryError)
@@ -70,12 +71,12 @@ class JupiterOneClient:
 
     @property
     def token(self):
-        """ Your JupiteOne access token """
+        """ Your JupiterOne access token """
         return self._token
 
     @token.setter
     def token(self, value: str):
-        """ Your JupiteOne access token """
+        """ Your JupiterOne access token """
         if not value:
             raise JupiterOneClientError('token is required')
         self._token = value
@@ -95,7 +96,7 @@ class JupiterOneClient:
 
         # It is still unclear if all responses will have a status
         # code of 200 or if 429 will eventually be used to 
-        # indicate rate limitting.  J1 devs are aware.
+        # indicate rate limits being hit.  J1 devs are aware.
         if response.status_code == 200:
             if response._content:
                 content = json.loads(response._content)
@@ -155,7 +156,11 @@ class JupiterOneClient:
 
         return {'data': results}
 
-    def _limit_and_skip_query(self, query: str, skip: int = J1QL_SKIP_COUNT, limit: int = J1QL_LIMIT_COUNT, include_deleted: bool = False) -> Dict:
+    def _limit_and_skip_query(self,
+                              query: str,
+                              skip: int = J1QL_SKIP_COUNT,
+                              limit: int = J1QL_LIMIT_COUNT,
+                              include_deleted: bool = False) -> Dict:
         results: List = []
         page: int = 0
 
@@ -200,7 +205,10 @@ class JupiterOneClient:
         cursor: str = kwargs.pop('cursor', None)
 
         if uses_limit_and_skip:
-            warn('limit and skip pagination is no longer a recommended method for pagination. To read more about using cursors checkout the JupiterOne documentation: https://support.jupiterone.io/hc/en-us/articles/360022722094#entityandrelationshipqueries', DeprecationWarning, stacklevel=2)
+            warn('limit and skip pagination is no longer a recommended method for pagination. '
+                 'To read more about using cursors checkout the JupiterOne documentation: '
+                 'https://support.jupiterone.io/hc/en-us/articles/360022722094#entityandrelationshipqueries',
+                 DeprecationWarning, stacklevel=2)
             return self._limit_and_skip_query(
                 query=query,
                 skip=skip,
@@ -261,7 +269,7 @@ class JupiterOneClient:
         Update an existing entity.
 
         args:
-            entity_id (str): The _id of the entity to udate
+            entity_id (str): The _id of the entity to update
             properties (dict): Dictionary of key/value entity properties
         """
         variables = {
@@ -273,7 +281,7 @@ class JupiterOneClient:
 
     def create_relationship(self, **kwargs) -> Dict:
         """
-        Create a relationship (edge) between two entities (veritces).
+        Create a relationship (edge) between two entities (vertices).
 
         args:
             relationship_key (str): Unique key for the relationship
