@@ -14,14 +14,14 @@ query_r = j1.query_v1(q)
 print(query_r)
 
 # create_entity
-num1 = random.randrange(1,999,1)
+num1 = random.randrange(1, 999, 1)
 
 # create_entity
 properties = {
         'displayName': 'test{}'.format(num1),
         'customProperty': 'customVal',
         'tag.Production': 'false',
-        'owner': 'colin.blumer@jupiterone.com'
+        'owner': 'user.name@jupiterone.com'
     }
 
 create_r = j1.create_entity(
@@ -45,7 +45,7 @@ update_r = j1.update_entity(
 print(update_r)
 
 # create_entity_2
-num2 = random.randrange(1,999,1)
+num2 = random.randrange(1, 999, 1)
 
 properties = {
         'displayName': 'test{}'.format(num2),
