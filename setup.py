@@ -1,20 +1,20 @@
-# Copyright (c) 2020 Auth0
-
+# Copyright (c) 2020-2025 JupiterOne
 from setuptools import setup, find_packages
 
 install_reqs = [
     'requests',
-    'retrying'
+    'retrying',
+    'warnings'
 ]
 
 setup(name='jupiterone',
-      version='0.1.0',
+      version='1.0.0',
       description='A Python client for the JupiterOne API',
       license='MIT License',
-      author='George Vauter',
-      author_email='george.vauter@auth0.com',
-      maintainer='Auth0',
-      url='https://github.com/auth0/jupiterone-python-sdk',
+      author='JupiterOne',
+      author_email='solutions@jupiterone.com',
+      maintainer='JupiterOne',
+      url='https://github.com/JupiterOne/jupiterone-api-client-python',
       install_requires=install_reqs,
       classifiers=[
           'Development Status :: 4 - Beta',
@@ -28,4 +28,4 @@ setup(name='jupiterone',
           'Topic :: Security',
       ],
       packages=find_packages()
-)
+      )

@@ -4,7 +4,7 @@
 [![Python 3.7](https://img.shields.io/badge/python-3.7-blue.svg)](https://www.python.org/downloads/release/python-370/)
 
 
-A Python library for the [JupiterOne API](https://support.jupiterone.io/hc/en-us/articles/360022722094-JupiterOne-Platform-API).
+A Python library for the [JupiterOne API](https://docs.jupiterone.io/reference).
 
 ## Installation
 
@@ -41,6 +41,10 @@ query_result = j1.query_v1(QUERY, include_deleted=True)
 # Tree query
 QUERY = 'FIND Host RETURN TREE'
 query_result = j1.query_v1(QUERY)
+
+# Using cursor graphQL variable to return full set of paginated results
+QUERY = "FIND (Device | Person)"
+cursor_query_r = j1._cursor_query(QUERY)
 ```
 
 ##### Create an entity:

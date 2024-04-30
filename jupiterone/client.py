@@ -7,6 +7,7 @@ from typing import Dict, List
 
 import requests
 from retrying import retry
+from warnings import warn
 
 from jupiterone.errors import (
     JupiterOneClientError,
@@ -22,8 +23,10 @@ from jupiterone.constants import (
     DELETE_ENTITY,
     UPDATE_ENTITY,
     CREATE_RELATIONSHIP,
-    DELETE_RELATIONSHIP
+    DELETE_RELATIONSHIP,
+    CURSOR_QUERY_V1
 )
+
 
 def retry_on_429(exc):
     """ Used to trigger retry on rate limit """
@@ -68,12 +71,12 @@ class JupiterOneClient:
 
     @property
     def token(self):
-        """ Your JupiteOne access token """
+        """ Your JupiterOne access token """
         return self._token
 
     @token.setter
     def token(self, value: str):
-        """ Your JupiteOne access token """
+        """ Your JupiterOne access token """
         if not value:
             raise JupiterOneClientError('token is required')
         self._token = value
@@ -89,11 +92,11 @@ class JupiterOneClient:
         if variables:
             data.update(variables=variables)
 
-        response = requests.post(self.query_endpoint, headers=self.headers, json=data)
+        response = requests.post(self.query_endpoint, headers=self.headers, json=data, timeout=60)
 
         # It is still unclear if all responses will have a status
         # code of 200 or if 429 will eventually be used to 
-        # indicate rate limitting.  J1 devs are aware.
+        # indicate rate limits being hit.  J1 devs are aware.
         if response.status_code == 200:
             if response._content:
                 content = json.loads(response._content)
@@ -108,29 +111,59 @@ class JupiterOneClient:
         elif response.status_code == 401:
             raise JupiterOneApiError('401: Unauthorized. Please supply a valid account id and API token.')
 
-        elif response.status_code in [429, 500]:
+        elif response.status_code in [429, 503]:
             raise JupiterOneApiRetryError('JupiterOne API rate limit exceeded')
 
+        elif response.status_code in [500]:
+            raise JupiterOneApiError('JupiterOne API internal server error.')
+
         else:
-            try:
-                content = json.loads(response._content)
-                raise JupiterOneApiError('{}: {}'.format(response.status_code, content.get('error') or 'Unknown Error'))
-            except ValueError as e:
-                raise JupiterOneApiError('{}: {}'.format(response.status_code, 'Unknown Error'));
+            content = response._content
+            if isinstance(content, (bytes, bytearray)):
+                content = content.decode("utf-8")
+            if 'application/json' in response.headers.get('Content-Type', 'text/plain'):
+                data = json.loads(content)
+                content = data.get('error', data.get('errors', content))
+            raise JupiterOneApiError('{}:{}'.format(response.status_code, content))
 
-
-    def query_v1(self, query: str, **kwargs) -> Dict:
-        """ Performs a V1 graph query
+    def _cursor_query(self, query: str, cursor: str = None, include_deleted: bool = False) -> Dict:
+        """ Performs a V1 graph query using cursor pagination
             args:
                 query (str): Query text
-                skip (int):  Skip entity count
-                limit (int): Limit entity count
+                cursor (str): A pagination cursor for the initial query
                 include_deleted (bool): Include recently deleted entities in query/search
         """
-        skip: int = kwargs.pop('skip', J1QL_SKIP_COUNT)
-        limit: int = kwargs.pop('limit', J1QL_LIMIT_COUNT)
-        include_deleted: bool = kwargs.pop('include_deleted', False)
 
+        results: List = []
+        while True:
+            variables = {
+                'query': query,
+                'includeDeleted': include_deleted
+            }
+
+            if cursor is not None:
+                variables['cursor'] = cursor
+
+            response = self._execute_query(query=CURSOR_QUERY_V1, variables=variables)
+            data = response['data']['queryV1']['data']
+
+            if 'vertices' in data and 'edges' in data:
+                return data
+
+            results.extend(data)
+
+            if 'cursor' in response['data']['queryV1'] and response['data']['queryV1']['cursor'] is not None:
+                cursor = response['data']['queryV1']['cursor']
+            else:
+                break
+
+        return {'data': results}
+
+    def _limit_and_skip_query(self,
+                              query: str,
+                              skip: int = J1QL_SKIP_COUNT,
+                              limit: int = J1QL_LIMIT_COUNT,
+                              include_deleted: bool = False) -> Dict:
         results: List = []
         page: int = 0
 
@@ -158,6 +191,39 @@ class JupiterOneClient:
             page += 1
 
         return {'data': results}
+
+    def query_v1(self, query: str, **kwargs) -> Dict:
+        """ Performs a V1 graph query
+            args:
+                query (str): Query text
+                skip (int):  Skip entity count
+                limit (int): Limit entity count
+                cursor (str): A pagination cursor for the initial query
+                include_deleted (bool): Include recently deleted entities in query/search
+        """
+        uses_limit_and_skip: bool = 'skip' in kwargs.keys() or 'limit' in kwargs.keys()
+        skip: int = kwargs.pop('skip', J1QL_SKIP_COUNT)
+        limit: int = kwargs.pop('limit', J1QL_LIMIT_COUNT)
+        include_deleted: bool = kwargs.pop('include_deleted', False)
+        cursor: str = kwargs.pop('cursor', None)
+
+        if uses_limit_and_skip:
+            warn('limit and skip pagination is no longer a recommended method for pagination. '
+                 'To read more about using cursors checkout the JupiterOne documentation: '
+                 'https://docs.jupiterone.io/features/admin/parameters#query-parameterlist',
+                 DeprecationWarning, stacklevel=2)
+            return self._limit_and_skip_query(
+                query=query,
+                skip=skip,
+                limit=limit,
+                include_deleted=include_deleted
+            )
+        else:
+            return self._cursor_query(
+                query=query,
+                cursor=cursor,
+                include_deleted=include_deleted
+            )
 
     def create_entity(self, **kwargs) -> Dict:
         """ Creates an entity in graph.  It will also update an existing entity.
@@ -206,7 +272,7 @@ class JupiterOneClient:
         Update an existing entity.
 
         args:
-            entity_id (str): The _id of the entity to udate
+            entity_id (str): The _id of the entity to update
             properties (dict): Dictionary of key/value entity properties
         """
         variables = {
@@ -218,7 +284,7 @@ class JupiterOneClient:
 
     def create_relationship(self, **kwargs) -> Dict:
         """
-        Create a relationship (edge) between two entities (veritces).
+        Create a relationship (edge) between two entities (vertices).
 
         args:
             relationship_key (str): Unique key for the relationship
