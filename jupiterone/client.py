@@ -109,10 +109,17 @@ class JupiterOneClient:
                 return response.json()
 
         elif response.status_code == 401:
-            raise JupiterOneApiError('JupiterOne API query is unauthorized, check credentials.')
+            raise JupiterOneApiError('401: Unauthorized. Please supply a valid account id and API token.')
 
-        elif response.status_code in [429, 503]:
-            raise JupiterOneApiRetryError('JupiterOne API rate limit exceeded.')
+        elif response.status_code in [429, 500]:
+            raise JupiterOneApiRetryError('JupiterOne API rate limit exceeded')
+
+        else:
+            try:
+                content = json.loads(response._content)
+                raise JupiterOneApiError('{}: {}'.format(response.status_code, content.get('error') or 'Unknown Error'))
+            except ValueError as e:
+                raise JupiterOneApiError('{}: {}'.format(response.status_code, 'Unknown Error'));
 
         elif response.status_code in [500]:
             raise JupiterOneApiError('JupiterOne API internal server error.')

@@ -1,0 +1,10 @@
+{
+  "name": "jupiterone-api-client-python",
+  "version": "0.0.0",
+  "description": "Automatically generated package.json, please edit manually",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JupiterOne/jupiterone-api-client-python"
+  },
+  "license": "UNLICENSED"
+}

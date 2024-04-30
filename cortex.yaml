@@ -1,0 +1,13 @@
+openapi: 3.0.1
+info:
+  title: jupiterone-api-client-python
+  description: Automatically generated package.json, please edit manually
+  x-cortex-git:
+    github:
+      repository: JupiterOne/jupiterone-api-client-python
+  x-cortex-owners:
+    - type: group
+      name: JupiterOne/engineering
+  x-cortex-tag: jupiterone-api-client-python
+  x-cortex-service-groups:
+    - tier-4
