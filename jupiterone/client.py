@@ -210,7 +210,7 @@ class JupiterOneClient:
         if uses_limit_and_skip:
             warn('limit and skip pagination is no longer a recommended method for pagination. '
                  'To read more about using cursors checkout the JupiterOne documentation: '
-                 'https://support.jupiterone.io/hc/en-us/articles/360022722094#entityandrelationshipqueries',
+                 'https://docs.jupiterone.io/features/admin/parameters#query-parameterlist',
                  DeprecationWarning, stacklevel=2)
             return self._limit_and_skip_query(
                 query=query,
