@@ -32,9 +32,6 @@ j1 = JupiterOneClient(
 QUERY = 'FIND Host'
 query_result = j1.query_v1(QUERY)
 
-# Using LIMIT and SKIP for pagination
-query_result = j1.query_v1(QUERY, limit=5, skip=5)
-
 # Including deleted entities
 query_result = j1.query_v1(QUERY, include_deleted=True)
 
