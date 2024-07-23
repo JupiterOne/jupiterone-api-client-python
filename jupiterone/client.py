@@ -91,6 +91,9 @@ class JupiterOneClient:
         if variables:
             data.update(variables=variables)
 
+        # Always ask for variableresultsize
+        data.update(flags={"variableResultSize": True})
+
         response = requests.post(
             self.query_endpoint, headers=self.headers, json=data, timeout=60
         )
@@ -151,6 +154,7 @@ class JupiterOneClient:
             response = self._execute_query(query=CURSOR_QUERY_V1, variables=variables)
             data = response["data"]["queryV1"]["data"]
 
+            # This means it's a "TREE" query and we have everything
             if "vertices" in data and "edges" in data:
                 return data
 
