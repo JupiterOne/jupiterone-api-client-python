@@ -3,8 +3,7 @@ from setuptools import setup, find_packages
 
 install_reqs = [
     'requests',
-    'retrying',
-    'warnings'
+    'retrying'
 ]
 
 setup(name='jupiterone',

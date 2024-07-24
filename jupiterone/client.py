@@ -3,6 +3,7 @@
 # see https://github.com/PyCQA/pylint/issues/409
 
 import json
+from warnings import warn
 from typing import Dict, List
 
 import requests
@@ -50,11 +51,11 @@ class JupiterOneClient:
         self.account = account
         self.token = token
         self.url = url
-        self.query_endpoint = self.url + "/graphql"
+        self.query_endpoint = self.url
         self.rules_endpoint = self.url + "/rules/graphql"
         self.headers = {
             "Authorization": "Bearer {}".format(self.token),
-            "Jupiterone-Account": self.account,
+            "JupiterOne-Account": self.account,
         }
 
     @property
@@ -124,7 +125,7 @@ class JupiterOneClient:
             raise JupiterOneApiRetryError("JupiterOne API rate limit exceeded.")
 
         elif response.status_code in [504]:
-            raise JupiterOneApiRetryError("Bad Gateway error. Check network route and try again.")
+            raise JupiterOneApiRetryError("Gateway Timeout.")
 
         elif response.status_code in [500]:
             raise JupiterOneApiError("JupiterOne API internal server error.")
