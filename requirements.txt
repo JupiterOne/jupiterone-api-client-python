@@ -1,3 +1,2 @@
 retrying
 requests
-warnings
