@@ -69,7 +69,7 @@ create_relationship_r = j1.create_relationship(
     relationship_type='jupiterone-api-client-python:create_relationship',
     relationship_class='HAS',
     from_entity_id=create_r['entity']['_id'],
-    to_entity_id=create_r_2['entity']['_id']
+    to_entity_id=create_r_2['entity']['_id'],
 )
 print(create_relationship_r)
 
@@ -84,8 +84,7 @@ print(delete_entity_r1)
 delete_entity_r2 = j1.delete_entity(entity_id=create_r_2['entity']['_id'])
 print(delete_entity_r2)
 
-
-q = "FIND (Device | Person)"
+q = "FIND Person"
 cursor_query_r = j1._cursor_query(q)
 print(cursor_query_r)
 print(len(cursor_query_r['data']))

@@ -7,7 +7,6 @@ from typing import Dict, List
 
 import requests
 from retrying import retry
-from warnings import warn
 
 from jupiterone.errors import (
     JupiterOneClientError,
@@ -38,7 +37,7 @@ class JupiterOneClient:
 
     # pylint: disable=too-many-instance-attributes
 
-    DEFAULT_URL = "https://api.us.jupiterone.io"
+    DEFAULT_URL = "https://graphql.us.jupiterone.io"
 
     RETRY_OPTS = {
         "wait_exponential_multiplier": 1000,
@@ -55,7 +54,7 @@ class JupiterOneClient:
         self.rules_endpoint = self.url + "/rules/graphql"
         self.headers = {
             "Authorization": "Bearer {}".format(self.token),
-            "LifeOmic-Account": self.account,
+            "Jupiterone-Account": self.account,
         }
 
     @property
@@ -120,7 +119,12 @@ class JupiterOneClient:
             )
 
         elif response.status_code in [429, 503]:
-            raise JupiterOneApiRetryError("JupiterOne API rate limit exceeded")
+            print(response.status_code)
+            print(response.content)
+            raise JupiterOneApiRetryError("JupiterOne API rate limit exceeded.")
+
+        elif response.status_code in [504]:
+            raise JupiterOneApiRetryError("Bad Gateway error. Check network route and try again.")
 
         elif response.status_code in [500]:
             raise JupiterOneApiError("JupiterOne API internal server error.")
