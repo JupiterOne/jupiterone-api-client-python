@@ -91,7 +91,7 @@ class JupiterOneClient:
         if variables:
             data.update(variables=variables)
 
-        # Always ask for variableresultsize
+        # Always ask for variableResultSize
         data.update(flags={"variableResultSize": True})
 
         response = requests.post(
