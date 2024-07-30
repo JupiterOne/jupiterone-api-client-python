@@ -10,6 +10,7 @@ from jupiterone.errors import (
     JupiterOneApiError
 ) 
 
+
 def build_results(response_code: int = 200, cursor: str = None, max_pages: int = 1):
     pages = Counter(requests=0)
 
@@ -60,7 +61,7 @@ def build_results(response_code: int = 200, cursor: str = None, max_pages: int =
 
         pages.update(requests=1)
 
-        return (response_code, headers, json.dumps(response))
+        return response_code, headers, json.dumps(response)
 
     return request_callback
 
@@ -97,7 +98,7 @@ def test_execute_query():
     assert 'data' in response
     assert 'queryV1' in response['data']
     assert len(response['data']['queryV1']['data']) == 1
-    assert type(response['data']['queryV1']['data']) == list
+    assert type(response['data']['queryV1']['data']) is list
     assert response['data']['queryV1']['data'][0]['entity']['_id'] == '1'
 
 
@@ -118,10 +119,11 @@ def test_limit_skip_query_v1():
         skip=0
     )
 
-    assert type(response) == dict
+    assert type(response) is dict
     assert len(response['data']) == 1
-    assert type(response['data']) == list
+    assert type(response['data']) is list
     assert response['data'][0]['entity']['_id'] == '1'
+
 
 @responses.activate
 def test_cursor_query_v1():
@@ -145,10 +147,11 @@ def test_cursor_query_v1():
         query=query,
     )
 
-    assert type(response) == dict
+    assert type(response) is dict
     assert len(response['data']) == 2
-    assert type(response['data']) == list
+    assert type(response['data']) is list
     assert response['data'][0]['entity']['_id'] == '1'
+
 
 @responses.activate
 def test_limit_skip_tree_query_v1():
@@ -176,7 +179,7 @@ def test_limit_skip_tree_query_v1():
             }
         }
 
-        return (200, headers, json.dumps(response))
+        return 200, headers, json.dumps(response)
 
     responses.add_callback(
         responses.POST, 'https://graphql.us.jupiterone.io/',
@@ -192,12 +195,13 @@ def test_limit_skip_tree_query_v1():
         skip=0
     )
 
-    assert type(response) == dict
+    assert type(response) is dict
     assert 'edges' in response
     assert 'vertices' in response
-    assert type(response['edges']) == list
-    assert type(response['vertices']) == list
+    assert type(response['edges']) is list
+    assert type(response['vertices']) is list
     assert response['vertices'][0]['id'] == '1'
+
 
 @responses.activate
 def test_cursor_tree_query_v1():
@@ -237,12 +241,13 @@ def test_cursor_tree_query_v1():
     query = "find Host with _id='1' return tree"
     response = j1.query_v1(query)
 
-    assert type(response) == dict
+    assert type(response) is dict
     assert 'edges' in response
     assert 'vertices' in response
-    assert type(response['edges']) == list
-    assert type(response['vertices']) == list
+    assert type(response['edges']) is list
+    assert type(response['vertices']) is list
     assert response['vertices'][0]['id'] == '1'
+
 
 @responses.activate
 def test_retry_on_limit_skip_query():
@@ -272,10 +277,11 @@ def test_retry_on_limit_skip_query():
         skip=0
     )
 
-    assert type(response) == dict
+    assert type(response) is dict
     assert len(response['data']) == 1
-    assert type(response['data']) == list
+    assert type(response['data']) is list
     assert response['data'][0]['entity']['_id'] == '1'
+
 
 @responses.activate
 def test_retry_on_cursor_query():
@@ -303,10 +309,11 @@ def test_retry_on_cursor_query():
         query=query
     )
 
-    assert type(response) == dict
+    assert type(response) is dict
     assert len(response['data']) == 1
-    assert type(response['data']) == list
+    assert type(response['data']) is list
     assert response['data'][0]['entity']['_id'] == '1'
+
 
 @responses.activate
 def test_avoid_retry_on_limit_skip_query():
@@ -325,6 +332,7 @@ def test_avoid_retry_on_limit_skip_query():
             skip=0
         )
 
+
 @responses.activate
 def test_avoid_retry_on_cursor_query():
     responses.add_callback(
@@ -339,6 +347,7 @@ def test_avoid_retry_on_cursor_query():
         j1.query_v1(
             query=query
         )
+
 
 @responses.activate
 def test_warn_limit_and_skip_deprecated():
@@ -374,6 +383,7 @@ def test_unauthorized_query_v1():
         j1.query_v1(query)
 
     assert "401: Unauthorized" in str(exc_info.value.args[0])
+
 
 @responses.activate
 def test_five_hundred_error_query_v1():
