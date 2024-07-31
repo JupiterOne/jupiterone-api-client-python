@@ -6,7 +6,6 @@ from collections import Counter
 from jupiterone.client import JupiterOneClient
 from jupiterone.constants import QUERY_V1
 from jupiterone.errors import (
-    JupiterOneApiRetryError,
     JupiterOneApiError
 ) 
 
