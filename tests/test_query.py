@@ -5,9 +5,7 @@ from collections import Counter
 
 from jupiterone.client import JupiterOneClient
 from jupiterone.constants import QUERY_V1
-from jupiterone.errors import (
-    JupiterOneApiError
-) 
+from jupiterone.errors import JupiterOneApiError
 
 
 def build_results(response_code: int = 200, cursor: str = None, max_pages: int = 1):
