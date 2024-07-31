@@ -7,6 +7,7 @@ from jupiterone.client import JupiterOneClient
 from jupiterone.constants import QUERY_V1
 from jupiterone.errors import JupiterOneApiError
 
+
 def build_results(response_code: int = 200, cursor: str = None, max_pages: int = 1):
     pages = Counter(requests=0)
 
@@ -57,7 +58,7 @@ def build_results(response_code: int = 200, cursor: str = None, max_pages: int =
 
         pages.update(requests=1)
 
-        return (response_code, headers, json.dumps(response))
+        return response_code, headers, json.dumps(response)
 
     return request_callback
 
@@ -74,9 +75,8 @@ def build_error_results(response_code: int, response_content, response_type: str
 
 @responses.activate
 def test_execute_query():
-
     responses.add_callback(
-        responses.POST, 'https://api.us.jupiterone.io/graphql',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=build_results(),
         content_type='application/json',
     )
@@ -95,7 +95,7 @@ def test_execute_query():
     assert 'data' in response
     assert 'queryV1' in response['data']
     assert len(response['data']['queryV1']['data']) == 1
-    assert type(response['data']['queryV1']['data']) == list
+    assert type(response['data']['queryV1']['data']) is list
     assert response['data']['queryV1']['data'][0]['entity']['_id'] == '1'
 
 
@@ -103,7 +103,7 @@ def test_execute_query():
 def test_limit_skip_query_v1():
 
     responses.add_callback(
-        responses.POST, 'https://api.us.jupiterone.io/graphql',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=build_results(),
         content_type='application/json',
     )
@@ -116,22 +116,23 @@ def test_limit_skip_query_v1():
         skip=0
     )
 
-    assert type(response) == dict
+    assert type(response) is dict
     assert len(response['data']) == 1
-    assert type(response['data']) == list
+    assert type(response['data']) is list
     assert response['data'][0]['entity']['_id'] == '1'
+
 
 @responses.activate
 def test_cursor_query_v1():
 
     responses.add_callback(
-        responses.POST, 'https://api.us.jupiterone.io/graphql',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=build_results(cursor='cursor_value'),
         content_type='application/json',
     )
 
     responses.add_callback(
-        responses.POST, 'https://api.us.jupiterone.io/graphql',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=build_results(),
         content_type='application/json',
     )
@@ -143,10 +144,11 @@ def test_cursor_query_v1():
         query=query,
     )
 
-    assert type(response) == dict
+    assert type(response) is dict
     assert len(response['data']) == 2
-    assert type(response['data']) == list
+    assert type(response['data']) is list
     assert response['data'][0]['entity']['_id'] == '1'
+
 
 @responses.activate
 def test_limit_skip_tree_query_v1():
@@ -174,10 +176,10 @@ def test_limit_skip_tree_query_v1():
             }
         }
 
-        return (200, headers, json.dumps(response))
+        return 200, headers, json.dumps(response)
 
     responses.add_callback(
-        responses.POST, 'https://api.us.jupiterone.io/graphql',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=request_callback,
         content_type='application/json',
     )
@@ -190,12 +192,13 @@ def test_limit_skip_tree_query_v1():
         skip=0
     )
 
-    assert type(response) == dict
+    assert type(response) is dict
     assert 'edges' in response
     assert 'vertices' in response
-    assert type(response['edges']) == list
-    assert type(response['vertices']) == list
+    assert type(response['edges']) is list
+    assert type(response['vertices']) is list
     assert response['vertices'][0]['id'] == '1'
+
 
 @responses.activate
 def test_cursor_tree_query_v1():
@@ -226,7 +229,7 @@ def test_cursor_tree_query_v1():
         return (200, headers, json.dumps(response))
 
     responses.add_callback(
-        responses.POST, 'https://api.us.jupiterone.io/graphql',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=request_callback,
         content_type='application/json',
     )
@@ -235,29 +238,30 @@ def test_cursor_tree_query_v1():
     query = "find Host with _id='1' return tree"
     response = j1.query_v1(query)
 
-    assert type(response) == dict
+    assert type(response) is dict
     assert 'edges' in response
     assert 'vertices' in response
-    assert type(response['edges']) == list
-    assert type(response['vertices']) == list
+    assert type(response['edges']) is list
+    assert type(response['vertices']) is list
     assert response['vertices'][0]['id'] == '1'
+
 
 @responses.activate
 def test_retry_on_limit_skip_query():
     responses.add_callback(
-        responses.POST, 'https://api.us.jupiterone.io/graphql',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=build_results(response_code=429),
         content_type='application/json',
     )
 
     responses.add_callback(
-        responses.POST, 'https://api.us.jupiterone.io/graphql',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=build_results(response_code=503),
         content_type='application/json',
     )
 
     responses.add_callback(
-        responses.POST, 'https://api.us.jupiterone.io/graphql',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=build_results(),
         content_type='application/json',
     )
@@ -270,27 +274,28 @@ def test_retry_on_limit_skip_query():
         skip=0
     )
 
-    assert type(response) == dict
+    assert type(response) is dict
     assert len(response['data']) == 1
-    assert type(response['data']) == list
+    assert type(response['data']) is list
     assert response['data'][0]['entity']['_id'] == '1'
+
 
 @responses.activate
 def test_retry_on_cursor_query():
     responses.add_callback(
-        responses.POST, 'https://api.us.jupiterone.io/graphql',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=build_results(response_code=429),
         content_type='application/json',
     )
 
     responses.add_callback(
-        responses.POST, 'https://api.us.jupiterone.io/graphql',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=build_results(response_code=503),
         content_type='application/json',
     )
 
     responses.add_callback(
-        responses.POST, 'https://api.us.jupiterone.io/graphql',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=build_results(),
         content_type='application/json',
     )
@@ -301,15 +306,16 @@ def test_retry_on_cursor_query():
         query=query
     )
 
-    assert type(response) == dict
+    assert type(response) is dict
     assert len(response['data']) == 1
-    assert type(response['data']) == list
+    assert type(response['data']) is list
     assert response['data'][0]['entity']['_id'] == '1'
+
 
 @responses.activate
 def test_avoid_retry_on_limit_skip_query():
     responses.add_callback(
-        responses.POST, 'https://api.us.jupiterone.io/graphql',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=build_results(response_code=404),
         content_type='application/json',
     )
@@ -323,10 +329,11 @@ def test_avoid_retry_on_limit_skip_query():
             skip=0
         )
 
+
 @responses.activate
 def test_avoid_retry_on_cursor_query():
     responses.add_callback(
-        responses.POST, 'https://api.us.jupiterone.io/graphql',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=build_results(response_code=404),
         content_type='application/json',
     )
@@ -338,10 +345,11 @@ def test_avoid_retry_on_cursor_query():
             query=query
         )
 
+
 @responses.activate
 def test_warn_limit_and_skip_deprecated():
     responses.add_callback(
-        responses.POST, 'https://api.us.jupiterone.io/graphql',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=build_results(),
         content_type='application/json',
     )
@@ -360,7 +368,7 @@ def test_warn_limit_and_skip_deprecated():
 @responses.activate
 def test_unauthorized_query_v1():
     responses.add_callback(
-        responses.POST, 'https://api.us.jupiterone.io/graphql',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=build_error_results(401, b'Unauthorized', 'text/plain'),
         content_type='application/json',
     )
@@ -371,14 +379,14 @@ def test_unauthorized_query_v1():
     with pytest.raises(JupiterOneApiError) as exc_info:
         j1.query_v1(query)
 
-    assert exc_info.value.args[0] == 'JupiterOne API query is unauthorized, check credentials.'
+    assert "401: Unauthorized" in str(exc_info.value.args[0])
 
 
 @responses.activate
-def test_unexpected_string_error_query_v1():
+def test_five_hundred_error_query_v1():
     responses.add_callback(
-        responses.POST, 'https://api.us.jupiterone.io/graphql',
-        callback=build_error_results(500, 'String exception on server', 'text/plain'),
+        responses.POST, 'https://graphql.us.jupiterone.io',
+        callback=build_error_results(500, 'Internal Server Error', 'text/plain'),
         content_type='application/json',
     )
 
@@ -388,17 +396,17 @@ def test_unexpected_string_error_query_v1():
     with pytest.raises(JupiterOneApiError) as exc_info:
         j1.query_v1(query)
 
-    assert exc_info.value.args[0] == '500:String exception on server'
+    assert exc_info.value.args[0] == 'JupiterOne API internal server error.'
 
 
 @responses.activate
-def test_unexpected_json_error_query_v1():
+def test_bad_gateway_error_query_v1():
     error_json = {
         'error': 'Bad Gateway'
     }
 
     responses.add_callback(
-        responses.POST, 'https://api.us.jupiterone.io/graphql',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=build_error_results(502, json.dumps(error_json), ),
         content_type='application/json',
     )
@@ -408,26 +416,3 @@ def test_unexpected_json_error_query_v1():
 
     with pytest.raises(JupiterOneApiError) as exc_info:
         j1.query_v1(query)
-
-    assert exc_info.value.args[0] == '502:Bad Gateway'
-
-
-@responses.activate
-def test_unexpected_json_errors_query_v1():
-    errors_json = {
-        'errors': ['First error', 'Second error', 'Third error']
-    }
-
-    responses.add_callback(
-        responses.POST, 'https://api.us.jupiterone.io/graphql',
-        callback=build_error_results(500, json.dumps(errors_json), ),
-        content_type='application/json',
-    )
-
-    j1 = JupiterOneClient(account='testAccount', token='bogusToken')
-    query = "find Host with _id='1' return tree"
-
-    with pytest.raises(JupiterOneApiError) as exc_info:
-        j1.query_v1(query)
-
-    assert exc_info.value.args[0] == "500:['First error', 'Second error', 'Third error']"

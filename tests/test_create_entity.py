@@ -32,7 +32,7 @@ def test_tree_query_v1():
         return (200, headers, json.dumps(response))
     
     responses.add_callback(
-        responses.POST, 'https://api.us.jupiterone.io/graphql',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=request_callback,
         content_type='application/json',
     )
