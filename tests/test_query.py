@@ -419,31 +419,3 @@ def test_bad_gateway_error_query_v1():
 
     with pytest.raises(JupiterOneApiError) as exc_info:
         j1.query_v1(query)
-
-# @responses.activate
-# def test_rate_limit_error_query_v1():
-#     responses.add_callback(
-#         responses.POST, 'https://graphql.us.jupiterone.io/',
-#         callback=build_error_results(429, "Too Many Requests", ),
-#         content_type='application/json',
-#     )
-
-#     j1 = JupiterOneClient(account='testAccount', token='bogusToken')
-#     query = "find Host with _id='1' return tree"
-
-#     with pytest.raises(JupiterOneApiError) as exc_info:
-#         j1.query_v1(query)
-
-# @responses.activate
-# def test_service_unavailable_error_query_v1():
-#     responses.add_callback(
-#         responses.POST, 'https://graphql.us.jupiterone.io/',
-#         callback=build_error_results(503, "Service Unavailable", ),
-#         content_type='application/json',
-#     )
-
-#     j1 = JupiterOneClient(account='testAccount', token='bogusToken')
-#     query = "find Host with _id='1' return tree"
-
-#     with pytest.raises(JupiterOneApiRetryError) as exc_info:
-#         j1.query_v1(query)
