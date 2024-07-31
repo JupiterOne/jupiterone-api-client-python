@@ -76,7 +76,7 @@ def build_error_results(response_code: int, response_content, response_type: str
 @responses.activate
 def test_execute_query():
     responses.add_callback(
-        responses.POST, 'https://graphql.us.jupiterone.io/',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=build_results(),
         content_type='application/json',
     )
@@ -103,7 +103,7 @@ def test_execute_query():
 def test_limit_skip_query_v1():
 
     responses.add_callback(
-        responses.POST, 'https://graphql.us.jupiterone.io/',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=build_results(),
         content_type='application/json',
     )
@@ -126,13 +126,13 @@ def test_limit_skip_query_v1():
 def test_cursor_query_v1():
 
     responses.add_callback(
-        responses.POST, 'https://graphql.us.jupiterone.io/',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=build_results(cursor='cursor_value'),
         content_type='application/json',
     )
 
     responses.add_callback(
-        responses.POST, 'https://graphql.us.jupiterone.io/',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=build_results(),
         content_type='application/json',
     )
@@ -179,7 +179,7 @@ def test_limit_skip_tree_query_v1():
         return 200, headers, json.dumps(response)
 
     responses.add_callback(
-        responses.POST, 'https://graphql.us.jupiterone.io/',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=request_callback,
         content_type='application/json',
     )
@@ -229,7 +229,7 @@ def test_cursor_tree_query_v1():
         return (200, headers, json.dumps(response))
 
     responses.add_callback(
-        responses.POST, 'https://graphql.us.jupiterone.io/',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=request_callback,
         content_type='application/json',
     )
@@ -249,19 +249,19 @@ def test_cursor_tree_query_v1():
 @responses.activate
 def test_retry_on_limit_skip_query():
     responses.add_callback(
-        responses.POST, 'https://graphql.us.jupiterone.io/',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=build_results(response_code=429),
         content_type='application/json',
     )
 
     responses.add_callback(
-        responses.POST, 'https://graphql.us.jupiterone.io/',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=build_results(response_code=503),
         content_type='application/json',
     )
 
     responses.add_callback(
-        responses.POST, 'https://graphql.us.jupiterone.io/',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=build_results(),
         content_type='application/json',
     )
@@ -283,19 +283,19 @@ def test_retry_on_limit_skip_query():
 @responses.activate
 def test_retry_on_cursor_query():
     responses.add_callback(
-        responses.POST, 'https://graphql.us.jupiterone.io/',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=build_results(response_code=429),
         content_type='application/json',
     )
 
     responses.add_callback(
-        responses.POST, 'https://graphql.us.jupiterone.io/',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=build_results(response_code=503),
         content_type='application/json',
     )
 
     responses.add_callback(
-        responses.POST, 'https://graphql.us.jupiterone.io/',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=build_results(),
         content_type='application/json',
     )
@@ -315,7 +315,7 @@ def test_retry_on_cursor_query():
 @responses.activate
 def test_avoid_retry_on_limit_skip_query():
     responses.add_callback(
-        responses.POST, 'https://graphql.us.jupiterone.io/',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=build_results(response_code=404),
         content_type='application/json',
     )
@@ -333,7 +333,7 @@ def test_avoid_retry_on_limit_skip_query():
 @responses.activate
 def test_avoid_retry_on_cursor_query():
     responses.add_callback(
-        responses.POST, 'https://graphql.us.jupiterone.io/',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=build_results(response_code=404),
         content_type='application/json',
     )
@@ -349,7 +349,7 @@ def test_avoid_retry_on_cursor_query():
 @responses.activate
 def test_warn_limit_and_skip_deprecated():
     responses.add_callback(
-        responses.POST, 'https://graphql.us.jupiterone.io/',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=build_results(),
         content_type='application/json',
     )
@@ -368,7 +368,7 @@ def test_warn_limit_and_skip_deprecated():
 @responses.activate
 def test_unauthorized_query_v1():
     responses.add_callback(
-        responses.POST, 'https://graphql.us.jupiterone.io/',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=build_error_results(401, b'Unauthorized', 'text/plain'),
         content_type='application/json',
     )
@@ -385,7 +385,7 @@ def test_unauthorized_query_v1():
 @responses.activate
 def test_five_hundred_error_query_v1():
     responses.add_callback(
-        responses.POST, 'https://graphql.us.jupiterone.io/',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=build_error_results(500, 'Internal Server Error', 'text/plain'),
         content_type='application/json',
     )
@@ -406,7 +406,7 @@ def test_bad_gateway_error_query_v1():
     }
 
     responses.add_callback(
-        responses.POST, 'https://graphql.us.jupiterone.io/',
+        responses.POST, 'https://graphql.us.jupiterone.io',
         callback=build_error_results(502, json.dumps(error_json), ),
         content_type='application/json',
     )
