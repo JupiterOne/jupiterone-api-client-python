@@ -95,6 +95,7 @@ class JupiterOneClient:
         # Always ask for variableResultSize
         data.update(flags={"variableResultSize": True})
 
+        # initiate requests session and implement retry logic of 5 request retries with 1 second between
         s = requests.Session()
         retries = Retry(total=5, backoff_factor=1, status_forcelist=[429, 502, 503, 504])
         s.mount('https://', HTTPAdapter(max_retries=retries))
