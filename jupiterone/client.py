@@ -117,7 +117,6 @@ class JupiterOneClient:
                             raise JupiterOneApiRetryError(
                                 "JupiterOne API rate limit exceeded"
                             )
-
                     raise JupiterOneApiError(content.get("errors"))
                 return response.json()
 
