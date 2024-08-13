@@ -6,6 +6,7 @@ import json
 from warnings import warn
 from typing import Dict, List
 
+import re
 import requests
 from requests.adapters import HTTPAdapter, Retry
 from retrying import retry
@@ -155,6 +156,15 @@ class JupiterOneClient:
             include_deleted (bool): Include recently deleted entities in query/search
         """
 
+        # If the query itself includes a LIMIT then we must parse that and check if we've reached
+        # or exceeded the required number of results.
+        limit_match = re.search(r"(?i)LIMIT\s+(?P<inline_limit>\d+)", query)
+
+        if limit_match:
+            result_limit = int(limit_match.group("inline_limit"))
+        else:
+            result_limit = False
+
         results: List = []
         while True:
             variables = {"query": query, "includeDeleted": include_deleted}
@@ -171,14 +181,24 @@ class JupiterOneClient:
 
             results.extend(data)
 
-            if (
+            if result_limit and len(results) >= result_limit:
+                # We can stop paginating if we've collected enough results based on the requested limit
+                break
+            elif (
                 "cursor" in response["data"]["queryV1"]
                 and response["data"]["queryV1"]["cursor"] is not None
             ):
+                # We got a cursor and haven't collected enough results
                 cursor = response["data"]["queryV1"]["cursor"]
             else:
+                # No cursor returned so we're done
                 break
 
+        # If we detected an inline LIMIT make sure we only return that many results
+        if result_limit:
+            return {"data": results[:result_limit]}
+
+        # Return everything
         return {"data": results}
 
     def _limit_and_skip_query(
