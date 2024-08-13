@@ -7,6 +7,7 @@ from warnings import warn
 from typing import Dict, List
 
 import requests
+from requests.adapters import HTTPAdapter, Retry
 from retrying import retry
 
 from jupiterone.errors import (
@@ -94,7 +95,12 @@ class JupiterOneClient:
         # Always ask for variableResultSize
         data.update(flags={"variableResultSize": True})
 
-        response = requests.post(
+        # initiate requests session and implement retry logic of 5 request retries with 1 second between
+        s = requests.Session()
+        retries = Retry(total=5, backoff_factor=1, status_forcelist=[429, 502, 503, 504])
+        s.mount('https://', HTTPAdapter(max_retries=retries))
+
+        response = s.post(
             self.query_endpoint, headers=self.headers, json=data, timeout=60
         )
 
