@@ -118,9 +118,6 @@ class JupiterOneClient:
                                 "JupiterOne API rate limit exceeded"
                             )
 
-                    print(response.status_code)
-                    print(content)
-
                     raise JupiterOneApiError(content.get("errors"))
                 return response.json()
 
