@@ -53,7 +53,7 @@ class JupiterOneClient:
         self.account = account
         self.token = token
         self.url = url
-        self.query_endpoint = self.url
+        self.query_endpoint = self.url + "/graphql"
         self.rules_endpoint = self.url + "/rules/graphql"
         self.headers = {
             "Authorization": "Bearer {}".format(self.token),
