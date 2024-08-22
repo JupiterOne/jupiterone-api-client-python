@@ -22,9 +22,11 @@ from jupiterone import JupiterOneClient
 
 j1 = JupiterOneClient(
     account='<yourAccountId>',
-    token='<yourApiToken>'
+    token='<yourApiToken>',
+    url='https://graphql.us.jupiterone.io'
 )
 ```
+Depending on your region and account configuration, the 'url' parameter may need to be updated to "https://graphql.eu.jupiterone.io" or "https://graphql.<custom_value>.jupiterone.io"
 
 ##### Execute a query:
 
