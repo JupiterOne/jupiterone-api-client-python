@@ -26,7 +26,9 @@ j1 = JupiterOneClient(
     url='https://graphql.us.jupiterone.io'
 )
 ```
-Depending on your region and account configuration, the 'url' parameter may need to be updated to "https://graphql.eu.jupiterone.io" or "https://graphql.your-tenant-name-here.jupiterone.io"
+For users with J1 accounts in the EU region, the 'url' parameter will need to be updated to "https://graphql.eu.jupiterone.io".
+
+If no 'url' parameter is passed, the default of "https://graphql.us.jupiterone.io" is used.
 
 ##### Execute a query:
 
