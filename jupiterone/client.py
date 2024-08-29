@@ -633,16 +633,3 @@ class JupiterOneClient:
         response = self._execute_query(LIST_RULE_INSTANCES, variables=variables)
 
         return response['data']['listRuleInstances']
-
-    def list_alert_rules(self):
-        """List defined Alert Rules configured in J1 account
-
-        """
-
-        variables = {
-                    "limit": 100
-        }
-
-        response = self._execute_query(LIST_RULE_INSTANCES, variables=variables)
-
-        return response['data']['listRuleInstances']
