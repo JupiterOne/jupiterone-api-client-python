@@ -586,3 +586,4 @@ class JupiterOneClient:
         response = self._execute_query(GET_SMARTCLASS_DETAILS, variables=variables)
 
         return response['data']['smartClass']
+    
