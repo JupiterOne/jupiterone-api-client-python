@@ -28,7 +28,10 @@ from jupiterone.constants import (
     DELETE_RELATIONSHIP,
     CURSOR_QUERY_V1,
     CREATE_INSTANCE,
-    ALL_PROPERTIES
+    ALL_PROPERTIES,
+    CREATE_SMARTCLASS,
+    CREATE_SMARTCLASS_QUERY,
+    RUN_SMARTCLASS_EVALUATION
 )
 
 
@@ -62,6 +65,7 @@ class JupiterOneClient:
         self.headers = {
             "Authorization": "Bearer {}".format(self.token),
             "JupiterOne-Account": self.account,
+            "Content-Type": "application/json"
         }
 
     @property
@@ -235,7 +239,7 @@ class JupiterOneClient:
 
         return {"data": results}
 
-    def _execute_syncapi_request(self, endpoint: str, headers: Dict = None, payload: Dict = None):
+    def _execute_syncapi_request(self, endpoint: str, payload: Dict = None) -> Dict:
         """Executes POST request to SyncAPI endpoints"""
 
         # initiate requests session and implement retry logic of 5 request retries with 1 second between
@@ -494,9 +498,7 @@ class JupiterOneClient:
                "entities": entities_list
         }
 
-        json_headers = self.headers.update({'Content-Type': 'application/json'})
-
-        response = self._execute_syncapi_request(endpoint=endpoint, headers=json_headers, payload=data)
+        response = self._execute_syncapi_request(endpoint=endpoint, payload=data)
 
         return response
 
@@ -510,6 +512,58 @@ class JupiterOneClient:
 
         data = {}
 
-        response = self._execute_syncapi_request(endpoint=endpoint, headers=self.headers, payload=data)
+        response = self._execute_syncapi_request(endpoint=endpoint, payload=data)
 
         return response
+
+    def create_smartclass(self, smartclass_name: str = None, smartclass_description: str = None):
+        """Creates a new Smart Class within Assets.
+
+        args:
+            smartclass_name (str): The "Smart class name" for Smart Class to be created.
+            smartclass_description (str): The "Description" for Smart Class to be created.
+        """
+
+        variables = {
+                    "input": {
+                        "tagName": smartclass_name,
+                        "description": smartclass_description
+                    }
+        }
+
+        response = self._execute_query(CREATE_SMARTCLASS, variables=variables)
+        return response['data']['createSmartClass']
+
+    def create_smartclass_query(self, smartclass_id: str = None, query: str = None, query_description: str = None):
+        """Creates a new J1QL Query within a defined Smart Class.
+
+        args:
+            smartclass_id (str): The unique ID of the Smart Class the query is created within.
+            query (str): The J1QL for the query being created.
+            query_description (str): The description of the query being created.
+        """
+
+        variables = {
+                    "input": {
+                        "smartClassId": smartclass_id,
+                        "query": query,
+                        "description": query_description
+                    }
+        }
+
+        response = self._execute_query(CREATE_SMARTCLASS_QUERY, variables=variables)
+        return response['data']['createSmartClassQuery']
+
+    def trigger_smartclass_evaluation(self, smartclass_id: str = None):
+        """Execute an on-demand Evaluation of a defined Smartclass.
+
+        args:
+            smartclass_id (str): The unique ID of the Smart Class the query is created within.
+        """
+
+        variables = {
+                    "smartClassId": smartclass_id
+        }
+
+        response = self._execute_query(RUN_SMARTCLASS_EVALUATION, variables=variables)
+        return response['data']['evaluateSmartClassRule']
