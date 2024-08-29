@@ -28,11 +28,13 @@ from jupiterone.constants import (
     DELETE_RELATIONSHIP,
     CURSOR_QUERY_V1,
     CREATE_INSTANCE,
+    INTEGRATION_JOB_VALUES,
+    INTEGRATION_INSTANCE_EVENT_VALUES,
     ALL_PROPERTIES,
     CREATE_SMARTCLASS,
     CREATE_SMARTCLASS_QUERY,
     EVALUATE_SMARTCLASS,
-    GET_SMARTCLASS_DETAILS
+    GET_SMARTCLASS_DETAILS,
 )
 
 
@@ -240,7 +242,7 @@ class JupiterOneClient:
 
         return {"data": results}
 
-    def _execute_syncapi_request(self, endpoint: str, payload: Dict):
+    def _execute_syncapi_request(self, endpoint: str, payload: Dict = None) -> Dict:
         """Executes POST request to SyncAPI endpoints"""
 
         # initiate requests session and implement retry logic of 5 request retries with 1 second between
@@ -266,7 +268,6 @@ class JupiterOneClient:
                                 "JupiterOne API rate limit exceeded"
                             )
                     raise JupiterOneApiError(content.get("errors"))
-
                 return response.json()
 
         elif response.status_code == 401:
@@ -518,6 +519,38 @@ class JupiterOneClient:
 
         return response
 
+    def fetch_integration_jobs(self, instance_id: str = None):
+        """Fetch Integration Job details from defined integration instance.
+
+        args:
+            instance_id (str): The "integrationInstanceId" of the integration to fetch jobs from.
+        """
+        variables = {
+                    "integrationInstanceId": instance_id,
+                    "size": 100
+        }
+
+        response = self._execute_query(INTEGRATION_JOB_VALUES, variables=variables)
+
+        return response['data']['integrationJobs']
+
+    def fetch_integration_job_events(self, instance_id: str = None, instance_job_id: str = None):
+        """Fetch events within an integration job run.
+
+        args:
+            instance_id (str): The integration Instance Id of the integration to fetch job events from.
+            instance_job_id (str): The integration Job ID of the integration to fetch job events from.
+        """
+        variables = {
+                    "integrationInstanceId": instance_id,
+                    "jobId": instance_job_id,
+                    "size": 1000
+        }
+
+        response = self._execute_query(INTEGRATION_INSTANCE_EVENT_VALUES, variables=variables)
+
+        return response['data']['integrationEvents']
+
     def create_smartclass(self, smartclass_name: str = None, smartclass_description: str = None):
         """Creates a new Smart Class within Assets.
 
@@ -525,7 +558,6 @@ class JupiterOneClient:
             smartclass_name (str): The "Smart class name" for Smart Class to be created.
             smartclass_description (str): The "Description" for Smart Class to be created.
         """
-
         variables = {
                     "input": {
                         "tagName": smartclass_name,

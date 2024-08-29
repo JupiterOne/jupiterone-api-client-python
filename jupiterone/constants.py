@@ -222,3 +222,82 @@ GET_SMARTCLASS_DETAILS = """
         }
     }
 """
+
+INTEGRATION_JOB_VALUES = """
+    query IntegrationJobs(
+      $status: IntegrationJobStatus
+      $integrationInstanceId: String
+      $integrationDefinitionId: String
+      $integrationInstanceIds: [String]
+      $cursor: String
+      $size: Int
+    ) {
+      integrationJobs(
+        status: $status
+        integrationInstanceId: $integrationInstanceId
+        integrationDefinitionId: $integrationDefinitionId
+        integrationInstanceIds: $integrationInstanceIds
+        cursor: $cursor
+        size: $size
+      ) {
+        jobs {
+          id
+          status
+          integrationInstanceId
+          createDate
+          endDate
+          hasSkippedSteps
+          integrationInstance {
+            id
+            name
+            __typename
+          }
+          integrationDefinition {
+            id
+            title
+            integrationType
+            __typename
+          }
+          __typename
+        }
+        pageInfo {
+          endCursor
+          __typename
+        }
+        __typename
+      }
+    }
+"""
+
+INTEGRATION_INSTANCE_EVENT_VALUES = """
+    query ListEvents(
+      $jobId: String!
+      $integrationInstanceId: String!
+      $cursor: String
+      $size: Int
+    ) {
+      integrationEvents(
+        size: $size
+        cursor: $cursor
+        jobId: $jobId
+        integrationInstanceId: $integrationInstanceId
+      ) {
+        events {
+          id
+          name
+          description
+          createDate
+          jobId
+          level
+          eventCode
+          __typename
+        }
+        pageInfo {
+          endCursor
+          hasNextPage
+          __typename
+        }
+        __typename
+      }
+    }
+"""
