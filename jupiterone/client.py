@@ -240,7 +240,7 @@ class JupiterOneClient:
 
         return {"data": results}
 
-    def _execute_syncapi_request(self, endpoint: str, payload: Dict = None) -> Dict:
+    def _execute_syncapi_request(self, endpoint: str, payload: Dict):
         """Executes POST request to SyncAPI endpoints"""
 
         # initiate requests session and implement retry logic of 5 request retries with 1 second between
@@ -266,6 +266,7 @@ class JupiterOneClient:
                                 "JupiterOne API rate limit exceeded"
                             )
                     raise JupiterOneApiError(content.get("errors"))
+
                 return response.json()
 
         elif response.status_code == 401:
