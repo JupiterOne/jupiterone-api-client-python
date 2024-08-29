@@ -301,3 +301,71 @@ INTEGRATION_INSTANCE_EVENT_VALUES = """
       }
     }
 """
+
+LIST_RULE_INSTANCES = """
+    query listRuleInstances(
+        $limit: Int, 
+        $cursor: String, 
+        $filters: ListRuleInstancesFilters) {
+      listRuleInstances(
+        limit: $limit, 
+        cursor: $cursor, 
+        filters: $filters) {
+        questionInstances {
+          ...RuleInstanceFields
+          __typename
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
+          __typename
+        }
+        __typename
+      }
+    }
+
+    fragment RuleInstanceFields on QuestionRuleInstance {
+      id
+      accountId
+      name
+      description
+      version
+      lastEvaluationStartOn
+      lastEvaluationEndOn
+      evaluationStep
+      specVersion
+      notifyOnFailure
+      triggerActionsOnNewEntitiesOnly
+      pollingInterval
+      templates
+      outputs
+      question {
+        queries {
+          query
+          name
+          version
+          includeDeleted
+          __typename
+        }
+        __typename
+      }
+      questionId
+      latest
+      deleted
+      type
+      operations {
+        when
+        actions
+        __typename
+      }
+      latestAlertId
+      latestAlertIsActive
+      state {
+        actions
+        __typename
+      }
+      tags
+      remediationSteps
+      __typename
+    }
+"""

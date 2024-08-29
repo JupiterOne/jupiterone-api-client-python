@@ -35,6 +35,7 @@ from jupiterone.constants import (
     CREATE_SMARTCLASS_QUERY,
     EVALUATE_SMARTCLASS,
     GET_SMARTCLASS_DETAILS,
+    LIST_RULE_INSTANCES
 )
 
 
@@ -518,7 +519,7 @@ class JupiterOneClient:
         response = self._execute_syncapi_request(endpoint=endpoint, payload=data)
 
         return response
-    
+
     def fetch_integration_jobs(self, instance_id: str = None):
         """Fetch Integration Job details from defined integration instance.
 
@@ -533,7 +534,7 @@ class JupiterOneClient:
         response = self._execute_query(INTEGRATION_JOB_VALUES, variables=variables)
 
         return response['data']['integrationJobs']
-    
+
     def fetch_integration_job_events(self, instance_id: str = None, instance_job_id: str = None):
         """Fetch events within an integration job run.
 
@@ -619,3 +620,29 @@ class JupiterOneClient:
         response = self._execute_query(GET_SMARTCLASS_DETAILS, variables=variables)
 
         return response['data']['smartClass']
+
+    def list_configured_alert_rules(self):
+        """List defined Alert Rules configured in J1 account
+
+        """
+
+        variables = {
+                    "limit": 100
+        }
+
+        response = self._execute_query(LIST_RULE_INSTANCES, variables=variables)
+
+        return response['data']['listRuleInstances']
+
+    def list_alert_rules(self):
+        """List defined Alert Rules configured in J1 account
+
+        """
+
+        variables = {
+                    "limit": 100
+        }
+
+        response = self._execute_query(LIST_RULE_INSTANCES, variables=variables)
+
+        return response['data']['listRuleInstances']
