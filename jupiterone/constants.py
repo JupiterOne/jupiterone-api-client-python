@@ -135,3 +135,57 @@ DELETE_RELATIONSHIP = """
     }
   }
 """
+
+CREATE_INSTANCE = """
+    mutation CreateInstance($instance: CreateIntegrationInstanceInput!) {
+        createIntegrationInstance(instance: $instance) {
+            id
+            name
+            accountId
+            pollingInterval
+            integrationDefinitionId
+            description
+            config
+        }
+    }
+"""
+
+ALL_PROPERTIES = """
+    query getAllAssetProperties {
+      getAllAssetProperties
+    }
+"""
+
+CREATE_SMARTCLASS = """
+    mutation CreateSmartClass($input: CreateSmartClassInput!) {
+      createSmartClass(input: $input) {
+        id
+        accountId
+        tagName
+        description
+        ruleId
+        __typename
+      }
+    }
+"""
+
+CREATE_SMARTCLASS_QUERY = """
+    mutation CreateSmartClassQuery($input: CreateSmartClassQueryInput!) {
+      createSmartClassQuery(input: $input) {
+        id
+        smartClassId
+        description
+        query
+        __typename
+      }
+    }
+"""
+
+RUN_SMARTCLASS_EVALUATION = """
+    mutation EvaluateSmartClassRule($smartClassId: ID!) {
+      evaluateSmartClassRule(smartClassId: $smartClassId) {
+        ruleId
+        __typename
+      }
+    }
+"""
