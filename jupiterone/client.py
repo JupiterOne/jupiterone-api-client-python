@@ -35,7 +35,8 @@ from jupiterone.constants import (
     CREATE_SMARTCLASS_QUERY,
     EVALUATE_SMARTCLASS,
     GET_SMARTCLASS_DETAILS,
-    LIST_RULE_INSTANCES
+    LIST_RULE_INSTANCES,
+    J1QL_FROM_NATURAL_LANGUAGE
 )
 
 
@@ -633,3 +634,20 @@ class JupiterOneClient:
         response = self._execute_query(LIST_RULE_INSTANCES, variables=variables)
 
         return response['data']['listRuleInstances']
+
+    def generate_j1ql(self, natural_language_prompt: str = None):
+        """Generate J1QL query syntax from natural language user input.
+
+        args:
+            natural_language_prompt (str): The naturalLanguageQuery plaintext input to generate J1QL from.
+        """
+
+        variables = {
+            "input": {
+                "naturalLanguageQuery": natural_language_prompt
+            }
+        }
+
+        response = self._execute_query(J1QL_FROM_NATURAL_LANGUAGE, variables=variables)
+
+        return response['data']['j1qlFromNaturalLanguage']

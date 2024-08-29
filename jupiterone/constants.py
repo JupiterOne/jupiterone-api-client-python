@@ -369,3 +369,11 @@ LIST_RULE_INSTANCES = """
       __typename
     }
 """
+
+J1QL_FROM_NATURAL_LANGUAGE = """
+    query j1qlFromNaturalLanguage($input: J1qlFromNaturalLanguageInput!) {
+        j1qlFromNaturalLanguage(input: $input) {
+            j1ql
+        }
+    }
+"""
