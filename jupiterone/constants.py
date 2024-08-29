@@ -181,7 +181,7 @@ CREATE_SMARTCLASS_QUERY = """
     }
 """
 
-RUN_SMARTCLASS_EVALUATION = """
+EVALUATE_SMARTCLASS = """
     mutation EvaluateSmartClassRule($smartClassId: ID!) {
       evaluateSmartClassRule(smartClassId: $smartClassId) {
         ruleId

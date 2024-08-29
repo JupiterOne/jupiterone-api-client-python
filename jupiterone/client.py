@@ -31,7 +31,7 @@ from jupiterone.constants import (
     ALL_PROPERTIES,
     CREATE_SMARTCLASS,
     CREATE_SMARTCLASS_QUERY,
-    RUN_SMARTCLASS_EVALUATION
+    EVALUATE_SMARTCLASS
 )
 
 
@@ -554,7 +554,7 @@ class JupiterOneClient:
         response = self._execute_query(CREATE_SMARTCLASS_QUERY, variables=variables)
         return response['data']['createSmartClassQuery']
 
-    def trigger_smartclass_evaluation(self, smartclass_id: str = None):
+    def evaluate_smartclass(self, smartclass_id: str = None):
         """Execute an on-demand Evaluation of a defined Smartclass.
 
         args:
@@ -565,5 +565,5 @@ class JupiterOneClient:
                     "smartClassId": smartclass_id
         }
 
-        response = self._execute_query(RUN_SMARTCLASS_EVALUATION, variables=variables)
+        response = self._execute_query(EVALUATE_SMARTCLASS, variables=variables)
         return response['data']['evaluateSmartClassRule']
