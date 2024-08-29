@@ -235,7 +235,7 @@ class JupiterOneClient:
 
         return {"data": results}
 
-    def _execute_syncapi_request(self, endpoint: str, headers: Dict = None, payload: Dict = None) -> Dict:
+    def _execute_syncapi_request(self, endpoint: str, headers: Dict = None, payload: Dict = None):
         """Executes POST request to SyncAPI endpoints"""
 
         # initiate requests session and implement retry logic of 5 request retries with 1 second between
@@ -485,7 +485,7 @@ class JupiterOneClient:
         """Upload batch of entities.
 
         args:
-            instance_job_id (str): The "Job ID" for the Custom Integration integration job
+            instance_job_id (str): The "Job ID" for the Custom Integration job
             entities_list (list): List of Dictionaries containing entities data to upload
         """
         endpoint = f"/persister/synchronization/jobs/{instance_job_id}/entities"
@@ -504,7 +504,7 @@ class JupiterOneClient:
         """Start a synchronization job.
 
         args:
-            instance_job_id (str): The "Job ID" for the Custom Integration integration job
+            instance_job_id (str): The "Job ID" for the Custom Integration job
         """
         endpoint = f"/persister/synchronization/jobs/{instance_job_id}/finalize"
 
