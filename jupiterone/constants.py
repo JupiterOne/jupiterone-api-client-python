@@ -189,3 +189,36 @@ EVALUATE_SMARTCLASS = """
       }
     }
 """
+
+GET_SMARTCLASS_DETAILS = """
+    query GetSmartClass($id: ID!) {
+        smartClass(id: $id) {
+          id
+          accountId
+          tagName
+          description
+          ruleId
+        queries {
+          id
+          smartClassId
+          description
+          query
+          __typename
+        }
+        tags {
+          id
+          smartClassId
+          name
+          type
+          value
+          __typename
+        }
+        rule {
+          lastEvaluationEndOn
+          evaluationStep
+          __typename
+        }
+        __typename
+        }
+    }
+"""

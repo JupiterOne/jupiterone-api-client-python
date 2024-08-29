@@ -31,7 +31,8 @@ from jupiterone.constants import (
     ALL_PROPERTIES,
     CREATE_SMARTCLASS,
     CREATE_SMARTCLASS_QUERY,
-    EVALUATE_SMARTCLASS
+    EVALUATE_SMARTCLASS,
+    GET_SMARTCLASS_DETAILS
 )
 
 
@@ -532,6 +533,7 @@ class JupiterOneClient:
         }
 
         response = self._execute_query(CREATE_SMARTCLASS, variables=variables)
+
         return response['data']['createSmartClass']
 
     def create_smartclass_query(self, smartclass_id: str = None, query: str = None, query_description: str = None):
@@ -552,13 +554,14 @@ class JupiterOneClient:
         }
 
         response = self._execute_query(CREATE_SMARTCLASS_QUERY, variables=variables)
+
         return response['data']['createSmartClassQuery']
 
     def evaluate_smartclass(self, smartclass_id: str = None):
         """Execute an on-demand Evaluation of a defined Smartclass.
 
         args:
-            smartclass_id (str): The unique ID of the Smart Class the query is created within.
+            smartclass_id (str): The unique ID of the Smart Class to trigger the evaluation for.
         """
 
         variables = {
@@ -566,4 +569,20 @@ class JupiterOneClient:
         }
 
         response = self._execute_query(EVALUATE_SMARTCLASS, variables=variables)
+
         return response['data']['evaluateSmartClassRule']
+
+    def get_smartclass_details(self, smartclass_id: str = None):
+        """Fetch config details from defined Smart Class.
+
+        args:
+            smartclass_id (str): The unique ID of the Smart Class to fetch details from.
+        """
+
+        variables = {
+                    "id": smartclass_id
+        }
+
+        response = self._execute_query(GET_SMARTCLASS_DETAILS, variables=variables)
+
+        return response['data']['smartClass']
