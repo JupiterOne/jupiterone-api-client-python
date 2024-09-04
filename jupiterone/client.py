@@ -639,7 +639,7 @@ class JupiterOneClient:
         """Generate J1QL query syntax from natural language user input.
 
         args:
-            natural_language_prompt (str): The naturalLanguageQuery plaintext input to generate J1QL from.
+            natural_language_prompt (str): The naturalLanguageQuery prompt input to generate J1QL from.
         """
 
         variables = {
