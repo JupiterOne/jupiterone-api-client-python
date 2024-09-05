@@ -163,7 +163,7 @@ print("finalize_sync_job()")
 print(finalize_sync_job_r)
 
 # create_smartclass
-create_smartclass_r = j1.create_smartclass(smartclass_name="SmartClassTest2",
+create_smartclass_r = j1.create_smartclass(smartclass_name="SmartClass1",
                                            smartclass_description="Created via create_smartclass() method")
 print("create_smartclass()")
 print(create_smartclass_r)
@@ -191,16 +191,6 @@ print("list_configured_alert_rules()")
 print(list_configured_alert_rules_r)
 
 # generate_j1ql
-generate_j1ql_r = j1.generate_j1ql(natural_language_prompt="show me all Users containing 'Colin' in their email address")
+generate_j1ql_r = j1.generate_j1ql(natural_language_prompt="show me all Users containing 'jupiterone' in their email address")
 print("generate_j1ql()")
 print(generate_j1ql_r)
-
-
-
-
-
-
-
-
-
-
