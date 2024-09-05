@@ -412,18 +412,23 @@ class JupiterOneClient:
         response = self._execute_query(DELETE_RELATIONSHIP, variables=variables)
         return response["data"]["deleteRelationship"]
 
-    def create_integration_instance(self, instance_name: str = None, instance_description: str = None):
+    def create_integration_instance(self,
+                                    instance_name: str = None,
+                                    instance_description: str = None,
+                                    integration_definition_id: str = "8013680b-311a-4c2e-b53b-c8735fd97a5c"):
         """Creates a new Custom Integration Instance.
 
         args:
             instance_name (str): The "Account name" for integration instance
             instance_description (str): The "Description" for integration instance
+            integration_definition_id (str): The "Integration definition ID" for integration instance,
+            if no parameter is passed, then the Custom Integration definition ID will be used.
         """
         variables = {
                   "instance": {
                     "name": instance_name,
                     "description": instance_description,
-                    "integrationDefinitionId": "8013680b-311a-4c2e-b53b-c8735fd97a5c",
+                    "integrationDefinitionId": integration_definition_id,
                     "pollingInterval": "DISABLED",
                     "config": {
                       "@tag": {
