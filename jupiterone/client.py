@@ -653,7 +653,6 @@ class JupiterOneClient:
             query (str): The J1QL for the query being created.
             query_description (str): The description of the query being created.
         """
-
         variables = {
                     "input": {
                         "smartClassId": smartclass_id,
@@ -672,7 +671,6 @@ class JupiterOneClient:
         args:
             smartclass_id (str): The unique ID of the Smart Class to trigger the evaluation for.
         """
-
         variables = {
                     "smartClassId": smartclass_id
         }
@@ -687,7 +685,6 @@ class JupiterOneClient:
         args:
             smartclass_id (str): The unique ID of the Smart Class to fetch details from.
         """
-
         variables = {
                     "id": smartclass_id
         }
@@ -700,7 +697,6 @@ class JupiterOneClient:
         """List defined Alert Rules configured in J1 account
 
         """
-
         variables = {
                     "limit": 100
         }
@@ -715,7 +711,6 @@ class JupiterOneClient:
         args:
             natural_language_prompt (str): The naturalLanguageQuery prompt input to generate J1QL from.
         """
-
         variables = {
             "input": {
                 "naturalLanguageQuery": natural_language_prompt
