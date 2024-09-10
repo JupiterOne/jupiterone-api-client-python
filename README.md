@@ -30,6 +30,10 @@ For users with J1 accounts in the EU region, the 'url' parameter will need to be
 
 If no 'url' parameter is passed, the default of "https://graphql.us.jupiterone.io" is used.
 
+##### Method Exmaples:
+
+See the examples/examples.py for full usage example documentation
+
 ##### Execute a query:
 
 ```python
