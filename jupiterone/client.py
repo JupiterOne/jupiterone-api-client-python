@@ -512,6 +512,36 @@ class JupiterOneClient:
 
         return response
 
+    def upload_relationships_batch_json(self, instance_job_id: str = None, relationships_list: list = None):
+        """Upload batch of relationships.
+
+        args:
+            instance_job_id (str): The "Job ID" for the Custom Integration job
+            relationships_list (list): List of Dictionaries containing relationships data to upload
+        """
+        endpoint = f"/persister/synchronization/jobs/{instance_job_id}/relationships"
+
+        data = {
+               "relationships": relationships_list
+        }
+
+        response = self._execute_syncapi_request(endpoint=endpoint, payload=data)
+
+        return response
+
+    def upload_combined_batch_json(self, instance_job_id: str = None, combined_payload: Dict = None):
+        """Upload batch of entities and relationships together.
+
+        args:
+            instance_job_id (str): The "Job ID" for the Custom Integration job.
+            combined_payload (list): Dictionary containing combined entities and relationships data to upload.
+        """
+        endpoint = f"/persister/synchronization/jobs/{instance_job_id}/upload"
+
+        response = self._execute_syncapi_request(endpoint=endpoint, payload=combined_payload)
+
+        return response
+
     def finalize_sync_job(self, instance_job_id: str = None):
         """Start a synchronization job.
 
