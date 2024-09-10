@@ -5,6 +5,7 @@
 import json
 from warnings import warn
 from typing import Dict, List
+from datetime import datetime
 
 import re
 import requests
@@ -36,7 +37,7 @@ from jupiterone.constants import (
     EVALUATE_SMARTCLASS,
     GET_SMARTCLASS_DETAILS,
     LIST_RULE_INSTANCES,
-    J1QL_FROM_NATURAL_LANGUAGE
+    J1QL_FROM_NATURAL_LANGUAGE, UPDATE_RELATIONSHIP
 )
 
 
@@ -63,9 +64,7 @@ class JupiterOneClient:
     def __init__(self, account: str = None, token: str = None, url: str = DEFAULT_URL, sync_url: str = SYNC_API_URL):
         self.account = account
         self.token = token
-        self.url = url
-        self.query_endpoint = self.url
-        self.rules_endpoint = self.url + "/rules/graphql"
+        self.graphql_url = url
         self.sync_url = sync_url
         self.headers = {
             "Authorization": "Bearer {}".format(self.token),
@@ -115,7 +114,7 @@ class JupiterOneClient:
         s.mount('https://', HTTPAdapter(max_retries=retries))
 
         response = s.post(
-            self.query_endpoint, headers=self.headers, json=data, timeout=60
+            self.graphql_url, headers=self.headers, json=data, timeout=60
         )
 
         # It is still unclear if all responses will have a status
@@ -401,6 +400,28 @@ class JupiterOneClient:
         response = self._execute_query(query=CREATE_RELATIONSHIP, variables=variables)
         return response["data"]["createRelationship"]
 
+    def update_relationship(self, **kwargs) -> Dict:
+        """
+        Update a relationship (edge) between two entities (vertices).
+
+        args:
+            relationship_id (str): Unique _id of the relationship
+            properties (dict): Dictionary of key/value relationship properties
+        """
+        now_dt = datetime.now()
+
+        variables = {
+            "relationshipId": kwargs.pop("relationship_id"),
+            "timestamp": datetime.strptime(str(now_dt), "%Y-%m-%d %H:%M:%S.%f").timestamp()
+        }
+
+        properties = kwargs.pop("properties", None)
+        if properties:
+            variables["properties"] = properties
+
+        response = self._execute_query(query=UPDATE_RELATIONSHIP, variables=variables)
+        return response["data"]["updateRelationship"]
+
     def delete_relationship(self, relationship_id: str = None):
         """Deletes a relationship between two entities.
 
@@ -539,6 +560,23 @@ class JupiterOneClient:
         endpoint = f"/persister/synchronization/jobs/{instance_job_id}/upload"
 
         response = self._execute_syncapi_request(endpoint=endpoint, payload=combined_payload)
+
+        return response
+
+    def bulk_delete_entities(self, instance_job_id: str = None, entities_list: list = None):
+        """Send a request to bulk delete existing entities.
+
+        args:
+            instance_job_id (str): The "Job ID" for the Custom Integration job.
+            entities_list (list): List of dictionaries containing entities _id's to be deleted.
+        """
+        endpoint = f"/persister/synchronization/jobs/{instance_job_id}/upload"
+
+        data = {
+            "deleteEntities": entities_list
+        }
+
+        response = self._execute_syncapi_request(endpoint=endpoint, payload=data)
 
         return response
 

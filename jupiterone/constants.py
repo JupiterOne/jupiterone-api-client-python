@@ -117,6 +117,35 @@ CREATE_RELATIONSHIP = """
   }
 """
 
+UPDATE_RELATIONSHIP = """
+      mutation UpdateRelationship (
+      $relationshipId: String!
+      $timestamp: Long
+      $properties: JSON
+    ) {
+      updateRelationship (
+        relationshipId: $relationshipId,
+        timestamp: $timestamp,
+        properties: $properties
+      ) {
+        relationship {
+          _id
+          ...
+        }
+        edge {
+          id
+          toVertexId
+          fromVertexId
+          relationship {
+            _id
+            ...
+          }
+          properties
+        }
+      }
+    }
+"""
+
 DELETE_RELATIONSHIP = """
   mutation DeleteRelationship($relationshipId: String! $timestamp: Long) {
     deleteRelationship (relationshipId: $relationshipId, timestamp: $timestamp) {
