@@ -5,8 +5,9 @@ import os
 
 account = os.environ.get("JUPITERONE_ACCOUNT")
 token = os.environ.get("JUPITERONE_TOKEN")
+url = "https://graphql.us.jupiterone.io"
 
-j1 = JupiterOneClient(account=account, token=token)
+j1 = JupiterOneClient(account=account, token=token, url=url)
 
 # query_v1
 q = "FIND jupiterone_user"
@@ -109,13 +110,15 @@ print("fetch_all_entity_tags()")
 print(fetch_all_entity_tags_r)
 
 # create_integration_instance
-create_integration_instance_r = j1.create_integration_instance(instance_name="testInstanceName",
-                                                               instance_description="testInstanceDescription")
+create_integration_instance_r = j1.create_integration_instance(instance_name="pythonclient-customintegration",
+                                                               instance_description="dev-testing")
 print("create_integration_instance()")
 print(create_integration_instance_r)
 
+integration_instance_id = "<GUID>"
+
 # start_sync_job
-start_sync_job_r = j1.start_sync_job(instance_id=create_integration_instance_r['id'])
+start_sync_job_r = j1.start_sync_job(instance_id=integration_instance_id)
 print("start_sync_job()")
 print(start_sync_job_r)
 
@@ -123,44 +126,134 @@ print(start_sync_job_r)
 entity_payload = [
     {
       "_key": "1",
-      "_type": "jupiterone-api-client-python",
+      "_type": "pythonclient",
       "_class": "API",
-      "propertyName": "value"
+      "displayName": "pythonclient1",
+      "propertyName": "value",
+      "relationshipProperty": "source",
     },
     {
       "_key": "2",
-      "_type": "jupiterone-api-client-python",
+      "_type": "pythonclient",
       "_class": "API",
+      "displayName": "pythonclient2",
       "propertyName": "value"
     },
     {
       "_key": "3",
-      "_type": "jupiterone-api-client-python",
+      "_type": "pythonclient",
       "_class": "API",
+      "displayName": "pythonclient3",
       "propertyName": "value"
     }
-  ]
+]
 
+# update_entities_batch_json
 upload_entities_batch_json_r = j1.upload_entities_batch_json(instance_job_id=start_sync_job_r['job']['id'],
                                                              entities_list=entity_payload)
 print("upload_entities_batch_json()")
 print(upload_entities_batch_json_r)
 
-# fetch_integration_jobs
-fetch_integration_jobs_r = j1.fetch_integration_jobs(instance_id=create_integration_instance_r['id'])
-print("fetch_integration_jobs()")
-print(fetch_integration_jobs_r)
+# upload_relationships_batch_json
+relationships_payload = [
+    {
+      "_key": "1:2",
+      "_class": "EXTENDS",
+      "_type": "pythonclient_extends_pythonclient",
+      "_fromEntityKey": "1",
+      "_toEntityKey": "2",
+      "relationshipProperty": "value"
+    },
+    {
+      "_key": "2:3",
+      "_class": "EXTENDS",
+      "_type": "pythonclient_extends_pythonclient",
+      "_fromEntityKey": "2",
+      "_toEntityKey": "3",
+      "relationshipProperty": "value"
+    }
+]
 
-# fetch_integration_job_events
-fetch_integration_job_events_r = j1.fetch_integration_job_events(instance_id=create_integration_instance_r['id'],
-                                                                 instance_job_id=fetch_integration_jobs_r['jobs'][0]['id'])
-print("fetch_integration_job_events()")
-print(fetch_integration_job_events_r)
+# update_relationships_batch_json
+upload_relationships_batch_json_r = j1.upload_relationships_batch_json(instance_job_id=start_sync_job_r['job']['id'],
+                                                                       relationships_list=relationships_payload)
+print("upload_relationships_batch_json()")
+print(upload_relationships_batch_json_r)
+
+# upload_entities_batch_json
+combined_payload = {
+    "entities": [
+    {
+      "_key": "4",
+      "_type": "pythonclient",
+      "_class": "API",
+      "displayName": "pythonclient4",
+      "propertyName": "value",
+      "relationshipProperty": "source",
+    },
+    {
+      "_key": "5",
+      "_type": "pythonclient",
+      "_class": "API",
+      "displayName": "pythonclient5",
+      "propertyName": "value"
+    },
+    {
+      "_key": "6",
+      "_type": "pythonclient",
+      "_class": "API",
+      "displayName": "pythonclient6",
+      "propertyName": "value"
+    }
+],
+    "relationships": [
+    {
+      "_key": "4:5",
+      "_class": "EXTENDS",
+      "_type": "pythonclient_extends_pythonclient",
+      "_fromEntityKey": "4",
+      "_toEntityKey": "5",
+      "relationshipProperty": "value"
+    },
+    {
+      "_key": "5:6",
+      "_class": "EXTENDS",
+      "_type": "pythonclient_extends_pythonclient",
+      "_fromEntityKey": "5",
+      "_toEntityKey": "6",
+      "relationshipProperty": "value"
+    }
+]
+}
+
+# upload_combined_batch_json
+upload_combined_batch_json_r = j1.upload_combined_batch_json(instance_job_id=start_sync_job_r['job']['id'],
+                                                             combined_payload=combined_payload)
+print("upload_combined_batch_json()")
+print(upload_combined_batch_json_r)
 
 # finalize_sync_job
 finalize_sync_job_r = j1.finalize_sync_job(instance_job_id=start_sync_job_r['job']['id'])
 print("finalize_sync_job()")
 print(finalize_sync_job_r)
+
+# fetch_integration_jobs
+fetch_integration_jobs_r = j1.fetch_integration_jobs(instance_id=integration_instance_id)
+print("fetch_integration_jobs()")
+print(fetch_integration_jobs_r)
+
+while j1.fetch_integration_jobs(instance_id=integration_instance_id)['jobs'][0]['status'] == "IN_PROGRESS":
+
+    fetch_integration_jobs_r = j1.fetch_integration_jobs(instance_id=integration_instance_id)
+
+    print("fetch_integration_jobs()")
+    print(fetch_integration_jobs_r)
+
+# fetch_integration_job_events
+fetch_integration_job_events_r = j1.fetch_integration_job_events(instance_id=integration_instance_id,
+                                                                 instance_job_id=fetch_integration_jobs_r['jobs'][0]['id'])
+print("fetch_integration_job_events()")
+print(fetch_integration_job_events_r)
 
 # create_smartclass
 create_smartclass_r = j1.create_smartclass(smartclass_name="SmartClass1",
@@ -170,8 +263,8 @@ print(create_smartclass_r)
 
 # create_smartclass_query
 create_smartclass_query_r = j1.create_smartclass_query(smartclass_id=create_smartclass_r['id'],
-                               query="FIND (Device|Host) with osType ~= \'Windows\'",
-                               query_description="all windows devices and hosts")
+                                                       query="FIND (Device|Host) with osType ~= \'Windows\'",
+                                                       query_description="all windows devices and hosts")
 print("create_smartclass_query()")
 print(create_smartclass_query_r)
 
