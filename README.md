@@ -12,7 +12,6 @@ Requires Python 3.6+
 
 `pip install jupiterone`
 
-
 ## Usage
 
 ##### Create a new client:
@@ -23,16 +22,25 @@ from jupiterone import JupiterOneClient
 j1 = JupiterOneClient(
     account='<yourAccountId>',
     token='<yourApiToken>',
-    url='https://graphql.us.jupiterone.io'
+    url='https://graphql.us.jupiterone.io',
+    sync_url='https://api.us.jupiterone.io'
 )
 ```
-For users with J1 accounts in the EU region, the 'url' parameter will need to be updated to "https://graphql.eu.jupiterone.io".
 
-If no 'url' parameter is passed, the default of "https://graphql.us.jupiterone.io" is used.
+## Regional or Custom Tenant Support
 
-##### Method Exmaples:
+For users with J1 accounts in the EU region for example, 
+the 'url' parameter will need to be updated to "https://graphql.eu.jupiterone.io"
+and the 'sync_url' parameter will need to be updated to "https://api.eu.jupiterone.io".
 
-See the examples/examples.py for full usage example documentation
+If no 'url' parameter is passed, 
+the default of "https://graphql.us.jupiterone.io" is used,
+and if no 'sync_url' paramter is passed,
+the default of "https://api.us.jupiterone.io" is used.
+
+## Method Examples:
+
+### *See the examples/examples.py for full usage example documentation
 
 ##### Execute a query:
 
@@ -110,4 +118,30 @@ j1.create_relationship(
 
 ```python
 j1.delete_relationship(relationship_id='<id-of-relationship-to-delete>')
+```
+
+##### Fetch Graph Entity Properties
+
+```python
+j1.fetch_all_entity_properties()
+```
+
+##### Fetch Graph Entity Tags
+
+```python
+j1.fetch_all_entity_tags()
+```
+
+##### Create Integration Instance
+
+```python
+j1.create_integration_instance(
+    instance_name="Integration Name", 
+    instance_description="Description Text")
+```
+
+##### Start Synrchonization Job
+
+```python
+j1.start_sync_job(instance_id='<id-of-integration-instance>')
 ```
