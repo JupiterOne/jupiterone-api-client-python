@@ -35,7 +35,7 @@ and the 'sync_url' parameter will need to be updated to "https://api.eu.jupitero
 
 If no 'url' parameter is passed, 
 the default of "https://graphql.us.jupiterone.io" is used,
-and if no 'sync_url' paramter is passed,
+and if no 'sync_url' parameter is passed,
 the default of "https://api.us.jupiterone.io" is used.
 
 ## Method Examples:
