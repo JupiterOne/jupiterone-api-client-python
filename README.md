@@ -12,7 +12,6 @@ Requires Python 3.6+
 
 `pip install jupiterone`
 
-
 ## Usage
 
 ##### Create a new client:
@@ -23,16 +22,25 @@ from jupiterone import JupiterOneClient
 j1 = JupiterOneClient(
     account='<yourAccountId>',
     token='<yourApiToken>',
-    url='https://graphql.us.jupiterone.io'
+    url='https://graphql.us.jupiterone.io',
+    sync_url='https://api.us.jupiterone.io'
 )
 ```
-For users with J1 accounts in the EU region, the 'url' parameter will need to be updated to "https://graphql.eu.jupiterone.io".
 
-If no 'url' parameter is passed, the default of "https://graphql.us.jupiterone.io" is used.
+## Regional or Custom Tenant Support
 
-##### Method Exmaples:
+For users with J1 accounts in the EU region for example, 
+the 'url' parameter will need to be updated to "https://graphql.eu.jupiterone.io"
+and the 'sync_url' parameter will need to be updated to "https://api.eu.jupiterone.io".
 
-See the examples/examples.py for full usage example documentation
+If no 'url' parameter is passed, 
+the default of "https://graphql.us.jupiterone.io" is used,
+and if no 'sync_url' parameter is passed,
+the default of "https://api.us.jupiterone.io" is used.
+
+## Method Examples:
+
+### *See the examples/examples.py for full usage example documentation
 
 ##### Execute a query:
 
@@ -110,4 +118,196 @@ j1.create_relationship(
 
 ```python
 j1.delete_relationship(relationship_id='<id-of-relationship-to-delete>')
+```
+
+##### Fetch Graph Entity Properties
+
+```python
+j1.fetch_all_entity_properties()
+```
+
+##### Fetch Graph Entity Tags
+
+```python
+j1.fetch_all_entity_tags()
+```
+
+##### Create Integration Instance
+
+```python
+j1.create_integration_instance(
+    instance_name="Integration Name", 
+    instance_description="Description Text")
+```
+
+##### Start Synchronization Job
+
+```python
+j1.start_sync_job(instance_id='<id-of-integration-instance>')
+```
+
+##### Upload Batch of Entities
+
+```python
+entities_payload = [
+    {
+      "_key": "1",
+      "_type": "pythonclient",
+      "_class": "API",
+      "displayName": "pythonclient1",
+      "propertyName": "value"
+    },
+    {
+      "_key": "2",
+      "_type": "pythonclient",
+      "_class": "API",
+      "displayName": "pythonclient2",
+      "propertyName": "value"
+    },
+    {
+      "_key": "3",
+      "_type": "pythonclient",
+      "_class": "API",
+      "displayName": "pythonclient3",
+      "propertyName": "value"
+    }
+]
+
+j1.upload_entities_batch_json(instance_job_id='<id-of-integration-sync-job>',
+                              entities_list=entities_payload)
+```
+
+##### Upload Batch of Relationships
+
+```python
+relationships_payload = [
+    {
+      "_key": "1:2",
+      "_class": "EXTENDS",
+      "_type": "pythonclient_extends_pythonclient",
+      "_fromEntityKey": "1",
+      "_toEntityKey": "2",
+      "relationshipProperty": "value"
+    },
+    {
+      "_key": "2:3",
+      "_class": "EXTENDS",
+      "_type": "pythonclient_extends_pythonclient",
+      "_fromEntityKey": "2",
+      "_toEntityKey": "3",
+      "relationshipProperty": "value"
+    }
+]
+
+j1.upload_relationships_batch_json(instance_job_id='<id-of-integration-sync-job>',
+                                   relationships_list=relationships_payload)
+```
+
+##### Upload Batch of Entities and Relationships
+
+```python
+combined_payload = {
+    "entities": [
+    {
+      "_key": "4",
+      "_type": "pythonclient",
+      "_class": "API",
+      "displayName": "pythonclient4",
+      "propertyName": "value"
+    },
+    {
+      "_key": "5",
+      "_type": "pythonclient",
+      "_class": "API",
+      "displayName": "pythonclient5",
+      "propertyName": "value"
+    },
+    {
+      "_key": "6",
+      "_type": "pythonclient",
+      "_class": "API",
+      "displayName": "pythonclient6",
+      "propertyName": "value"
+    }
+],
+    "relationships": [
+    {
+      "_key": "4:5",
+      "_class": "EXTENDS",
+      "_type": "pythonclient_extends_pythonclient",
+      "_fromEntityKey": "4",
+      "_toEntityKey": "5",
+      "relationshipProperty": "value"
+    },
+    {
+      "_key": "5:6",
+      "_class": "EXTENDS",
+      "_type": "pythonclient_extends_pythonclient",
+      "_fromEntityKey": "5",
+      "_toEntityKey": "6",
+      "relationshipProperty": "value"
+    }
+]
+}
+
+j1.upload_combined_batch_json(instance_job_id='<id-of-integration-sync-job>',
+                              combined_payload=combined_payload)
+```
+
+##### Finalize Synchronization Job
+
+```python
+j1.finalize_sync_job(instance_job_id='<id-of-integration-sync-job>')
+```
+
+##### Fetch Integration Instance Jobs
+
+```python
+j1.fetch_integration_jobs(instance_id='<id-of-integration-instance>')
+```
+
+##### Fetch Integration Instance Job Events
+
+```python
+j1.fetch_integration_job_events(instance_id='<id-of-integration-instance>',
+                                instance_job_id='<id-of-integration-instance-job>')
+```
+
+##### Create SmartClass
+
+```python
+j1.create_smartclass(smartclass_name='SmartClassName',
+                     smartclass_description='SmartClass Description Text')
+```
+
+##### Create SmartClass Query
+
+```python
+j1.create_smartclass_query(smartclass_id='<id-of-smartclass>',
+                           query='<J1QL-query-to-be-added>',
+                           query_description='Query Description Text')
+```
+
+##### Run SmartClass Evaluation
+
+```python
+j1.evaluate_smartclass(smartclass_id='<id-of-smartclass>')
+```
+
+##### Get SmartClass Details
+
+```python
+j1.get_smartclass_details(smartclass_id='<id-of-smartclass>')
+```
+
+##### List Alert Rules
+
+```python
+j1.list_configured_alert_rules()
+```
+
+##### Generate J1QL from Natural Language Prompt
+
+```python
+j1.generate_j1ql(natural_language_prompt='<natural-language-input-text>')
 ```
