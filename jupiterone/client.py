@@ -500,17 +500,20 @@ class JupiterOneClient:
 
         return return_list
 
-    def start_sync_job(self, instance_id: str = None):
+    def start_sync_job(self, instance_id: str = None, sync_mode: str = None, source: str = None,):
         """Start a synchronization job.
 
         args:
             instance_id (str): The "integrationInstanceId" request param for synchronization job
+            sync_mode (str): The "syncMode" request body property for synchronization job. "DIFF", "CREATE_OR_UPDATE", or "PATCH"
+            source (str): The "source" request body property for synchronization job. "api" or "integration-external"
         """
         endpoint = "/persister/synchronization/jobs"
 
         data = {
-               "source": "integration-managed",
-               "integrationInstanceId": instance_id
+               "source": source,
+               "integrationInstanceId": instance_id,
+               "syncMode": sync_mode
                }
 
         response = self._execute_syncapi_request(endpoint=endpoint, payload=data)
