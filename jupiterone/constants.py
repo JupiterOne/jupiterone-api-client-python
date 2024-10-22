@@ -331,14 +331,6 @@ INTEGRATION_INSTANCE_EVENT_VALUES = """
     }
 """
 
-J1QL_FROM_NATURAL_LANGUAGE = """
-    query j1qlFromNaturalLanguage($input: J1qlFromNaturalLanguageInput!) {
-        j1qlFromNaturalLanguage(input: $input) {
-            j1ql
-        }
-    }
-"""
-
 LIST_RULE_INSTANCES = """
     query listRuleInstances(
         $limit: Int, 
@@ -407,70 +399,10 @@ LIST_RULE_INSTANCES = """
     }
 """
 
-CREATE_RULE_INSTANCE = """
-    mutation createInlineQuestionRuleInstance($instance: CreateInlineQuestionRuleInstanceInput!) {
-      createInlineQuestionRuleInstance(instance: $instance) {
-        ...RuleInstanceFields
-        __typename
-      }
-    }
-    
-    fragment RuleInstanceFields on QuestionRuleInstance {
-      id
-      accountId
-      name
-      description
-      version
-      lastEvaluationStartOn
-      lastEvaluationEndOn
-      evaluationStep
-      specVersion
-      notifyOnFailure
-      triggerActionsOnNewEntitiesOnly
-      ignorePreviousResults
-      pollingInterval
-      templates
-      outputs
-      labels {
-        labelName
-        labelValue
-        __typename
-      }
-      question {
-        queries {
-          query
-          name
-          includeDeleted
-          __typename
+J1QL_FROM_NATURAL_LANGUAGE = """
+    query j1qlFromNaturalLanguage($input: J1qlFromNaturalLanguageInput!) {
+        j1qlFromNaturalLanguage(input: $input) {
+            j1ql
         }
-        __typename
-      }
-      questionId
-      latest
-      deleted
-      type
-      operations {
-        when
-        actions
-        __typename
-      }
-      latestAlertId
-      latestAlertIsActive
-      state {
-        actions
-        __typename
-      }
-      tags
-      remediationSteps
-      __typename
-    }
-"""
-
-DELETE_RULE_INSTANCE = """
-    mutation deleteRuleInstance($id: ID!) {
-      deleteRuleInstance(id: $id) {
-        id
-        __typename
-      }
     }
 """
