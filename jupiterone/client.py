@@ -37,8 +37,10 @@ from jupiterone.constants import (
     CREATE_SMARTCLASS_QUERY,
     EVALUATE_SMARTCLASS,
     GET_SMARTCLASS_DETAILS,
+    J1QL_FROM_NATURAL_LANGUAGE,
     LIST_RULE_INSTANCES,
-    J1QL_FROM_NATURAL_LANGUAGE
+    CREATE_RULE_INSTANCE,
+    DELETE_RULE_INSTANCE
 )
 
 
@@ -434,10 +436,7 @@ class JupiterOneClient:
         response = self._execute_query(DELETE_RELATIONSHIP, variables=variables)
         return response["data"]["deleteRelationship"]
 
-    def create_integration_instance(self,
-                                    instance_name: str = None,
-                                    instance_description: str = None,
-                                    integration_definition_id: str = "8013680b-311a-4c2e-b53b-c8735fd97a5c"):
+    def create_integration_instance(self, instance_name: str = None, instance_description: str = None, integration_definition_id: str = "8013680b-311a-4c2e-b53b-c8735fd97a5c"):
         """Creates a new Custom Integration Instance.
 
         args:
@@ -696,18 +695,6 @@ class JupiterOneClient:
 
         return response['data']['smartClass']
 
-    def list_configured_alert_rules(self):
-        """List defined Alert Rules configured in J1 account
-
-        """
-        variables = {
-                    "limit": 100
-        }
-
-        response = self._execute_query(LIST_RULE_INSTANCES, variables=variables)
-
-        return response['data']['listRuleInstances']
-
     def generate_j1ql(self, natural_language_prompt: str = None):
         """Generate J1QL query syntax from natural language user input.
 
@@ -723,3 +710,89 @@ class JupiterOneClient:
         response = self._execute_query(J1QL_FROM_NATURAL_LANGUAGE, variables=variables)
 
         return response['data']['j1qlFromNaturalLanguage']
+
+    def list_alert_rules(self):
+        """List defined Alert Rules configured in J1 account
+
+        """
+        response = self._execute_query(LIST_RULE_INSTANCES)
+
+        return response['data']['listRuleInstances']
+
+    def create_alert_rule(self, name: str = None, description: str = None, tags: List[str] = None, polling_interval: str = None, severity: str = None, j1ql: str = None, action_configs: Dict = None):
+        """Create Alert Rule Configuration in J1 account
+
+        """
+
+        variables = {
+          "instance": {
+            "name": name,
+            "description": description,
+            "notifyOnFailure": True,
+            "triggerActionsOnNewEntitiesOnly": True,
+            "ignorePreviousResults": False,
+            "operations": [
+              {
+                "when": {
+                  "type": "FILTER",
+                  "condition": [
+                    "AND",
+                    [
+                      "queries.query0.total",
+                      ">",
+                      0
+                    ]
+                  ]
+                },
+                "actions": [
+                  {
+                    "type": "SET_PROPERTY",
+                    "targetProperty": "alertLevel",
+                    "targetValue": severity
+                  },
+                  {
+                    "type": "CREATE_ALERT"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              "alertLevel"
+            ],
+            "pollingInterval": polling_interval,
+            "question": {
+              "queries": [
+                {
+                  "query": j1ql,
+                  "name": "query0",
+                  "version": "v1",
+                  "includeDeleted": False
+                }
+              ]
+            },
+            "specVersion": 1,
+            "tags": tags,
+            "templates": {}
+          }
+        }
+
+        if action_configs:
+            variables['instance']['operations'][0]['actions'].append(action_configs)
+
+        print(variables)
+
+        response = self._execute_query(CREATE_RULE_INSTANCE, variables=variables)
+
+        return response['data']['createInlineQuestionRuleInstance']
+
+    def delete_alert_rule(self, rule_id: str = None):
+        """Delete a single Alert Rule configured in J1 account
+
+        """
+        variables = {
+            "id": rule_id
+        }
+
+        response = self._execute_query(DELETE_RULE_INSTANCE, variables=variables)
+
+        return response['data']['deleteRuleInstance']
