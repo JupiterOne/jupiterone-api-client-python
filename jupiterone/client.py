@@ -48,7 +48,6 @@ def retry_on_429(exc):
     """Used to trigger retry on rate limit"""
     return isinstance(exc, JupiterOneApiRetryError)
 
-
 class JupiterOneClient:
     """Python client class for the JupiterOne GraphQL API"""
 
@@ -712,14 +711,45 @@ class JupiterOneClient:
         return response['data']['j1qlFromNaturalLanguage']
 
     def list_alert_rules(self):
-        """List defined Alert Rules configured in J1 account
+        """List all defined Alert Rules configured in J1 account
 
         """
-        response = self._execute_query(LIST_RULE_INSTANCES)
+        results = []
 
-        return response['data']['listRuleInstances']
+        data = {
+            "query": LIST_RULE_INSTANCES,
+            "flags": {
+                "variableResultSize": True
+            }
+        }
 
-    def create_alert_rule(self, name: str = None, description: str = None, tags: List[str] = None, polling_interval: str = None, severity: str = None, j1ql: str = None, action_configs: Dict = None):
+        r = requests.post(url=self.graphql_url, headers=self.headers, json=data, verify=True).json()
+        results.extend(r['data']['listRuleInstances']['questionInstances'])
+
+        while r['data']['listRuleInstances']['pageInfo']['hasNextPage'] == True:
+
+            cursor = r['data']['listRuleInstances']['pageInfo']['endCursor']
+
+            # cursor query until reached last page
+            data = {
+                "query": LIST_RULE_INSTANCES,
+                "variables": {
+                    "cursor": cursor
+                },
+                "flags":{
+                    "variableResultSize": True
+                }
+            }
+
+            r = requests.post(url=self.graphql_url, headers=self.headers, json=data, verify=True).json()
+            results.extend(r['data']['listRuleInstances']['questionInstances'])
+
+        else:
+            return results
+
+        return results
+
+    def create_alert_rule(self, name: str = None, description: str = None, tags: List[str] = None, polling_interval: str = None, severity: str = None, j1ql: str = None, action_config: Dict = None):
         """Create Alert Rule Configuration in J1 account
 
         """
