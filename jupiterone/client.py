@@ -906,7 +906,6 @@ class JupiterOneClient:
         if tags is not None:
             
             if tag_op == "OVERWRITE":
-                tags_config = alert_rule_config['tags']
                 tags_config = tags
             elif tag_op == "APPEND":
                 tags_config = alert_rule_config['tags'] + tags
