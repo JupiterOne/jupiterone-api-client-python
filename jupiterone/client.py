@@ -781,12 +781,12 @@ class JupiterOneClient:
             results.extend(r['data']['listRuleInstances']['questionInstances'])
         
         # pick result out of list of results by 'id' key
-        for item in results:
-            if item["id"] == alert_rule_id:
-                result = item
-                break
+        item = next((item for item in results if item['id'] == alert_rule_id), None)
 
-        return result
+        if item:
+            return item
+        else:
+            return 'Alert Rule not found for provided ID in configured J1 Account'
 
     def create_alert_rule(self, name: str = None, description: str = None, tags: List[str] = None, polling_interval: str = None, severity: str = None, j1ql: str = None, action_configs: Dict = None):
         """Create Alert Rule Configuration in J1 account
