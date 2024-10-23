@@ -321,7 +321,8 @@ j1.get_alert_rule_details(rule_id='<id-of-alert-rule>')
 ##### Create Alert Rule
 
 ```python
-# polling_interval can be DISABLED, THIRTY_MINUTES, ONE_HOUR, FOUR_HOURS, EIGHT_HOURS, TWELVE_HOURS, ONE_DAY, and ONE_WEEK
+# polling_interval can be DISABLED, THIRTY_MINUTES, ONE_HOUR, FOUR_HOURS, EIGHT_HOURS, TWELVE_HOURS, ONE_DAY, or ONE_WEEK
+# severity can be INFO, LOW, MEDIUM, HIGH, or CRITICAL
 
 j1.create_alert_rule(name="create_alert_rule-name",
                      description="create_alert_rule-description",
