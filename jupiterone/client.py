@@ -744,12 +744,9 @@ class JupiterOneClient:
             r = requests.post(url=self.graphql_url, headers=self.headers, json=data, verify=True).json()
             results.extend(r['data']['listRuleInstances']['questionInstances'])
 
-        else:
-            return results
-
         return results
 
-    def create_alert_rule(self, name: str = None, description: str = None, tags: List[str] = None, polling_interval: str = None, severity: str = None, j1ql: str = None, action_config: Dict = None):
+    def create_alert_rule(self, name: str = None, description: str = None, tags: List[str] = None, polling_interval: str = None, severity: str = None, j1ql: str = None, action_configs: Dict = None):
         """Create Alert Rule Configuration in J1 account
 
         """
@@ -826,3 +823,4 @@ class JupiterOneClient:
         response = self._execute_query(DELETE_RULE_INSTANCE, variables=variables)
 
         return response['data']['deleteRuleInstance']
+        
