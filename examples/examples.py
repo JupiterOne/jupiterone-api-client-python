@@ -109,6 +109,11 @@ fetch_all_entity_tags_r = j1.fetch_all_entity_tags()
 print("fetch_all_entity_tags()")
 print(fetch_all_entity_tags_r)
 
+# fetch_entity_raw_data
+fetch_entity_raw_data_r = j1.fetch_entity_raw_data(entity_id="<GUID>")
+print("fetch_entity_raw_data()")
+print(json.dumps(fetch_entity_raw_data_r, indent=1))
+
 # create_integration_instance
 create_integration_instance_r = j1.create_integration_instance(instance_name="pythonclient-customintegration",
                                                                instance_description="dev-testing")
@@ -118,11 +123,19 @@ print(create_integration_instance_r)
 integration_instance_id = "<GUID>"
 
 # start_sync_job
-start_sync_job_r = j1.start_sync_job(instance_id=integration_instance_id)
+# sync_mode can be "DIFF", "CREATE_OR_UPDATE", or "PATCH"
+start_sync_job_r = j1.start_sync_job(instance_id=integration_instance_id,
+                                     sync_mode='CREATE_OR_UPDATE',
+                                     source='integration-external')
 print("start_sync_job()")
 print(start_sync_job_r)
 
 # upload_entities_batch_json
+rand_val_range = [x / 10.0 for x in range(0, 100)]
+rand_val = random.choice(rand_val_range)
+
+epoch_now = round(time.time() * 1000)
+
 entity_payload = [
     {
       "_key": "1",
@@ -131,20 +144,18 @@ entity_payload = [
       "displayName": "pythonclient1",
       "propertyName": "value",
       "relationshipProperty": "source",
+      "value": rand_val,
+      "bulkUploadedOn": epoch_now
     },
     {
       "_key": "2",
       "_type": "pythonclient",
       "_class": "API",
       "displayName": "pythonclient2",
-      "propertyName": "value"
-    },
-    {
-      "_key": "3",
-      "_type": "pythonclient",
-      "_class": "API",
-      "displayName": "pythonclient3",
-      "propertyName": "value"
+      "propertyName": "value",
+      "relationshipProperty": "source",
+      "value": rand_val,
+      "bulkUploadedOn": epoch_now
     }
 ]
 
@@ -188,22 +199,21 @@ combined_payload = {
       "_type": "pythonclient",
       "_class": "API",
       "displayName": "pythonclient4",
-      "propertyName": "value",
-      "relationshipProperty": "source",
+      "enrichProp": "value1"
     },
     {
       "_key": "5",
       "_type": "pythonclient",
       "_class": "API",
       "displayName": "pythonclient5",
-      "propertyName": "value"
+      "enrichProp": "value2"
     },
     {
       "_key": "6",
       "_type": "pythonclient",
       "_class": "API",
       "displayName": "pythonclient6",
-      "propertyName": "value"
+      "enrichProp": "value3"
     }
 ],
     "relationships": [
@@ -278,12 +288,74 @@ get_smartclass_details_r = j1.get_smartclass_details(smartclass_id=create_smartc
 print("get_smartclass_details()")
 print(get_smartclass_details_r)
 
-# list_configured_alert_rules
-list_configured_alert_rules_r = j1.list_configured_alert_rules()
-print("list_configured_alert_rules()")
-print(list_configured_alert_rules_r)
-
 # generate_j1ql
 generate_j1ql_r = j1.generate_j1ql(natural_language_prompt="show me all Users containing 'jupiterone' in their email address")
 print("generate_j1ql()")
 print(generate_j1ql_r)
+
+# list_alert_rules
+list_alert_rules_r = j1.list_alert_rules()
+print("list_configured_alert_rules()")
+print(list_alert_rules_r)
+print(len(list_alert_rules_r))
+
+# get_alert_rule_details
+get_alert_rule_details_r = j1.get_alert_rule_details(rule_id="<GUID>")
+print("get_alert_rule_details()")
+print(get_alert_rule_details_r)
+
+# create_alert_rule
+# polling_interval can be DISABLED, THIRTY_MINUTES, ONE_HOUR, FOUR_HOURS, EIGHT_HOURS, TWELVE_HOURS, ONE_DAY, and ONE_WEEK
+webhook_token = "<SECRET>"
+
+webhook_action_config = {
+            "type": "WEBHOOK",
+            "endpoint": "https://webhook.domain.here/endpoint",
+            "headers": {
+              "Authorization": "Bearer {}".format(webhook_token),
+            },
+            "method": "POST",
+            "body": {
+              "queryData": "{{queries.query0.data}}"
+            }
+}
+
+tag_entities_action_config = {
+            "type": "TAG_ENTITIES",
+            "entities": "{{queries.query0.data}}",
+            "tags": [
+              {
+                "name": "tagKey",
+                "value": "tagValue"
+              }
+            ]
+}
+
+create_alert_rule_r = j1.create_alert_rule(name="create_alert_rule-name",
+                                           description="create_alert_rule-description",
+                                           tags=['tag1', 'tag2'],
+                                           polling_interval="DISABLED",
+                                           severity="INFO",
+                                           j1ql="find jupiterone_user")
+print("create_alert_rule()")
+print(create_alert_rule_r)
+
+# delete_alert_rule
+delete_alert_rule_r = j1.delete_alert_rule(rule_id="<GUID>")
+print("delete_alert_rule()")
+print(delete_alert_rule_r)
+
+# update_alert_rule
+update_alert_rule_r = j1.update_alert_rule(rule_id="<GUID>",
+                                           j1ql="find jupiterone_user as i return i._key",
+                                           polling_interval="ONE_WEEK",
+                                           tags=['new_tag1', 'new_tag2'])
+print("update_alert_rule()")
+print(json.dumps(update_alert_rule_r, indent=1))
+
+# evaluate_alert_rule
+evaluate_alert_rule_r = j1.evaluate_alert_rule(rule_id="<GUID>")
+print("evaluate_alert_rule()")
+print(json.dumps(evaluate_alert_rule_r, indent=1))
+
+

@@ -33,6 +33,7 @@ from jupiterone.constants import (
     INTEGRATION_JOB_VALUES,
     INTEGRATION_INSTANCE_EVENT_VALUES,
     ALL_PROPERTIES,
+    GET_ENTITY_RAW_DATA,
     CREATE_SMARTCLASS,
     CREATE_SMARTCLASS_QUERY,
     EVALUATE_SMARTCLASS,
@@ -40,14 +41,15 @@ from jupiterone.constants import (
     J1QL_FROM_NATURAL_LANGUAGE,
     LIST_RULE_INSTANCES,
     CREATE_RULE_INSTANCE,
-    DELETE_RULE_INSTANCE
+    DELETE_RULE_INSTANCE,
+    UPDATE_RULE_INSTANCE,
+    EVALUATE_RULE_INSTANCE
 )
 
 
 def retry_on_429(exc):
     """Used to trigger retry on rate limit"""
     return isinstance(exc, JupiterOneApiRetryError)
-
 
 class JupiterOneClient:
     """Python client class for the JupiterOne GraphQL API"""
@@ -499,6 +501,19 @@ class JupiterOneClient:
 
         return return_list
 
+    def fetch_entity_raw_data(self, entity_id: str = None):
+        """Fetch the contents of raw data for a given entity in a J1 Account.
+
+        """
+        variables = {
+            "entityId": entity_id,
+            "source": "integration-managed"
+        }
+
+        response = self._execute_query(query=GET_ENTITY_RAW_DATA, variables=variables)
+
+        return response
+    
     def start_sync_job(self, instance_id: str = None, sync_mode: str = None, source: str = None,):
         """Start a synchronization job.
 
@@ -712,12 +727,82 @@ class JupiterOneClient:
         return response['data']['j1qlFromNaturalLanguage']
 
     def list_alert_rules(self):
-        """List defined Alert Rules configured in J1 account
+        """List all defined Alert Rules configured in J1 account
 
         """
-        response = self._execute_query(LIST_RULE_INSTANCES)
+        results = []
 
-        return response['data']['listRuleInstances']
+        data = {
+            "query": LIST_RULE_INSTANCES,
+            "flags": {
+                "variableResultSize": True
+            }
+        }
+
+        r = requests.post(url=self.graphql_url, headers=self.headers, json=data, verify=True).json()
+        results.extend(r['data']['listRuleInstances']['questionInstances'])
+
+        while r['data']['listRuleInstances']['pageInfo']['hasNextPage'] == True:
+
+            cursor = r['data']['listRuleInstances']['pageInfo']['endCursor']
+
+            # cursor query until last page fetched
+            data = {
+                "query": LIST_RULE_INSTANCES,
+                "variables": {
+                    "cursor": cursor
+                },
+                "flags":{
+                    "variableResultSize": True
+                }
+            }
+
+            r = requests.post(url=self.graphql_url, headers=self.headers, json=data, verify=True).json()
+            results.extend(r['data']['listRuleInstances']['questionInstances'])
+
+        return results
+
+    def get_alert_rule_details(self, rule_id: str = None):
+        """Get details of a single defined Alert Rule configured in J1 account
+
+        """
+        results = []
+
+        data = {
+            "query": LIST_RULE_INSTANCES,
+            "flags": {
+                "variableResultSize": True
+            }
+        }
+
+        r = requests.post(url=self.graphql_url, headers=self.headers, json=data, verify=True).json()
+        results.extend(r['data']['listRuleInstances']['questionInstances'])
+
+        while r['data']['listRuleInstances']['pageInfo']['hasNextPage'] == True:
+
+            cursor = r['data']['listRuleInstances']['pageInfo']['endCursor']
+
+            # cursor query until last page fetched
+            data = {
+                "query": LIST_RULE_INSTANCES,
+                "variables": {
+                    "cursor": cursor
+                },
+                "flags":{
+                    "variableResultSize": True
+                }
+            }
+
+            r = requests.post(url=self.graphql_url, headers=self.headers, json=data, verify=True).json()
+            results.extend(r['data']['listRuleInstances']['questionInstances'])
+        
+        # pick result out of list of results by 'id' key
+        item = next((item for item in results if item['id'] == rule_id), None)
+
+        if item:
+            return item
+        else:
+            return 'Alert Rule not found for provided ID in configured J1 Account'
 
     def create_alert_rule(self, name: str = None, description: str = None, tags: List[str] = None, polling_interval: str = None, severity: str = None, j1ql: str = None, action_configs: Dict = None):
         """Create Alert Rule Configuration in J1 account
@@ -779,8 +864,6 @@ class JupiterOneClient:
         if action_configs:
             variables['instance']['operations'][0]['actions'].append(action_configs)
 
-        print(variables)
-
         response = self._execute_query(CREATE_RULE_INSTANCE, variables=variables)
 
         return response['data']['createInlineQuestionRuleInstance']
@@ -796,3 +879,78 @@ class JupiterOneClient:
         response = self._execute_query(DELETE_RULE_INSTANCE, variables=variables)
 
         return response['data']['deleteRuleInstance']
+
+    def update_alert_rule(self, rule_id: str = None, j1ql: str = None, polling_interval: str = None, tags: List[str] = None, tag_op: str = None):
+        """Update Alert Rule Configuration in J1 account
+
+        """
+        # fetch existing alert rule
+        alert_rule_config = self.get_alert_rule_details(rule_id)
+
+        # increment rule config version
+        rule_version = alert_rule_config['version'] + 1
+
+        # fetch current operations config
+        operations = alert_rule_config['operations']
+        del operations[0]['__typename']
+
+        # update J1QL query if provided
+        if j1ql is not None:
+            question_config = alert_rule_config['question']
+            # remove problematic fields
+            del question_config['__typename']
+            del question_config['queries'][0]['__typename']
+
+            # update query string
+            question_config['queries'][0]['query'] = j1ql
+        else:
+            question_config = alert_rule_config['question']
+            # remove problematic fields
+            del question_config['__typename']
+            del question_config['queries'][0]['__typename']
+
+        # update polling_interval if provided
+        if polling_interval is not None:
+            interval_config = polling_interval
+        else:
+            interval_config = alert_rule_config['pollingInterval']
+
+        # update tags list if provided
+        if tags is not None:
+            
+            if tag_op == "OVERWRITE":
+                tags_config = tags
+            elif tag_op == "APPEND":
+                tags_config = alert_rule_config['tags'] + tags
+            else:
+                tags_config = alert_rule_config['tags']
+        else:
+            tags_config = alert_rule_config['tags']
+
+        variables = {
+          "instance": {
+              "id": rule_id,
+              "version": rule_version,
+              "specVersion": alert_rule_config['specVersion'],
+              "name": alert_rule_config['name'],
+              "question": question_config,
+              "operations": operations,
+              "pollingInterval": interval_config,
+              "tags": tags_config
+          }
+        }
+
+        response = self._execute_query(UPDATE_RULE_INSTANCE, variables=variables)
+
+        return response['data']['updateInlineQuestionRuleInstance']
+
+    def evaluate_alert_rule(self, rule_id: str = None):
+        """Run an Evaluation for a defined Alert Rule configured in J1 account
+
+        """
+        variables = {
+            "id": rule_id
+        }
+
+        response = self._execute_query(EVALUATE_RULE_INSTANCE, variables=variables)
+        return response
