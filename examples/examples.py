@@ -296,6 +296,11 @@ print("list_configured_alert_rules()")
 print(list_alert_rules_r)
 print(len(list_alert_rules_r))
 
+# get_alert_rule_details
+get_alert_rule_details_r = j1.get_alert_rule_details(alert_rule_id="<GUID>")
+print("get_alert_rule_details()")
+print(get_alert_rule_details_r)
+
 # create_alert_rule
 webhook_token = "<SECRET>"
 

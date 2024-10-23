@@ -746,6 +746,48 @@ class JupiterOneClient:
 
         return results
 
+    def get_alert_rule_details(self, alert_rule_id: str = None):
+        """Get details of a single defined Alert Rule configured in J1 account
+
+        """
+        results = []
+
+        data = {
+            "query": LIST_RULE_INSTANCES,
+            "flags": {
+                "variableResultSize": True
+            }
+        }
+
+        r = requests.post(url=self.graphql_url, headers=self.headers, json=data, verify=True).json()
+        results.extend(r['data']['listRuleInstances']['questionInstances'])
+
+        while r['data']['listRuleInstances']['pageInfo']['hasNextPage'] == True:
+
+            cursor = r['data']['listRuleInstances']['pageInfo']['endCursor']
+
+            # cursor query until last page fetched
+            data = {
+                "query": LIST_RULE_INSTANCES,
+                "variables": {
+                    "cursor": cursor
+                },
+                "flags":{
+                    "variableResultSize": True
+                }
+            }
+
+            r = requests.post(url=self.graphql_url, headers=self.headers, json=data, verify=True).json()
+            results.extend(r['data']['listRuleInstances']['questionInstances'])
+        
+        # pick result out of list of results by 'id' key
+        for item in results:
+            if item["id"] == alert_rule_id:
+                result = item
+                break
+
+        return result
+
     def create_alert_rule(self, name: str = None, description: str = None, tags: List[str] = None, polling_interval: str = None, severity: str = None, j1ql: str = None, action_configs: Dict = None):
         """Create Alert Rule Configuration in J1 account
 
