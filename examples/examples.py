@@ -302,6 +302,7 @@ print("get_alert_rule_details()")
 print(get_alert_rule_details_r)
 
 # create_alert_rule
+# polling_interval can be DISABLED, THIRTY_MINUTES, ONE_HOUR, FOUR_HOURS, EIGHT_HOURS, TWELVE_HOURS, ONE_DAY, and ONE_WEEK
 webhook_token = "<SECRET>"
 
 webhook_action_config = {
@@ -327,7 +328,7 @@ tag_entities_action_config = {
             ]
 }
 
-create_alert_rule_r = j1.create_alert_rule(name="create_alert_rule",
+create_alert_rule_r = j1.create_alert_rule(name="create_alert_rule-name",
                                            description="create_alert_rule-description",
                                            tags=['tag1', 'tag2'],
                                            polling_interval="DISABLED",
@@ -339,3 +340,12 @@ print(create_alert_rule_r)
 delete_alert_rule_r = j1.delete_alert_rule(rule_id="<GUID>")
 print("delete_alert_rule()")
 print(delete_alert_rule_r)
+
+# update_alert_rule
+update_alert_rule_r = j1.update_alert_rule(rule_id="<GUID>",
+                                           j1ql="find jupiterone_user as i return i._key",
+                                           polling_interval="ONE_WEEK",
+                                           tags=['new_tag1', 'new_tag2'])
+print("update_alert_rule()")
+print(json.dumps(update_alert_rule_r, indent=1))
+

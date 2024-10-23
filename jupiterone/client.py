@@ -40,7 +40,8 @@ from jupiterone.constants import (
     J1QL_FROM_NATURAL_LANGUAGE,
     LIST_RULE_INSTANCES,
     CREATE_RULE_INSTANCE,
-    DELETE_RULE_INSTANCE
+    DELETE_RULE_INSTANCE,
+    UPDATE_RULE_INSTANCE
 )
 
 
@@ -865,4 +866,63 @@ class JupiterOneClient:
         response = self._execute_query(DELETE_RULE_INSTANCE, variables=variables)
 
         return response['data']['deleteRuleInstance']
-        
+
+    def update_alert_rule(self, rule_id: str = None, j1ql: str = None, polling_interval: str = None, tags: List[str] = None):
+        """Update Alert Rule Configuration in J1 account
+
+        """
+        # fetch existing alert rule
+        alert_rule_config = self.get_alert_rule_details(rule_id)
+
+        # increment rule config version
+        rule_version = alert_rule_config['version'] + 1
+
+        # fetch current operations config
+        operations = alert_rule_config['operations']
+        del operations[0]['__typename']
+
+        # update J1QL query if provided
+        if j1ql is not None:
+            question_config = alert_rule_config['question']
+            # remove problematic fields
+            del question_config['__typename']
+            del question_config['queries'][0]['__typename']
+
+            # update query string
+            question_config['queries'][0]['query'] = j1ql
+        else:
+            question_config = alert_rule_config['question']
+            # remove problematic fields
+            del question_config['__typename']
+            del question_config['queries'][0]['__typename']
+
+        # update polling_interval if provided
+        if polling_interval is not None:
+            interval_config = alert_rule_config['pollingInterval']
+            interval_config = polling_interval
+        else:
+            interval_config = alert_rule_config['pollingInterval']
+
+        # update tags list if provided
+        if tags is not None:
+            tags_config = alert_rule_config['tags']
+            tags_config = tags
+        else:
+            tags_config = alert_rule_config['tags']
+
+        variables = {
+          "instance": {
+              "id": rule_id,
+              "version": rule_version,
+              "specVersion": alert_rule_config['specVersion'],
+              "name": alert_rule_config['name'],
+              "question": question_config,
+              "operations": operations,
+              "pollingInterval": interval_config,
+              "tags": tags_config
+          }
+        }
+
+        response = self._execute_query(UPDATE_RULE_INSTANCE, variables=variables)
+
+        return response['data']['updateInlineQuestionRuleInstance']
