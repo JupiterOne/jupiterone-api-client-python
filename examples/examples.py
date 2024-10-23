@@ -2,7 +2,6 @@ from jupiterone.client import JupiterOneClient
 import random
 import time
 import os
-from datetime import datetime
 
 account = os.environ.get("JUPITERONE_ACCOUNT")
 token = os.environ.get("JUPITERONE_TOKEN")
@@ -135,8 +134,7 @@ print(start_sync_job_r)
 rand_val_range = [x / 10.0 for x in range(0, 100)]
 rand_val = random.choice(rand_val_range)
 
-now_dt = datetime.now()
-epoch_now = round(datetime.strptime(str(now_dt), "%Y-%m-%d %H:%M:%S.%f").timestamp())
+epoch_now = round(time.time() * 1000)
 
 entity_payload = [
     {
