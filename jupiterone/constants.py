@@ -474,3 +474,62 @@ DELETE_RULE_INSTANCE = """
       }
     }
 """
+
+UPDATE_RULE_INSTANCE = """
+    mutation updateQuestionRuleInstance($instance: UpdateInlineQuestionRuleInstanceInput!) {
+      updateInlineQuestionRuleInstance(instance: $instance) {
+        ...RuleInstanceFields
+        __typename
+      }
+    }
+    
+    fragment RuleInstanceFields on QuestionRuleInstance {
+      id
+      accountId
+      name
+      description
+      version
+      lastEvaluationStartOn
+      lastEvaluationEndOn
+      evaluationStep
+      specVersion
+      notifyOnFailure
+      triggerActionsOnNewEntitiesOnly
+      ignorePreviousResults
+      pollingInterval
+      templates
+      outputs
+      labels {
+        labelName
+        labelValue
+        __typename
+      }
+      question {
+        queries {
+          query
+          name
+          includeDeleted
+          __typename
+        }
+        __typename
+      }
+      questionId
+      latest
+      deleted
+      type
+      operations {
+        when
+        actions
+        __typename
+      }
+      latestAlertId
+      latestAlertIsActive
+      state {
+        actions
+        __typename
+      }
+      tags
+      remediationSteps
+      __typename
+    }
+"""
