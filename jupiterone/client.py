@@ -867,7 +867,7 @@ class JupiterOneClient:
 
         return response['data']['deleteRuleInstance']
 
-    def update_alert_rule(self, rule_id: str = None, j1ql: str = None, polling_interval: str = None, tags: List[str] = None):
+    def update_alert_rule(self, rule_id: str = None, j1ql: str = None, polling_interval: str = None, tags: List[str] = None, tag_op: str = None):
         """Update Alert Rule Configuration in J1 account
 
         """
@@ -898,15 +898,18 @@ class JupiterOneClient:
 
         # update polling_interval if provided
         if polling_interval is not None:
-            interval_config = alert_rule_config['pollingInterval']
             interval_config = polling_interval
         else:
             interval_config = alert_rule_config['pollingInterval']
 
         # update tags list if provided
         if tags is not None:
-            tags_config = alert_rule_config['tags']
-            tags_config = tags
+            
+            if tag_op == "OVERWRITE":
+                tags_config = alert_rule_config['tags']
+                tags_config = tags
+            elif tag_op == "APPEND":
+                tags_config = alert_rule_config['tags'] + tags
         else:
             tags_config = alert_rule_config['tags']
 

@@ -368,8 +368,19 @@ j1.delete_alert_rule(rule_id='<id-of-alert-rule')
 
 ```python
 
+# polling_interval can be DISABLED, THIRTY_MINUTES, ONE_HOUR, FOUR_HOURS, EIGHT_HOURS, TWELVE_HOURS, ONE_DAY, and ONE_WEEK
+# tag_op can be OVERWRITE or APPEND
+
 j1.update_alert_rule(rule_id='<id-of-alert-rule',
                      j1ql="find jupiterone_user as i return i._key",
                      polling_interval="ONE_WEEK",
                      tags=['new_tag1', 'new_tag2'])
+
+j1.update_alert_rule(rule_id='<id-of-alert-rule',
+                     tags=['newTag1', 'newTag1'],
+                     tag_op="OVERWRITE")
+
+j1.update_alert_rule(rule_id='<id-of-alert-rule',
+                     tags=['additionalTag1', 'additionalTag2'],
+                     tag_op="APPEND")
 ```
