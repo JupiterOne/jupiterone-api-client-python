@@ -41,7 +41,8 @@ from jupiterone.constants import (
     LIST_RULE_INSTANCES,
     CREATE_RULE_INSTANCE,
     DELETE_RULE_INSTANCE,
-    UPDATE_RULE_INSTANCE
+    UPDATE_RULE_INSTANCE,
+    EVALUATE_RULE_INSTANCE
 )
 
 
@@ -747,7 +748,7 @@ class JupiterOneClient:
 
         return results
 
-    def get_alert_rule_details(self, alert_rule_id: str = None):
+    def get_alert_rule_details(self, rule_id: str = None):
         """Get details of a single defined Alert Rule configured in J1 account
 
         """
@@ -782,7 +783,7 @@ class JupiterOneClient:
             results.extend(r['data']['listRuleInstances']['questionInstances'])
         
         # pick result out of list of results by 'id' key
-        item = next((item for item in results if item['id'] == alert_rule_id), None)
+        item = next((item for item in results if item['id'] == rule_id), None)
 
         if item:
             return item
@@ -930,3 +931,14 @@ class JupiterOneClient:
         response = self._execute_query(UPDATE_RULE_INSTANCE, variables=variables)
 
         return response['data']['updateInlineQuestionRuleInstance']
+
+    def evaluate_alert_rule(self, rule_id: str = None):
+        """Run an Evaluation for a defined Alert Rule configured in J1 account
+
+        """
+        variables = {
+            "id": rule_id
+        }
+
+        response = self._execute_query(EVALUATE_RULE_INSTANCE, variables=variables)
+        return response

@@ -315,7 +315,7 @@ j1.list_alert_rules()
 ##### Get Alert Rule Details
 
 ```python
-j1.get_alert_rule_details(alert_rule_id='<id-of-alert-rule>')
+j1.get_alert_rule_details(rule_id='<id-of-alert-rule>')
 ```
 
 ##### Create Alert Rule
@@ -383,4 +383,12 @@ j1.update_alert_rule(rule_id='<id-of-alert-rule',
 j1.update_alert_rule(rule_id='<id-of-alert-rule',
                      tags=['additionalTag1', 'additionalTag2'],
                      tag_op="APPEND")
+```
+
+##### Evaluate Alert Rule
+
+```python
+
+j1.evaluate_alert_rule(rule_id='<id-of-alert-rule')
+
 ```

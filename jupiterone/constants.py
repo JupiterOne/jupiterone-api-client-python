@@ -533,3 +533,12 @@ UPDATE_RULE_INSTANCE = """
       __typename
     }
 """
+
+EVALUATE_RULE_INSTANCE = """
+    mutation evaluateRuleInstance($id: ID!) {
+      evaluateRuleInstance(id: $id) {
+        id
+        __typename
+      }
+    }
+"""

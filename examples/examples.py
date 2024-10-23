@@ -297,7 +297,7 @@ print(list_alert_rules_r)
 print(len(list_alert_rules_r))
 
 # get_alert_rule_details
-get_alert_rule_details_r = j1.get_alert_rule_details(alert_rule_id="<GUID>")
+get_alert_rule_details_r = j1.get_alert_rule_details(rule_id="<GUID>")
 print("get_alert_rule_details()")
 print(get_alert_rule_details_r)
 
@@ -337,6 +337,7 @@ create_alert_rule_r = j1.create_alert_rule(name="create_alert_rule-name",
 print("create_alert_rule()")
 print(create_alert_rule_r)
 
+# delete_alert_rule
 delete_alert_rule_r = j1.delete_alert_rule(rule_id="<GUID>")
 print("delete_alert_rule()")
 print(delete_alert_rule_r)
@@ -348,4 +349,10 @@ update_alert_rule_r = j1.update_alert_rule(rule_id="<GUID>",
                                            tags=['new_tag1', 'new_tag2'])
 print("update_alert_rule()")
 print(json.dumps(update_alert_rule_r, indent=1))
+
+# evaluate_alert_rule
+evaluate_alert_rule_r = j1.evaluate_alert_rule(rule_id="<GUID>")
+print("evaluate_alert_rule()")
+print(json.dumps(evaluate_alert_rule_r, indent=1))
+
 
