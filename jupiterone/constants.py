@@ -185,6 +185,23 @@ ALL_PROPERTIES = """
     }
 """
 
+GET_ENTITY_RAW_DATA = """
+    query GetEntityRawData ($entityId: String!, $source: String!,
+        )   {
+        entityRawDataLegacy(entityId: $entityId, , source: $source) {
+            entityId
+            payload {
+    
+                ... on RawDataJSONEntityLegacy {
+                    contentType
+                    name
+                    data
+                }
+            }    
+        }
+    }
+"""
+
 CREATE_SMARTCLASS = """
     mutation CreateSmartClass($input: CreateSmartClassInput!) {
       createSmartClass(input: $input) {
