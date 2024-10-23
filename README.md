@@ -99,7 +99,7 @@ j1.update_entity(
 #### Delete an entity:
 
 ```python
-j1.delete_entity(entity_id='<id-of-entity-to-delete>')
+j1.delete_entity(entit_id='<id-of-entity-to-delete>')
 ```
 
 ##### Create a relationship
