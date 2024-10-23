@@ -909,6 +909,8 @@ class JupiterOneClient:
                 tags_config = tags
             elif tag_op == "APPEND":
                 tags_config = alert_rule_config['tags'] + tags
+            else:
+                tags_config = alert_rule_config['tags']
         else:
             tags_config = alert_rule_config['tags']
 
