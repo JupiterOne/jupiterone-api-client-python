@@ -850,8 +850,6 @@ class JupiterOneClient:
         if action_configs:
             variables['instance']['operations'][0]['actions'].append(action_configs)
 
-        print(variables)
-
         response = self._execute_query(CREATE_RULE_INSTANCE, variables=variables)
 
         return response['data']['createInlineQuestionRuleInstance']
