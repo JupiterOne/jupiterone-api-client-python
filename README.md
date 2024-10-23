@@ -300,14 +300,76 @@ j1.evaluate_smartclass(smartclass_id='<id-of-smartclass>')
 j1.get_smartclass_details(smartclass_id='<id-of-smartclass>')
 ```
 
-##### List Alert Rules
-
-```python
-j1.list_configured_alert_rules()
-```
-
 ##### Generate J1QL from Natural Language Prompt
 
 ```python
 j1.generate_j1ql(natural_language_prompt='<natural-language-input-text>')
+```
+
+##### List Alert Rules
+
+```python
+j1.list_alert_rules()
+```
+
+##### Get Alert Rule Details
+
+```python
+j1.get_alert_rule_details(alert_rule_id='<id-of-alert-rule>')
+```
+
+##### Create Alert Rule
+
+```python
+# polling_interval can be DISABLED, THIRTY_MINUTES, ONE_HOUR, FOUR_HOURS, EIGHT_HOURS, TWELVE_HOURS, ONE_DAY, and ONE_WEEK
+
+j1.create_alert_rule(name="create_alert_rule-name",
+                     description="create_alert_rule-description",
+                     tags=['tag1', 'tag2'],
+                     polling_interval="DISABLED",
+                     severity="INFO",
+                     j1ql="find jupiterone_user")
+```
+
+##### Create Alert Rule with Action Config
+
+```python
+
+webhook_action_config = {
+            "type": "WEBHOOK",
+            "endpoint": "https://webhook.domain.here/endpoint",
+            "headers": {
+              "Authorization": "Bearer <SECRET>",
+            },
+            "method": "POST",
+            "body": {
+              "queryData": "{{queries.query0.data}}"
+            }
+}
+
+j1.create_alert_rule(name="create_alert_rule-name",
+                    description="create_alert_rule-description",
+                    tags=['tag1', 'tag2'],
+                    polling_interval="DISABLED",
+                    severity="INFO",
+                    j1ql="find jupiterone_user",
+                    action_configs=webhook_action_config)
+
+```
+
+##### Delete Alert Rule
+
+```python
+
+j1.delete_alert_rule(rule_id='<id-of-alert-rule')
+```
+
+##### Update Alert Rule
+
+```python
+
+j1.update_alert_rule(rule_id='<id-of-alert-rule',
+                     j1ql="find jupiterone_user as i return i._key",
+                     polling_interval="ONE_WEEK",
+                     tags=['new_tag1', 'new_tag2'])
 ```
