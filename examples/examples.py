@@ -294,7 +294,7 @@ print(generate_j1ql_r)
 list_alert_rules_r = j1.list_alert_rules()
 print("list_configured_alert_rules()")
 print(list_alert_rules_r)
-print(len(list_alert_rules_r['questionInstances']))
+print(len(list_alert_rules_r))
 
 # create_alert_rule
 webhook_token = "<SECRET>"

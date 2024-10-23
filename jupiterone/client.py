@@ -730,7 +730,7 @@ class JupiterOneClient:
 
             cursor = r['data']['listRuleInstances']['pageInfo']['endCursor']
 
-            # cursor query until reached last page
+            # cursor query until last page fetched
             data = {
                 "query": LIST_RULE_INSTANCES,
                 "variables": {
