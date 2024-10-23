@@ -110,6 +110,11 @@ fetch_all_entity_tags_r = j1.fetch_all_entity_tags()
 print("fetch_all_entity_tags()")
 print(fetch_all_entity_tags_r)
 
+# fetch_entity_raw_data
+fetch_entity_raw_data_r = j1.fetch_entity_raw_data(entity_id="<GUID>")
+print("fetch_entity_raw_data()")
+print(json.dumps(fetch_entity_raw_data_r, indent=1))
+
 # create_integration_instance
 create_integration_instance_r = j1.create_integration_instance(instance_name="pythonclient-customintegration",
                                                                instance_description="dev-testing")

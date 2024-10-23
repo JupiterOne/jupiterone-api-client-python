@@ -33,6 +33,7 @@ from jupiterone.constants import (
     INTEGRATION_JOB_VALUES,
     INTEGRATION_INSTANCE_EVENT_VALUES,
     ALL_PROPERTIES,
+    GET_ENTITY_RAW_DATA,
     CREATE_SMARTCLASS,
     CREATE_SMARTCLASS_QUERY,
     EVALUATE_SMARTCLASS,
@@ -500,6 +501,19 @@ class JupiterOneClient:
 
         return return_list
 
+    def fetch_entity_raw_data(self, entity_id: str = None):
+        """Fetch the contents of raw data for a given entity in a J1 Account.
+
+        """
+        variables = {
+            "entityId": entity_id,
+            "source": "integration-managed"
+        }
+
+        response = self._execute_query(query=GET_ENTITY_RAW_DATA, variables=variables)
+
+        return response
+    
     def start_sync_job(self, instance_id: str = None, sync_mode: str = None, source: str = None,):
         """Start a synchronization job.
 
