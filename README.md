@@ -132,6 +132,12 @@ j1.fetch_all_entity_properties()
 j1.fetch_all_entity_tags()
 ```
 
+##### Fetch Entity Raw Data
+
+```python
+j1.fetch_entity_raw_data(entity_id='<id-of-entity>')
+```
+
 ##### Create Integration Instance
 
 ```python
