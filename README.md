@@ -62,7 +62,7 @@ cursor_query_r = j1._cursor_query(QUERY)
 
 ##### Create an entity:
 
-Note that the CreateEntity mutation behaves like an upsert, so an non-existent entity will be created or an existing entity will be updated.
+Note that the CreateEntity mutation behaves like an upsert, so a non-existent entity will be created or an existing entity will be updated.
 
 ```python
 properties = {
