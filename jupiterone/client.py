@@ -43,7 +43,8 @@ from jupiterone.constants import (
     CREATE_RULE_INSTANCE,
     DELETE_RULE_INSTANCE,
     UPDATE_RULE_INSTANCE,
-    EVALUATE_RULE_INSTANCE
+    EVALUATE_RULE_INSTANCE,
+    QUESTIONS,
 )
 
 
@@ -804,7 +805,14 @@ class JupiterOneClient:
         else:
             return 'Alert Rule not found for provided ID in configured J1 Account'
 
-    def create_alert_rule(self, name: str = None, description: str = None, tags: List[str] = None, polling_interval: str = None, severity: str = None, j1ql: str = None, action_configs: Dict = None):
+    def create_alert_rule(self,
+                          name: str = None,
+                          description: str = None,
+                          tags: List[str] = None,
+                          polling_interval: str = None,
+                          severity: str = None,
+                          j1ql: str = None,
+                          action_configs: Dict = None):
         """Create Alert Rule Configuration in J1 account
 
         """
@@ -864,6 +872,8 @@ class JupiterOneClient:
         if action_configs:
             variables['instance']['operations'][0]['actions'].append(action_configs)
 
+        print(variables)
+
         response = self._execute_query(CREATE_RULE_INSTANCE, variables=variables)
 
         return response['data']['createInlineQuestionRuleInstance']
@@ -880,7 +890,17 @@ class JupiterOneClient:
 
         return response['data']['deleteRuleInstance']
 
-    def update_alert_rule(self, rule_id: str = None, j1ql: str = None, polling_interval: str = None, tags: List[str] = None, tag_op: str = None):
+    def update_alert_rule(self,
+                          rule_id: str = None,
+                          name: str = None,
+                          description: str = None,
+                          j1ql: str = None,
+                          polling_interval: str = None,
+                          severity: str = None,
+                          tags: List[str] = None,
+                          tag_op: str = None,
+                          action_configs: List[dict] = None,
+                          action_configs_op: str = None):
         """Update Alert Rule Configuration in J1 account
 
         """
@@ -894,6 +914,18 @@ class JupiterOneClient:
         operations = alert_rule_config['operations']
         del operations[0]['__typename']
 
+        # update name if provided
+        if name is not None:
+            alert_name = name
+        else:
+            alert_name = alert_rule_config['name']
+
+        # update description if provided
+        if description is not None:
+            alert_description = description
+        else:
+            alert_description = alert_rule_config['description']
+
         # update J1QL query if provided
         if j1ql is not None:
             question_config = alert_rule_config['question']
@@ -901,7 +933,7 @@ class JupiterOneClient:
             del question_config['__typename']
             del question_config['queries'][0]['__typename']
 
-            # update query string
+            # update query string if provided
             question_config['queries'][0]['query'] = j1ql
         else:
             question_config = alert_rule_config['question']
@@ -915,9 +947,15 @@ class JupiterOneClient:
         else:
             interval_config = alert_rule_config['pollingInterval']
 
+        # update alert severity if provided
+        if severity is not None:
+            action_config = alert_rule_config['operations'][0]['actions']
+            action_config[0]['targetValue'] = severity
+        else:
+            action_config = alert_rule_config['operations'][0]['actions']
+
         # update tags list if provided
         if tags is not None:
-            
             if tag_op == "OVERWRITE":
                 tags_config = tags
             elif tag_op == "APPEND":
@@ -927,12 +965,37 @@ class JupiterOneClient:
         else:
             tags_config = alert_rule_config['tags']
 
+        # update action_configs list if provided
+        if action_configs is not None:
+
+            if action_configs_op == "OVERWRITE":
+
+                # maintain first item and build new list from input
+                alert_action_configs = []
+                base_action = alert_rule_config['operations'][0]['actions'][0]
+                alert_action_configs.append(base_action)
+                alert_action_configs.extend(action_configs)
+
+                # update actions field inside operations payload
+                operations[0]['actions'] = alert_action_configs
+
+            elif action_configs_op == "APPEND":
+
+                # update actions field inside operations payload
+                operations[0]['actions'].extend(action_configs)
+
+            else:
+                pass
+        else:
+            pass
+
         variables = {
           "instance": {
               "id": rule_id,
               "version": rule_version,
               "specVersion": alert_rule_config['specVersion'],
-              "name": alert_rule_config['name'],
+              "name": alert_name,
+              "description": alert_description,
               "question": question_config,
               "operations": operations,
               "pollingInterval": interval_config,
@@ -954,3 +1017,75 @@ class JupiterOneClient:
 
         response = self._execute_query(EVALUATE_RULE_INSTANCE, variables=variables)
         return response
+
+    def fetch_latest_evaluation_results(self):
+        """Fetch latest Alert Rules configured in J1 account
+
+        """
+        results = []
+
+        data = {
+            "query": LIST_RULE_INSTANCES,
+            "flags": {
+                "variableResultSize": True
+            }
+        }
+
+        r = requests.post(url=self.graphql_url, headers=self.headers, json=data, verify=True).json()
+        results.extend(r['data']['listRuleInstances']['questionInstances'])
+
+        while r['data']['listRuleInstances']['pageInfo']['hasNextPage'] == True:
+
+            cursor = r['data']['listRuleInstances']['pageInfo']['endCursor']
+
+            # cursor query until last page fetched
+            data = {
+                "query": LIST_RULE_INSTANCES,
+                "variables": {
+                    "cursor": cursor
+                },
+                "flags":{
+                    "variableResultSize": True
+                }
+            }
+
+            r = requests.post(url=self.graphql_url, headers=self.headers, json=data, verify=True).json()
+            results.extend(r['data']['listRuleInstances']['questionInstances'])
+
+        return results
+    
+    def list_questions(self):
+        """List all defined Questions configured in J1 account Questions Library
+
+        """
+        results = []
+
+        data = {
+            "query": QUESTIONS,
+            "flags": {
+                "variableResultSize": True
+            }
+        }
+
+        r = requests.post(url=self.graphql_url, headers=self.headers, json=data, verify=True).json()
+        results.extend(r['data']['questions']['questions'])
+
+        while r['data']['questions']['pageInfo']['hasNextPage'] == True:
+
+            cursor = r['data']['questions']['pageInfo']['endCursor']
+
+            # cursor query until last page fetched
+            data = {
+                "query": QUESTIONS,
+                "variables": {
+                    "cursor": cursor
+                },
+                "flags":{
+                    "variableResultSize": True
+                }
+            }
+
+            r = requests.post(url=self.graphql_url, headers=self.headers, json=data, verify=True).json()
+            results.extend(r['data']['questions']['questions'])
+
+        return results

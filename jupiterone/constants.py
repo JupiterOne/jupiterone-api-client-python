@@ -559,3 +559,62 @@ EVALUATE_RULE_INSTANCE = """
       }
     }
 """
+
+QUESTIONS = """
+    query questions($searchQuery: String, $integrationDefinitionId: String, $tags: [String], $type: ListQuestionsType, $limit: Int, $cursor: String, $categories: [String]) {
+      questions(
+        searchQuery: $searchQuery
+        integrationDefinitionId: $integrationDefinitionId
+        tags: $tags
+        type: $type
+        limit: $limit
+        cursor: $cursor
+        categories: $categories
+      ) {
+        questions {
+          ...QuestionFields
+          __typename
+        }
+        totalHits
+        pageInfo {
+          endCursor
+          hasNextPage
+          __typename
+        }
+        __typename
+      }
+    }
+    
+    fragment QuestionFields on Question {
+      id
+      sourceId
+      title
+      description
+      tags
+      lastUpdatedTimestamp
+      queries {
+        name
+        query
+        version
+        resultsAre
+        __typename
+      }
+      compliance {
+        standard
+        requirements
+        controls
+        __typename
+      }
+      variables {
+        name
+        required
+        default
+        __typename
+      }
+      accountId
+      integrationDefinitionId
+      showTrend
+      pollingInterval
+      __typename
+    }
+"""
