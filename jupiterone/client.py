@@ -947,13 +947,6 @@ class JupiterOneClient:
         else:
             interval_config = alert_rule_config['pollingInterval']
 
-        # update alert severity if provided
-        if severity is not None:
-            action_config = alert_rule_config['operations'][0]['actions']
-            action_config[0]['targetValue'] = severity
-        else:
-            action_config = alert_rule_config['operations'][0]['actions']
-
         # update tags list if provided
         if tags is not None:
             if tag_op == "OVERWRITE":
@@ -984,10 +977,9 @@ class JupiterOneClient:
                 # update actions field inside operations payload
                 operations[0]['actions'].extend(action_configs)
 
-            else:
-                pass
-        else:
-            pass
+        # update alert severity if provided
+        if severity is not None:
+            operations[0]['actions'][0]['targetValue'] = severity
 
         variables = {
           "instance": {
