@@ -305,7 +305,8 @@ print("get_alert_rule_details()")
 print(get_alert_rule_details_r)
 
 # create_alert_rule
-# polling_interval can be DISABLED, THIRTY_MINUTES, ONE_HOUR, FOUR_HOURS, EIGHT_HOURS, TWELVE_HOURS, ONE_DAY, and ONE_WEEK
+# polling_interval can be DISABLED, THIRTY_MINUTES, ONE_HOUR, FOUR_HOURS, EIGHT_HOURS, TWELVE_HOURS, ONE_DAY, or ONE_WEEK
+# severity can be INFO, LOW, MEDIUM, HIGH, or CRITICAL
 webhook_token = "<SECRET>"
 
 webhook_action_config = {
@@ -346,10 +347,77 @@ print("delete_alert_rule()")
 print(delete_alert_rule_r)
 
 # update_alert_rule
-update_alert_rule_r = j1.update_alert_rule(rule_id="<GUID>",
-                                           j1ql="find jupiterone_user as i return i._key",
+alert_rule_config_alert = [
+    {
+        "type": "CREATE_ALERT"
+    }
+]
+
+alert_rule_config_tag = [
+    {
+        "type": "TAG_ENTITIES",
+        "entities": "{{queries.query0.data}}",
+        "tags": [
+            {
+                "name": "tagName",
+                "value": "tagValue"
+            }
+        ]
+    }
+]
+
+alert_rule_config_webhook = [
+    {
+        "type": "WEBHOOK",
+        "endpoint": "https://webhook.example",
+        "headers": {
+            "Authorization": "Bearer <TOKEN>"
+        },
+        "method": "POST",
+        "body": {
+            "queryData": "{{queries.query0.data}}"
+        }
+    }
+]
+
+alert_rule_config_multiple = [
+    {
+        "type": "WEBHOOK",
+        "endpoint": "https://webhook.example",
+        "headers": {
+            "Authorization": "Bearer <TOKEN>"
+        },
+        "method": "POST",
+        "body": {
+            "queryData": "{{queries.query0.data}}"
+        }
+    },
+    {
+        "type": "TAG_ENTITIES",
+        "entities": "{{queries.query0.data}}",
+        "tags": [
+            {
+                "name": "tagName",
+                "value": "tagValue"
+            }
+        ]
+    }
+]
+
+# tag_op can be OVERWRITE or APPEND
+# severity can be INFO, LOW, MEDIUM, HIGH, or CRITICAL
+# action_configs_op can be OVERWRITE or APPEND
+
+update_alert_rule_r = j1.update_alert_rule(rule_id="GUID>",
+                                           name="Updated Alert Rule Name",
+                                           description="Updated Alert Rule Description",
+                                           j1ql="find jupiterone_user",
                                            polling_interval="ONE_WEEK",
-                                           tags=['new_tag1', 'new_tag2'])
+                                           tags=['tag1', 'tag2', 'tag3'],
+                                           tag_op="OVERWRITE",
+                                           severity="INFO",
+                                           action_configs=alert_rule_config_tag,
+                                           action_configs_op="OVERWRITE")
 print("update_alert_rule()")
 print(json.dumps(update_alert_rule_r, indent=1))
 
@@ -357,5 +425,7 @@ print(json.dumps(update_alert_rule_r, indent=1))
 evaluate_alert_rule_r = j1.evaluate_alert_rule(rule_id="<GUID>")
 print("evaluate_alert_rule()")
 print(json.dumps(evaluate_alert_rule_r, indent=1))
+
+
 
 
