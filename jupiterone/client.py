@@ -6,6 +6,7 @@ import json
 from warnings import warn
 from typing import Dict, List
 from datetime import datetime
+import time
 
 import re
 import requests
@@ -45,6 +46,9 @@ from jupiterone.constants import (
     UPDATE_RULE_INSTANCE,
     EVALUATE_RULE_INSTANCE,
     QUESTIONS,
+    COMPLIANCE_FRAMEWORK_ITEM,
+    LIST_COLLECTION_RESULTS,
+    GET_RAW_DATA_DOWNLOAD_URL,
 )
 
 
@@ -1010,42 +1014,52 @@ class JupiterOneClient:
         response = self._execute_query(EVALUATE_RULE_INSTANCE, variables=variables)
         return response
 
-    def fetch_latest_evaluation_results(self):
-        """Fetch latest Alert Rules configured in J1 account
+    def list_alert_rule_evaluation_results(self, rule_id: str = None):
+        """Fetch a list of Evaluation Results for an Alert Rule configured in J1 account
 
         """
-        results = []
-
-        data = {
-            "query": LIST_RULE_INSTANCES,
-            "flags": {
-                "variableResultSize": True
-            }
+        variables = {
+            "collectionType": "RULE_EVALUATION",
+            "collectionOwnerId": rule_id,
+            "beginTimestamp": 0,
+            "endTimestamp": round(time.time() * 1000),
+            "limit": 40
         }
 
-        r = requests.post(url=self.graphql_url, headers=self.headers, json=data, verify=True).json()
-        results.extend(r['data']['listRuleInstances']['questionInstances'])
+        response = self._execute_query(LIST_COLLECTION_RESULTS, variables=variables)
+        return response
 
-        while r['data']['listRuleInstances']['pageInfo']['hasNextPage'] == True:
+    def fetch_evaluation_result_download_url(self, raw_data_key: str = None):
+        """Fetch evaluation result Download URL for Alert Rule configured in J1 account
 
-            cursor = r['data']['listRuleInstances']['pageInfo']['endCursor']
+        """
+        variables = {
+            "rawDataKey": raw_data_key
+        }
 
-            # cursor query until last page fetched
-            data = {
-                "query": LIST_RULE_INSTANCES,
-                "variables": {
-                    "cursor": cursor
-                },
-                "flags":{
-                    "variableResultSize": True
-                }
-            }
+        response = self._execute_query(GET_RAW_DATA_DOWNLOAD_URL, variables=variables)
+        return response
 
-            r = requests.post(url=self.graphql_url, headers=self.headers, json=data, verify=True).json()
-            results.extend(r['data']['listRuleInstances']['questionInstances'])
+    def fetch_downloaded_evaluation_results(self, download_url: str = None):
+        """Return full Alert Rule J1QL results from Download URL
 
-        return results
-    
+        """
+        # initiate requests session and implement retry logic of 5 request retries with 1 second between
+        s = requests.Session()
+        retries = Retry(total=5, backoff_factor=1, status_forcelist=[502, 503, 504])
+        s.mount('https://', HTTPAdapter(max_retries=retries))
+        
+        try:
+            response = s.get(
+                download_url, timeout=60
+            )
+            
+            return response.json()
+            
+        except Exception as e:
+
+            return e
+
     def list_questions(self):
         """List all defined Questions configured in J1 account Questions Library
 
@@ -1081,3 +1095,16 @@ class JupiterOneClient:
             results.extend(r['data']['questions']['questions'])
 
         return results
+
+    def get_compliance_framework_item_details(self, item_id: str = None):
+        """Fetch Details of a Compliance Framework Requirement configured in J1 account
+
+        """
+        variables = {
+          "input": {
+            "id": item_id
+          }
+        }
+
+        response = self._execute_query(COMPLIANCE_FRAMEWORK_ITEM, variables=variables)
+        return response

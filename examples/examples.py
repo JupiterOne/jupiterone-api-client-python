@@ -426,6 +426,24 @@ evaluate_alert_rule_r = j1.evaluate_alert_rule(rule_id="<GUID>")
 print("evaluate_alert_rule()")
 print(json.dumps(evaluate_alert_rule_r, indent=1))
 
+# get_compliance_framework_item_details
+r = j1.get_compliance_framework_item_details(item_id="<GUID>")
+print("get_compliance_framework_item_details()")
+print(json.dumps(r, indent=1))
 
+# list alert rule evaluation results
+r = j1.list_alert_rule_evaluation_results(rule_id="<GUID>")
+print("list_alert_rule_evaluation_results()")
+print(json.dumps(r, indent=1))
+
+# fetch_evaluation_result_download_url
+r = j1.fetch_evaluation_result_download_url(raw_data_key="RULE_EVALUATION/<GUID>/query0.json")
+print("fetch_evaluation_result_download_url()")
+print(json.dumps(r, indent=1))
+
+# fetch_downloaded_evaluation_results
+r = j1.fetch_downloaded_evaluation_results(download_url="https://download.us.jupiterone.io/<GUID>%2FRULE_EVALUATION%2F<GUID>%2F<epoch>%2Fquery0.json?token=<TOKEN>&Expires=<epoch>")
+print("fetch_downloaded_evaluation_results()")
+print(json.dumps(r, indent=1))
 
 
