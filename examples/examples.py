@@ -404,6 +404,7 @@ alert_rule_config_multiple = [
     }
 ]
 
+# polling_interval can be DISABLED, THIRTY_MINUTES, ONE_HOUR, FOUR_HOURS, EIGHT_HOURS, TWELVE_HOURS, ONE_DAY, or ONE_WEEK
 # tag_op can be OVERWRITE or APPEND
 # severity can be INFO, LOW, MEDIUM, HIGH, or CRITICAL
 # action_configs_op can be OVERWRITE or APPEND
