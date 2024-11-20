@@ -49,6 +49,10 @@ from jupiterone.constants import (
     COMPLIANCE_FRAMEWORK_ITEM,
     LIST_COLLECTION_RESULTS,
     GET_RAW_DATA_DOWNLOAD_URL,
+    FIND_INTEGRATION_DEFINITION,
+    INTEGRATION_INSTANCES,
+    INTEGRATION_INSTANCE,
+    UPDATE_INTEGRATION_INSTANCE,
 )
 
 
@@ -443,7 +447,10 @@ class JupiterOneClient:
         response = self._execute_query(DELETE_RELATIONSHIP, variables=variables)
         return response["data"]["deleteRelationship"]
 
-    def create_integration_instance(self, instance_name: str = None, instance_description: str = None, integration_definition_id: str = "8013680b-311a-4c2e-b53b-c8735fd97a5c"):
+    def create_custom_integration_instance(self, 
+                                           instance_name: str = None,
+                                           instance_description: str = None,
+                                           integration_definition_id: str = "8013680b-311a-4c2e-b53b-c8735fd97a5c"):
         """Creates a new Custom Integration Instance.
 
         args:
@@ -648,6 +655,91 @@ class JupiterOneClient:
         response = self._execute_query(INTEGRATION_INSTANCE_EVENT_VALUES, variables=variables)
 
         return response['data']['integrationEvents']
+
+    def get_integration_definition_details(self, integration_type: str = None):
+        """Fetch the Integration Definition Details for a given integration type.
+
+        """
+        variables = {
+            "integrationType": integration_type,
+            "includeConfig": True
+        }
+
+        response = self._execute_query(FIND_INTEGRATION_DEFINITION, variables=variables)
+        return response
+
+    def fetch_integration_instances(self, definition_id: str = None):
+        """Fetch all configured Instances for a given integration type.
+
+                """
+        variables = {
+            "definitionId": definition_id,
+            "limit": 100
+        }
+
+        response = self._execute_query(INTEGRATION_INSTANCES, variables=variables)
+        return response
+
+    def get_integration_instance_details(self, instance_id: str = None):
+        """Fetch configuration details for a single configured Integration Instance.
+
+                """
+        variables = {
+            "integrationInstanceId": instance_id
+        }
+
+        response = self._execute_query(INTEGRATION_INSTANCE, variables=variables)
+        return response
+
+    def update_integration_instance_config_value(self, 
+                                                 instance_id: str = None,
+                                                 config_key: str = None,
+                                                 config_value: str = None):
+        """Update a single config k:v pair existing on a configured Integration Instance.
+
+                """
+
+       # fetch existing instnace configuration
+        instance_config = self.get_integration_instance_details(instance_id=instance_id)
+        config_dict = instance_config['data']['integrationInstance']['config']
+
+        if str(config_dict.get(config_key, "Not Found")) != "Not Found":
+
+            # update config key value with new provided value
+            config_dict[config_key] = config_value
+            instance_config['data']['integrationInstance']['config'] = config_dict
+
+            # remove externalId to not include in update payload
+            del instance_config['data']['integrationInstance']['config']['externalId']
+
+            # prepare variables GraphQL payload for updating config
+            instance_details = instance_config['data']['integrationInstance']
+
+            variables = {
+                "id": instance_details['id'],
+                "update": {
+                    "pollingInterval": instance_details['pollingInterval'],
+                    "config": instance_details['config'],
+                "description": instance_details['description'],
+                "name": instance_details['name'],
+                "collectorPoolId": instance_details['collectorPoolId'],
+                "pollingIntervalCronExpression": instance_details['pollingIntervalCronExpression'],
+                "ingestionSourcesOverrides": instance_details['ingestionSourcesOverrides']
+                }
+            }
+
+            # remove problem fields from previous response
+            del variables['update']['pollingIntervalCronExpression']['__typename']
+
+            for ingestion_source in instance_details['ingestionSourcesOverrides']:
+                ingestion_source.pop("__typename", None)  # Removes key if it exists, ignores if not
+
+            response = self._execute_query(UPDATE_INTEGRATION_INSTANCE, variables=variables)
+
+            return response
+
+        else:
+            return "Provided 'config_key' not found in existing Integration Instance config"
 
     def create_smartclass(self, smartclass_name: str = None, smartclass_description: str = None):
         """Creates a new Smart Class within Assets.

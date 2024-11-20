@@ -313,6 +313,258 @@ INTEGRATION_INSTANCE_EVENT_VALUES = """
       }
     }
 """
+FIND_INTEGRATION_DEFINITION = """
+    query FindIntegrationDefinition($integrationType: String!, $includeConfig: Boolean!) {
+      findIntegrationDefinition(integrationType: $integrationType) {
+        ...IntegrationDefinitionsValues
+        __typename
+      }
+    }
+    
+    fragment IntegrationDefinitionsValues on IntegrationDefinition {
+      id
+      name
+      type
+      title
+      displayMode
+      oAuth {
+        oAuthUrlGeneratorPath
+        __typename
+      }
+      offsiteUrl
+      offsiteButtonTitle
+      offsiteStatusQuery
+      integrationType
+      integrationClass
+      integrationCategory
+      beta
+      docsWebLink
+      repoWebLink
+      invocationPaused
+      managedExecutionDisabled
+      integrationPlatformFeatures {
+        supportsChildInstances
+        supportsCollectors
+        supportsIngestionSourcesConfig
+        __typename
+      }
+      ingestionSourcesConfig {
+        id
+        title
+        description
+        defaultsToDisabled
+        childIngestionSourcesMetadata {
+          id
+          name
+          __typename
+        }
+        cannotBeDisabled
+        __typename
+      }
+      ingestionSourcesOverrides {
+        enabled
+        ingestionSourceId
+        __typename
+      }
+      totalInstanceCount
+      integrationJobStatusMetrics {
+        count
+        status
+        __typename
+      }
+      ...IntegrationDefinitionConfigFragment @include(if: $includeConfig)
+      __typename
+    }
+    
+    fragment IntegrationDefinitionConfigFragment on IntegrationDefinition {
+      configFields {
+        ...ConfigFieldsRecursive
+        __typename
+      }
+      authSections {
+        id
+        description
+        displayName
+        configFields {
+          ...ConfigFieldsRecursive
+          __typename
+        }
+        verificationDisabled
+        __typename
+      }
+      configSections {
+        displayName
+        configFields {
+          ...ConfigFieldsRecursive
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    
+    fragment ConfigFieldsRecursive on ConfigField {
+      ...ConfigFieldValues
+      configFields {
+        ...ConfigFieldValues
+        configFields {
+          ...ConfigFieldValues
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    
+    fragment ConfigFieldValues on ConfigField {
+      key
+      displayName
+      description
+      type
+      format
+      defaultValue
+      helperText
+      inputAdornment
+      mask
+      optional
+      immutable
+      readonly
+      computed
+      options {
+        value
+        description
+        label
+        webLink
+        default
+        __typename
+      }
+      __typename
+    }
+"""
+INTEGRATION_INSTANCES = """
+    fragment IntegrationInstanceLiteValues on IntegrationInstanceLite {
+      id
+      name
+      accountId
+      sourceIntegrationInstanceId
+      pollingInterval
+      pollingIntervalCronExpression {
+        hour
+        dayOfWeek
+        __typename
+      }
+      integrationDefinitionId
+      description
+      config
+      instanceRelationship
+      mostRecentJob {
+        status
+        hasSkippedSteps
+        createDate
+        __typename
+      }
+      __typename
+    }
+    
+    query IntegrationInstances($definitionId: String, $cursor: String, $limit: Int, $filter: ListIntegrationInstancesSearchFilter) {
+      integrationInstancesV2(
+        definitionId: $definitionId
+        cursor: $cursor
+        limit: $limit
+        filter: $filter
+      ) {
+        instances {
+          ...IntegrationInstanceLiteValues
+          __typename
+        }
+        pageInfo {
+          endCursor
+          __typename
+        }
+        __typename
+      }
+    }
+"""
+INTEGRATION_INSTANCE = """
+    fragment IntegrationInstanceValues on IntegrationInstance {
+      id
+      name
+      accountId
+      sourceIntegrationInstanceId
+      pollingInterval
+      pollingIntervalCronExpression {
+        hour
+        dayOfWeek
+        __typename
+      }
+      integrationDefinition {
+        name
+        integrationType
+        __typename
+      }
+      integrationDefinitionId
+      description
+      config
+      offsiteComplete
+      jobs {
+        jobs {
+          ...IntegrationInstanceJobValues
+          __typename
+        }
+        __typename
+      }
+      instanceRelationship
+      ingestionSourcesOverrides {
+        ingestionSourceId
+        enabled
+        __typename
+      }
+      collectorPoolId
+      __typename
+    }
+    
+    fragment IntegrationInstanceJobValues on IntegrationJob {
+      id
+      status
+      integrationInstanceId
+      createDate
+      endDate
+      hasSkippedSteps
+      __typename
+    }
+    
+    query IntegrationInstance($integrationInstanceId: String!) {
+      integrationInstance(id: $integrationInstanceId) {
+        ...IntegrationInstanceValues
+        __typename
+      }
+    }
+"""
+UPDATE_INTEGRATION_INSTANCE = """
+    mutation UpdateIntegrationInstance($id: String!, $update: UpdateIntegrationInstanceInput!) {
+      updateIntegrationInstance(id: $id, update: $update) {
+        id
+        name
+        pollingInterval
+        pollingIntervalCronExpression {
+          hour
+          dayOfWeek
+          __typename
+        }
+        integrationDefinitionId
+        description
+        config
+        offsiteComplete
+        ingestionSourcesOverrides {
+          ingestionSourceId
+          enabled
+          __typename
+        }
+        collectorPoolId
+        __typename
+      }
+    }
+"""
 
 # J1QL & AI
 QUERY_V1 = """

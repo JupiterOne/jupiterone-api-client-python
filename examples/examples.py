@@ -114,11 +114,11 @@ fetch_entity_raw_data_r = j1.fetch_entity_raw_data(entity_id="<GUID>")
 print("fetch_entity_raw_data()")
 print(json.dumps(fetch_entity_raw_data_r, indent=1))
 
-# create_integration_instance
-create_integration_instance_r = j1.create_integration_instance(instance_name="pythonclient-customintegration",
+# create_custom_integration_instance
+create_custom_integration_instance_r = j1.create_custom_integration_instance(instance_name="pythonclient-customintegration",
                                                                instance_description="dev-testing")
-print("create_integration_instance()")
-print(create_integration_instance_r)
+print("create_custom_integration_instance()")
+print(create_custom_integration_instance_r)
 
 integration_instance_id = "<GUID>"
 
@@ -447,4 +447,17 @@ r = j1.fetch_downloaded_evaluation_results(download_url="https://download.us.jup
 print("fetch_downloaded_evaluation_results()")
 print(json.dumps(r, indent=1))
 
+# get_integration_definition_details
+r = j1.get_integration_definition_details(integration_type="aws")
+print("get_integration_definition_details()")
+print(json.dumps(r, indent=1))
 
+# fetch_integration_instances
+r = j1.fetch_integration_instances(definition_id="<GUID>")
+print("fetch_integration_instances()")
+print(json.dumps(r, indent=1))
+
+# get_integration_instance_details
+r = j1.get_integration_instance_details(instance_id="<GUID>")
+print("get_integration_instance_details()")
+print(json.dumps(r, indent=1))
