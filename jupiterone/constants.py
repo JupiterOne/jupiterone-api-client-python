@@ -1194,3 +1194,39 @@ fragment ReviewConfigurationFields on ComplianceReviewConfiguration {
   __typename
 }
 """
+
+# PARAMETERS
+PARAMETER = """
+    query Query($name: String!) {
+      parameter(name: $name) {
+        name
+        value
+        secret
+        lastUpdatedOn
+      }
+    }
+"""
+PARAMETER_LIST = """
+    query Query($limit: Int, $cursor: String) {
+      parameterList(limit: $limit, cursor: $cursor) {
+        items {
+          name
+          value
+          secret
+          lastUpdatedOn
+        }
+        pageInfo {
+          endCursor
+          hasNextPage
+        }
+      }
+    }
+"""
+UPSERT_PARAMETER = """
+    mutation UpsertParameter($name: String!, $value: ParameterValue!, $secret: Boolean) {
+      setParameter(name: $name, value: $value, secret: $secret) {
+        success
+        __typename
+      }
+    }
+"""

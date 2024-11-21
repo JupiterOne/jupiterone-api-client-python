@@ -461,3 +461,12 @@ print(json.dumps(r, indent=1))
 r = j1.get_integration_instance_details(instance_id="<GUID>")
 print("get_integration_instance_details()")
 print(json.dumps(r, indent=1))
+
+r = j1.get_parameter_details(name="ParameterName")
+print(json.dumps(r, indent=1))
+
+r = j1.list_account_parameters()
+print(json.dumps(r, indent=1))
+
+r = j1.create_update_parameter(name="ParameterName", value="stored_value", secret=False)
+print(json.dumps(r, indent=1))

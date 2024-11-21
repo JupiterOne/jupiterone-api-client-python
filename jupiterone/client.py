@@ -12,6 +12,7 @@ import re
 import requests
 from requests.adapters import HTTPAdapter, Retry
 from retrying import retry
+from typing import Union, List
 
 from jupiterone.errors import (
     JupiterOneClientError,
@@ -53,6 +54,9 @@ from jupiterone.constants import (
     INTEGRATION_INSTANCES,
     INTEGRATION_INSTANCE,
     UPDATE_INTEGRATION_INSTANCE,
+    PARAMETER,
+    PARAMETER_LIST,
+    UPSERT_PARAMETER,
 )
 
 
@@ -1199,4 +1203,63 @@ class JupiterOneClient:
         }
 
         response = self._execute_query(COMPLIANCE_FRAMEWORK_ITEM, variables=variables)
+        return response
+
+    def get_parameter_details(self, name: str = None):
+        """Fetch Details of a configured Parameter in J1 account
+
+                """
+        variables = {
+            "name": name
+        }
+
+        response = self._execute_query(PARAMETER, variables=variables)
+        return response
+
+    def list_account_parameters(self):
+        """Fetch List of all configured Account Parameters in J1 account
+
+        """
+        results = []
+
+        data = {
+            "query": PARAMETER_LIST,
+            "flags": {
+                "variableResultSize": True
+            }
+        }
+
+        r = requests.post(url=self.graphql_url, headers=self.headers, json=data, verify=True).json()
+        results.extend(r['data']['parameterList']['items'])
+
+        while r['data']['parameterList']['pageInfo']['hasNextPage'] == True:
+            cursor = r['data']['parameterList']['pageInfo']['endCursor']
+
+            # cursor query until last page fetched
+            data = {
+                "query": PARAMETER_LIST,
+                "variables": {
+                    "cursor": cursor
+                },
+                "flags": {
+                    "variableResultSize": True
+                }
+            }
+
+            r = requests.post(url=self.graphql_url, headers=self.headers, json=data, verify=True).json()
+            results.extend(r['data']['parameterList']['items'])
+
+        return results
+
+    def create_update_parameter(self, name: str = None, value: Union[str, int, bool, list] = None, secret: bool = False):
+        """Create or Update Account Parameter in J1 account
+
+        """
+        variables = {
+            "name": name,
+            "value": value,
+            "secret": secret
+        }
+
+        response = self._execute_query(UPSERT_PARAMETER, variables=variables)
         return response
