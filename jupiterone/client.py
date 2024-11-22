@@ -451,7 +451,7 @@ class JupiterOneClient:
         response = self._execute_query(DELETE_RELATIONSHIP, variables=variables)
         return response["data"]["deleteRelationship"]
 
-    def create_custom_integration_instance(self, 
+    def create_integration_instance(self, 
                                            instance_name: str = None,
                                            instance_description: str = None,
                                            integration_definition_id: str = "8013680b-311a-4c2e-b53b-c8735fd97a5c"):
