@@ -6,11 +6,13 @@ import json
 from warnings import warn
 from typing import Dict, List
 from datetime import datetime
+import time
 
 import re
 import requests
 from requests.adapters import HTTPAdapter, Retry
 from retrying import retry
+from typing import Union, List
 
 from jupiterone.errors import (
     JupiterOneClientError,
@@ -43,7 +45,18 @@ from jupiterone.constants import (
     CREATE_RULE_INSTANCE,
     DELETE_RULE_INSTANCE,
     UPDATE_RULE_INSTANCE,
-    EVALUATE_RULE_INSTANCE
+    EVALUATE_RULE_INSTANCE,
+    QUESTIONS,
+    COMPLIANCE_FRAMEWORK_ITEM,
+    LIST_COLLECTION_RESULTS,
+    GET_RAW_DATA_DOWNLOAD_URL,
+    FIND_INTEGRATION_DEFINITION,
+    INTEGRATION_INSTANCES,
+    INTEGRATION_INSTANCE,
+    UPDATE_INTEGRATION_INSTANCE,
+    PARAMETER,
+    PARAMETER_LIST,
+    UPSERT_PARAMETER,
 )
 
 
@@ -438,7 +451,10 @@ class JupiterOneClient:
         response = self._execute_query(DELETE_RELATIONSHIP, variables=variables)
         return response["data"]["deleteRelationship"]
 
-    def create_integration_instance(self, instance_name: str = None, instance_description: str = None, integration_definition_id: str = "8013680b-311a-4c2e-b53b-c8735fd97a5c"):
+    def create_integration_instance(self, 
+                                           instance_name: str = None,
+                                           instance_description: str = None,
+                                           integration_definition_id: str = "8013680b-311a-4c2e-b53b-c8735fd97a5c"):
         """Creates a new Custom Integration Instance.
 
         args:
@@ -644,6 +660,91 @@ class JupiterOneClient:
 
         return response['data']['integrationEvents']
 
+    def get_integration_definition_details(self, integration_type: str = None):
+        """Fetch the Integration Definition Details for a given integration type.
+
+        """
+        variables = {
+            "integrationType": integration_type,
+            "includeConfig": True
+        }
+
+        response = self._execute_query(FIND_INTEGRATION_DEFINITION, variables=variables)
+        return response
+
+    def fetch_integration_instances(self, definition_id: str = None):
+        """Fetch all configured Instances for a given integration type.
+
+                """
+        variables = {
+            "definitionId": definition_id,
+            "limit": 100
+        }
+
+        response = self._execute_query(INTEGRATION_INSTANCES, variables=variables)
+        return response
+
+    def get_integration_instance_details(self, instance_id: str = None):
+        """Fetch configuration details for a single configured Integration Instance.
+
+                """
+        variables = {
+            "integrationInstanceId": instance_id
+        }
+
+        response = self._execute_query(INTEGRATION_INSTANCE, variables=variables)
+        return response
+
+    def update_integration_instance_config_value(self, 
+                                                 instance_id: str = None,
+                                                 config_key: str = None,
+                                                 config_value: str = None):
+        """Update a single config k:v pair existing on a configured Integration Instance.
+
+                """
+
+       # fetch existing instnace configuration
+        instance_config = self.get_integration_instance_details(instance_id=instance_id)
+        config_dict = instance_config['data']['integrationInstance']['config']
+
+        if str(config_dict.get(config_key, "Not Found")) != "Not Found":
+
+            # update config key value with new provided value
+            config_dict[config_key] = config_value
+            instance_config['data']['integrationInstance']['config'] = config_dict
+
+            # remove externalId to not include in update payload
+            del instance_config['data']['integrationInstance']['config']['externalId']
+
+            # prepare variables GraphQL payload for updating config
+            instance_details = instance_config['data']['integrationInstance']
+
+            variables = {
+                "id": instance_details['id'],
+                "update": {
+                    "pollingInterval": instance_details['pollingInterval'],
+                    "config": instance_details['config'],
+                "description": instance_details['description'],
+                "name": instance_details['name'],
+                "collectorPoolId": instance_details['collectorPoolId'],
+                "pollingIntervalCronExpression": instance_details['pollingIntervalCronExpression'],
+                "ingestionSourcesOverrides": instance_details['ingestionSourcesOverrides']
+                }
+            }
+
+            # remove problem fields from previous response
+            del variables['update']['pollingIntervalCronExpression']['__typename']
+
+            for ingestion_source in instance_details['ingestionSourcesOverrides']:
+                ingestion_source.pop("__typename", None)  # Removes key if it exists, ignores if not
+
+            response = self._execute_query(UPDATE_INTEGRATION_INSTANCE, variables=variables)
+
+            return response
+
+        else:
+            return "Provided 'config_key' not found in existing Integration Instance config"
+
     def create_smartclass(self, smartclass_name: str = None, smartclass_description: str = None):
         """Creates a new Smart Class within Assets.
 
@@ -804,7 +905,14 @@ class JupiterOneClient:
         else:
             return 'Alert Rule not found for provided ID in configured J1 Account'
 
-    def create_alert_rule(self, name: str = None, description: str = None, tags: List[str] = None, polling_interval: str = None, severity: str = None, j1ql: str = None, action_configs: Dict = None):
+    def create_alert_rule(self,
+                          name: str = None,
+                          description: str = None,
+                          tags: List[str] = None,
+                          polling_interval: str = None,
+                          severity: str = None,
+                          j1ql: str = None,
+                          action_configs: Dict = None):
         """Create Alert Rule Configuration in J1 account
 
         """
@@ -864,6 +972,8 @@ class JupiterOneClient:
         if action_configs:
             variables['instance']['operations'][0]['actions'].append(action_configs)
 
+        print(variables)
+
         response = self._execute_query(CREATE_RULE_INSTANCE, variables=variables)
 
         return response['data']['createInlineQuestionRuleInstance']
@@ -880,7 +990,17 @@ class JupiterOneClient:
 
         return response['data']['deleteRuleInstance']
 
-    def update_alert_rule(self, rule_id: str = None, j1ql: str = None, polling_interval: str = None, tags: List[str] = None, tag_op: str = None):
+    def update_alert_rule(self,
+                          rule_id: str = None,
+                          name: str = None,
+                          description: str = None,
+                          j1ql: str = None,
+                          polling_interval: str = None,
+                          severity: str = None,
+                          tags: List[str] = None,
+                          tag_op: str = None,
+                          action_configs: List[dict] = None,
+                          action_configs_op: str = None):
         """Update Alert Rule Configuration in J1 account
 
         """
@@ -894,6 +1014,18 @@ class JupiterOneClient:
         operations = alert_rule_config['operations']
         del operations[0]['__typename']
 
+        # update name if provided
+        if name is not None:
+            alert_name = name
+        else:
+            alert_name = alert_rule_config['name']
+
+        # update description if provided
+        if description is not None:
+            alert_description = description
+        else:
+            alert_description = alert_rule_config['description']
+
         # update J1QL query if provided
         if j1ql is not None:
             question_config = alert_rule_config['question']
@@ -901,7 +1033,7 @@ class JupiterOneClient:
             del question_config['__typename']
             del question_config['queries'][0]['__typename']
 
-            # update query string
+            # update query string if provided
             question_config['queries'][0]['query'] = j1ql
         else:
             question_config = alert_rule_config['question']
@@ -917,7 +1049,6 @@ class JupiterOneClient:
 
         # update tags list if provided
         if tags is not None:
-            
             if tag_op == "OVERWRITE":
                 tags_config = tags
             elif tag_op == "APPEND":
@@ -927,12 +1058,36 @@ class JupiterOneClient:
         else:
             tags_config = alert_rule_config['tags']
 
+        # update action_configs list if provided
+        if action_configs is not None:
+
+            if action_configs_op == "OVERWRITE":
+
+                # maintain first item and build new list from input
+                alert_action_configs = []
+                base_action = alert_rule_config['operations'][0]['actions'][0]
+                alert_action_configs.append(base_action)
+                alert_action_configs.extend(action_configs)
+
+                # update actions field inside operations payload
+                operations[0]['actions'] = alert_action_configs
+
+            elif action_configs_op == "APPEND":
+
+                # update actions field inside operations payload
+                operations[0]['actions'].extend(action_configs)
+
+        # update alert severity if provided
+        if severity is not None:
+            operations[0]['actions'][0]['targetValue'] = severity
+
         variables = {
           "instance": {
               "id": rule_id,
               "version": rule_version,
               "specVersion": alert_rule_config['specVersion'],
-              "name": alert_rule_config['name'],
+              "name": alert_name,
+              "description": alert_description,
               "question": question_config,
               "operations": operations,
               "pollingInterval": interval_config,
@@ -953,4 +1108,158 @@ class JupiterOneClient:
         }
 
         response = self._execute_query(EVALUATE_RULE_INSTANCE, variables=variables)
+        return response
+
+    def list_alert_rule_evaluation_results(self, rule_id: str = None):
+        """Fetch a list of Evaluation Results for an Alert Rule configured in J1 account
+
+        """
+        variables = {
+            "collectionType": "RULE_EVALUATION",
+            "collectionOwnerId": rule_id,
+            "beginTimestamp": 0,
+            "endTimestamp": round(time.time() * 1000),
+            "limit": 40
+        }
+
+        response = self._execute_query(LIST_COLLECTION_RESULTS, variables=variables)
+        return response
+
+    def fetch_evaluation_result_download_url(self, raw_data_key: str = None):
+        """Fetch evaluation result Download URL for Alert Rule configured in J1 account
+
+        """
+        variables = {
+            "rawDataKey": raw_data_key
+        }
+
+        response = self._execute_query(GET_RAW_DATA_DOWNLOAD_URL, variables=variables)
+        return response
+
+    def fetch_downloaded_evaluation_results(self, download_url: str = None):
+        """Return full Alert Rule J1QL results from Download URL
+
+        """
+        # initiate requests session and implement retry logic of 5 request retries with 1 second between
+        s = requests.Session()
+        retries = Retry(total=5, backoff_factor=1, status_forcelist=[502, 503, 504])
+        s.mount('https://', HTTPAdapter(max_retries=retries))
+        
+        try:
+            response = s.get(
+                download_url, timeout=60
+            )
+            
+            return response.json()
+            
+        except Exception as e:
+
+            return e
+
+    def list_questions(self):
+        """List all defined Questions configured in J1 account Questions Library
+
+        """
+        results = []
+
+        data = {
+            "query": QUESTIONS,
+            "flags": {
+                "variableResultSize": True
+            }
+        }
+
+        r = requests.post(url=self.graphql_url, headers=self.headers, json=data, verify=True).json()
+        results.extend(r['data']['questions']['questions'])
+
+        while r['data']['questions']['pageInfo']['hasNextPage'] == True:
+
+            cursor = r['data']['questions']['pageInfo']['endCursor']
+
+            # cursor query until last page fetched
+            data = {
+                "query": QUESTIONS,
+                "variables": {
+                    "cursor": cursor
+                },
+                "flags":{
+                    "variableResultSize": True
+                }
+            }
+
+            r = requests.post(url=self.graphql_url, headers=self.headers, json=data, verify=True).json()
+            results.extend(r['data']['questions']['questions'])
+
+        return results
+
+    def get_compliance_framework_item_details(self, item_id: str = None):
+        """Fetch Details of a Compliance Framework Requirement configured in J1 account
+
+        """
+        variables = {
+          "input": {
+            "id": item_id
+          }
+        }
+
+        response = self._execute_query(COMPLIANCE_FRAMEWORK_ITEM, variables=variables)
+        return response
+
+    def get_parameter_details(self, name: str = None):
+        """Fetch Details of a configured Parameter in J1 account
+
+                """
+        variables = {
+            "name": name
+        }
+
+        response = self._execute_query(PARAMETER, variables=variables)
+        return response
+
+    def list_account_parameters(self):
+        """Fetch List of all configured Account Parameters in J1 account
+
+        """
+        results = []
+
+        data = {
+            "query": PARAMETER_LIST,
+            "flags": {
+                "variableResultSize": True
+            }
+        }
+
+        r = requests.post(url=self.graphql_url, headers=self.headers, json=data, verify=True).json()
+        results.extend(r['data']['parameterList']['items'])
+
+        while r['data']['parameterList']['pageInfo']['hasNextPage'] == True:
+            cursor = r['data']['parameterList']['pageInfo']['endCursor']
+
+            # cursor query until last page fetched
+            data = {
+                "query": PARAMETER_LIST,
+                "variables": {
+                    "cursor": cursor
+                },
+                "flags": {
+                    "variableResultSize": True
+                }
+            }
+
+            r = requests.post(url=self.graphql_url, headers=self.headers, json=data, verify=True).json()
+            results.extend(r['data']['parameterList']['items'])
+
+        return results
+
+    def create_update_parameter(self, name: str = None, value: Union[str, int, bool, list] = None, secret: bool = False):
+        """Create or Update Account Parameter in J1 account
+
+        """
+        variables = {
+            "name": name,
+            "value": value,
+            "secret": secret
+        }
+
+        response = self._execute_query(UPSERT_PARAMETER, variables=variables)
         return response

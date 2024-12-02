@@ -114,11 +114,11 @@ fetch_entity_raw_data_r = j1.fetch_entity_raw_data(entity_id="<GUID>")
 print("fetch_entity_raw_data()")
 print(json.dumps(fetch_entity_raw_data_r, indent=1))
 
-# create_integration_instance
-create_integration_instance_r = j1.create_integration_instance(instance_name="pythonclient-customintegration",
+# create_custom_integration_instance
+create_custom_integration_instance_r = j1.create_custom_integration_instance(instance_name="pythonclient-customintegration",
                                                                instance_description="dev-testing")
-print("create_integration_instance()")
-print(create_integration_instance_r)
+print("create_custom_integration_instance()")
+print(create_custom_integration_instance_r)
 
 integration_instance_id = "<GUID>"
 
@@ -305,7 +305,8 @@ print("get_alert_rule_details()")
 print(get_alert_rule_details_r)
 
 # create_alert_rule
-# polling_interval can be DISABLED, THIRTY_MINUTES, ONE_HOUR, FOUR_HOURS, EIGHT_HOURS, TWELVE_HOURS, ONE_DAY, and ONE_WEEK
+# polling_interval can be DISABLED, THIRTY_MINUTES, ONE_HOUR, FOUR_HOURS, EIGHT_HOURS, TWELVE_HOURS, ONE_DAY, or ONE_WEEK
+# severity can be INFO, LOW, MEDIUM, HIGH, or CRITICAL
 webhook_token = "<SECRET>"
 
 webhook_action_config = {
@@ -346,10 +347,78 @@ print("delete_alert_rule()")
 print(delete_alert_rule_r)
 
 # update_alert_rule
-update_alert_rule_r = j1.update_alert_rule(rule_id="<GUID>",
-                                           j1ql="find jupiterone_user as i return i._key",
+alert_rule_config_alert = [
+    {
+        "type": "CREATE_ALERT"
+    }
+]
+
+alert_rule_config_tag = [
+    {
+        "type": "TAG_ENTITIES",
+        "entities": "{{queries.query0.data}}",
+        "tags": [
+            {
+                "name": "tagName",
+                "value": "tagValue"
+            }
+        ]
+    }
+]
+
+alert_rule_config_webhook = [
+    {
+        "type": "WEBHOOK",
+        "endpoint": "https://webhook.example",
+        "headers": {
+            "Authorization": "Bearer <TOKEN>"
+        },
+        "method": "POST",
+        "body": {
+            "queryData": "{{queries.query0.data}}"
+        }
+    }
+]
+
+alert_rule_config_multiple = [
+    {
+        "type": "WEBHOOK",
+        "endpoint": "https://webhook.example",
+        "headers": {
+            "Authorization": "Bearer <TOKEN>"
+        },
+        "method": "POST",
+        "body": {
+            "queryData": "{{queries.query0.data}}"
+        }
+    },
+    {
+        "type": "TAG_ENTITIES",
+        "entities": "{{queries.query0.data}}",
+        "tags": [
+            {
+                "name": "tagName",
+                "value": "tagValue"
+            }
+        ]
+    }
+]
+
+# polling_interval can be DISABLED, THIRTY_MINUTES, ONE_HOUR, FOUR_HOURS, EIGHT_HOURS, TWELVE_HOURS, ONE_DAY, or ONE_WEEK
+# tag_op can be OVERWRITE or APPEND
+# severity can be INFO, LOW, MEDIUM, HIGH, or CRITICAL
+# action_configs_op can be OVERWRITE or APPEND
+
+update_alert_rule_r = j1.update_alert_rule(rule_id="GUID>",
+                                           name="Updated Alert Rule Name",
+                                           description="Updated Alert Rule Description",
+                                           j1ql="find jupiterone_user",
                                            polling_interval="ONE_WEEK",
-                                           tags=['new_tag1', 'new_tag2'])
+                                           tags=['tag1', 'tag2', 'tag3'],
+                                           tag_op="OVERWRITE",
+                                           severity="INFO",
+                                           action_configs=alert_rule_config_tag,
+                                           action_configs_op="OVERWRITE")
 print("update_alert_rule()")
 print(json.dumps(update_alert_rule_r, indent=1))
 
@@ -358,4 +427,46 @@ evaluate_alert_rule_r = j1.evaluate_alert_rule(rule_id="<GUID>")
 print("evaluate_alert_rule()")
 print(json.dumps(evaluate_alert_rule_r, indent=1))
 
+# get_compliance_framework_item_details
+r = j1.get_compliance_framework_item_details(item_id="<GUID>")
+print("get_compliance_framework_item_details()")
+print(json.dumps(r, indent=1))
 
+# list alert rule evaluation results
+r = j1.list_alert_rule_evaluation_results(rule_id="<GUID>")
+print("list_alert_rule_evaluation_results()")
+print(json.dumps(r, indent=1))
+
+# fetch_evaluation_result_download_url
+r = j1.fetch_evaluation_result_download_url(raw_data_key="RULE_EVALUATION/<GUID>/query0.json")
+print("fetch_evaluation_result_download_url()")
+print(json.dumps(r, indent=1))
+
+# fetch_downloaded_evaluation_results
+r = j1.fetch_downloaded_evaluation_results(download_url="https://download.us.jupiterone.io/<GUID>%2FRULE_EVALUATION%2F<GUID>%2F<epoch>%2Fquery0.json?token=<TOKEN>&Expires=<epoch>")
+print("fetch_downloaded_evaluation_results()")
+print(json.dumps(r, indent=1))
+
+# get_integration_definition_details
+r = j1.get_integration_definition_details(integration_type="aws")
+print("get_integration_definition_details()")
+print(json.dumps(r, indent=1))
+
+# fetch_integration_instances
+r = j1.fetch_integration_instances(definition_id="<GUID>")
+print("fetch_integration_instances()")
+print(json.dumps(r, indent=1))
+
+# get_integration_instance_details
+r = j1.get_integration_instance_details(instance_id="<GUID>")
+print("get_integration_instance_details()")
+print(json.dumps(r, indent=1))
+
+r = j1.get_parameter_details(name="ParameterName")
+print(json.dumps(r, indent=1))
+
+r = j1.list_account_parameters()
+print(json.dumps(r, indent=1))
+
+r = j1.create_update_parameter(name="ParameterName", value="stored_value", secret=False)
+print(json.dumps(r, indent=1))
