@@ -474,7 +474,7 @@ alert_rule_config_multiple = [
     }
 ]
 
-j1.update_alert_rule(rule_id="<id-of-alert-rule",
+j1.update_alert_rule(rule_id="<id-of-alert-rule>",
                      name="Updated Alert Rule Name",
                      description="Updated Alert Rule Description",
                      j1ql="find jupiterone_user",
@@ -539,7 +539,7 @@ j1.fetch_evaluation_result_download_url(raw_data_key="RULE_EVALUATION/<id-of-eva
 
 ```python
 
-j1.fetch_downloaded_evaluation_results(download_url="https://download.us.jupiterone.io/<GUID>%2FRULE_EVALUATION%2F<GUID>%2F<epoch>%2Fquery0.json?token=<TOKEN>&Expires=<epoch>")
+j1.fetch_downloaded_evaluation_results(download_url="https://download.us.jupiterone.io/<id-of-rule>/RULE_EVALUATION/<id-of-evaluation>/<epoch>/query0.json?token=<TOKEN>&Expires=<epoch>")
 
 ```
 
@@ -547,7 +547,9 @@ j1.fetch_downloaded_evaluation_results(download_url="https://download.us.jupiter
 
 ```python
 
-j1.get_integration_definition_details(integration_type="aws")
+# examples: 'aws', 'azure', 'google_cloud'
+
+j1.get_integration_definition_details(integration_type="<integration-type>")
 
 ```
 
