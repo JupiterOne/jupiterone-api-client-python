@@ -535,7 +535,7 @@ j1.fetch_evaluation_result_download_url(raw_data_key="RULE_EVALUATION/<id-of-eva
 
 ```
 
-##### Fetch Downloaded Evluation Results
+##### Fetch Downloaded Evaluation Results
 
 ```python
 
@@ -543,7 +543,7 @@ j1.fetch_downloaded_evaluation_results(download_url="https://download.us.jupiter
 
 ```
 
-##### Get Integration Defintion Details
+##### Get Integration Definition Details
 
 ```python
 
