@@ -499,7 +499,7 @@ j1.update_alert_rule(rule_id='<id-of-alert-rule>',
 
 ```python
 
-j1.evaluate_alert_rule(rule_id='<id-of-alert-rule')
+j1.evaluate_alert_rule(rule_id='<id-of-alert-rule>')
 
 ```
 
