@@ -5,7 +5,7 @@ install_reqs = ["requests", "retrying"]
 
 setup(
     name="jupiterone",
-    version="1.2.1",
+    version="1.3.0",
     description="A Python client for the JupiterOne API",
     license="MIT License",
     author="JupiterOne",
