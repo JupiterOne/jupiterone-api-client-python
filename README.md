@@ -485,11 +485,11 @@ j1.update_alert_rule(rule_id="<id-of-alert-rule>",
                      action_configs=alert_rule_config_tag,
                      action_configs_op="OVERWRITE")
 
-j1.update_alert_rule(rule_id='<id-of-alert-rule',
+j1.update_alert_rule(rule_id='<id-of-alert-rule>',
                      tags=['newTag1', 'newTag1'],
                      tag_op="OVERWRITE")
 
-j1.update_alert_rule(rule_id='<id-of-alert-rule',
+j1.update_alert_rule(rule_id='<id-of-alert-rule>',
                      tags=['additionalTag1', 'additionalTag2'],
                      tag_op="APPEND")
 
