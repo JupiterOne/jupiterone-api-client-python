@@ -444,7 +444,7 @@ class JupiterOneClient:
             variables["relationship"].update(properties)
 
         response = self._execute_query(query=UPDATE_RELATIONSHIPV2, variables=variables)
-        return response["data"]["updateRelationship"]
+        return response["data"]["updateRelationshipV2"]
 
     def delete_relationship(self, relationship_id: str = None):
         """Deletes a relationship between two entities.
