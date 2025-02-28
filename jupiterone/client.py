@@ -1,10 +1,11 @@
 """ Python SDK for JupiterOne GraphQL API """
+
 # pylint: disable=W0212,no-name-in-module
 # see https://github.com/PyCQA/pylint/issues/409
 
 import json
 from warnings import warn
-from typing import Dict, List
+from typing import Dict, List, Union
 from datetime import datetime
 import time
 
@@ -12,7 +13,6 @@ import re
 import requests
 from requests.adapters import HTTPAdapter, Retry
 from retrying import retry
-from typing import Union, List
 
 from jupiterone.errors import (
     JupiterOneClientError,
@@ -703,7 +703,7 @@ class JupiterOneClient:
 
                 """
 
-       # fetch existing instnace configuration
+        # fetch existing instnace configuration
         instance_config = self.get_integration_instance_details(instance_id=instance_id)
         config_dict = instance_config['data']['integrationInstance']['config']
 
@@ -714,7 +714,10 @@ class JupiterOneClient:
             instance_config['data']['integrationInstance']['config'] = config_dict
 
             # remove externalId to not include in update payload
-            del instance_config['data']['integrationInstance']['config']['externalId']
+            if "externalId" in instance_config["data"]["integrationInstance"]["config"]:
+                del instance_config["data"]["integrationInstance"]["config"][
+                    "externalId"
+                ]
 
             # prepare variables GraphQL payload for updating config
             instance_details = instance_config['data']['integrationInstance']
@@ -733,10 +736,18 @@ class JupiterOneClient:
             }
 
             # remove problem fields from previous response
-            del variables['update']['pollingIntervalCronExpression']['__typename']
+            if variables["update"].get("pollingIntervalCronExpression") is not None:
+                if "__typename" in ["update"]["pollingIntervalCronExpression"]:
+                    del variables["update"]["pollingIntervalCronExpression"][
+                        "__typename"
+                    ]
 
-            for ingestion_source in instance_details['ingestionSourcesOverrides']:
-                ingestion_source.pop("__typename", None)  # Removes key if it exists, ignores if not
+            ingestion_sources = instance_details.get("ingestionSourcesOverrides", None)
+            if ingestion_sources is not None:
+                for ingestion_source in instance_details["ingestionSourcesOverrides"]:
+                    ingestion_source.pop(
+                        "__typename", None
+                    )  # Removes key if it exists, ignores if not
 
             response = self._execute_query(UPDATE_INTEGRATION_INSTANCE, variables=variables)
 
