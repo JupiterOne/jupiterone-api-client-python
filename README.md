@@ -119,6 +119,18 @@ j1.create_relationship(
 
 ```
 
+##### Update a relationship
+
+```python
+j1.update_relationship(
+    relationship_id='<id-of-relationship-to-update>',
+    properties={
+        "<relationship-property-name>": "<relationship-property-updated-value>",
+    },
+)
+
+```
+
 ##### Delete a relationship
 
 ```python
