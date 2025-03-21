@@ -540,10 +540,12 @@ class JupiterOneClient:
         endpoint = "/persister/synchronization/jobs"
 
         data = {
-            "source": source,
-            "integrationInstanceId": instance_id,
-            "syncMode": sync_mode,
+               "source": source,
+               "syncMode": sync_mode
         }
+
+        if instance_id is not None:
+            data["integrationInstanceId"] = instance_id
 
         response = self._execute_syncapi_request(endpoint=endpoint, payload=data)
 
