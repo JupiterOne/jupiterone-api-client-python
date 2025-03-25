@@ -402,6 +402,40 @@ tag_entities_action_config = {
             ]
 }
 
+create_jira_ticket_action_config = {
+          "integrationInstanceId" : "5b0eee42-60f5-467a-8125-08666f1383da",
+          "type" : "CREATE_JIRA_TICKET",
+          "entityClass" : "Record",
+          "summary" : "Jira Task created via JupiterOne Alert Rule",
+          "issueType" : "Task",
+          "project" : "PROS",
+          "additionalFields" : {
+            "description" : {
+              "type" : "doc",
+              "version" : 1,
+              "content" : [
+                {
+                  "type" : "paragraph",
+                  "content" : [
+                    {
+                      "type" : "text",
+                      "text" : "{{alertWebLink}}\n\n**Affected Items:**\n\n* {{queries.query0.data|mapProperty('displayName')|join('\n* ')}}"
+                    }
+                  ]
+                }
+              ]
+            },
+            "j1webLink" : "{{alertWebLink}}",
+            "customfield_1234": "text-value",
+            "customfield_5678": {
+                "value": "select-value"
+            },
+            "labels" : [
+              "label1","label2"
+            ],
+          }
+}
+
 j1.create_alert_rule(name="create_alert_rule-name",
                     description="create_alert_rule-description",
                     tags=['tag1', 'tag2'],
@@ -461,6 +495,40 @@ alert_rule_config_webhook = [
         }
     }
 ]
+
+create_jira_ticket_action_config = {
+          "integrationInstanceId" : "5b0eee42-60f5-467a-8125-08666f1383da",
+          "type" : "CREATE_JIRA_TICKET",
+          "entityClass" : "Record",
+          "summary" : "Jira Task created via JupiterOne Alert Rule",
+          "issueType" : "Task",
+          "project" : "PROS",
+          "additionalFields" : {
+            "description" : {
+              "type" : "doc",
+              "version" : 1,
+              "content" : [
+                {
+                  "type" : "paragraph",
+                  "content" : [
+                    {
+                      "type" : "text",
+                      "text" : "{{alertWebLink}}\n\n**Affected Items:**\n\n* {{queries.query0.data|mapProperty('displayName')|join('\n* ')}}"
+                    }
+                  ]
+                }
+              ]
+            },
+            "j1webLink" : "{{alertWebLink}}",
+            "customfield_1234": "text-value",
+            "customfield_5678": {
+                "value": "select-value"
+            },
+            "labels" : [
+              "label1","label2"
+            ],
+          }
+}
 
 alert_rule_config_multiple = [
     {
