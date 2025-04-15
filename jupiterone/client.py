@@ -897,10 +897,12 @@ class JupiterOneClient:
         name: str = None,
         description: str = None,
         tags: List[str] = None,
+        labels: List[dict] = None,
         polling_interval: str = None,
         severity: str = None,
         j1ql: str = None,
         action_configs: Dict = None,
+        resource_group_id: str = None,
     ):
         """Create Alert Rule Configuration in J1 account"""
 
@@ -941,14 +943,14 @@ class JupiterOneClient:
                 },
                 "specVersion": 1,
                 "tags": tags,
+                "labels": labels,
                 "templates": {},
+                "resourceGroupId": resource_group_id,
             }
         }
 
         if action_configs:
             variables["instance"]["operations"][0]["actions"].append(action_configs)
-
-        print(variables)
 
         response = self._execute_query(CREATE_RULE_INSTANCE, variables=variables)
 
@@ -972,8 +974,10 @@ class JupiterOneClient:
         severity: str = None,
         tags: List[str] = None,
         tag_op: str = None,
+        labels: List[dict] = None,
         action_configs: List[dict] = None,
         action_configs_op: str = None,
+        resource_group_id: str = None,
     ):
         """Update Alert Rule Configuration in J1 account"""
         # fetch existing alert rule
@@ -1030,6 +1034,10 @@ class JupiterOneClient:
         else:
             tags_config = alert_rule_config["tags"]
 
+        # update labels list if provided
+        if labels is not None:
+            label_config = labels
+
         # update action_configs list if provided
         if action_configs is not None:
 
@@ -1064,6 +1072,8 @@ class JupiterOneClient:
                 "operations": operations,
                 "pollingInterval": interval_config,
                 "tags": tags_config,
+                "labels": label_config,
+                "resourceGroupId": resource_group_id,
             }
         }
 
