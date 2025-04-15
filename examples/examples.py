@@ -379,7 +379,7 @@ alert_rule_labels = [
 
 resource_group_id = "<GUID>"
 
-create_alert_rule_r = j1.create_alert_rule(name="4-14-25-create_alert_rule-name3",
+create_alert_rule_r = j1.create_alert_rule(name="create_alert_rule-name",
                                            description="create_alert_rule-description",
                                            tags=['tag1', 'tag2'],
                                            labels=alert_rule_labels,
