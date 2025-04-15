@@ -2,6 +2,7 @@ from jupiterone.client import JupiterOneClient
 import random
 import time
 import os
+import json
 
 account = os.environ.get("JUPITERONE_ACCOUNT")
 token = os.environ.get("JUPITERONE_TOKEN")
@@ -332,12 +333,61 @@ tag_entities_action_config = {
             ]
 }
 
-create_alert_rule_r = j1.create_alert_rule(name="create_alert_rule-name",
+create_jira_ticket_action_config = {
+          "integrationInstanceId" : "<GUID>",
+          "type" : "CREATE_JIRA_TICKET",
+          "entityClass" : "Record",
+          "summary" : "Jira Task created via JupiterOne Alert Rule",
+          "issueType" : "Task",
+          "project" : "KEY",
+          "additionalFields" : {
+            "description" : {
+              "type" : "doc",
+              "version" : 1,
+              "content" : [
+                {
+                  "type" : "paragraph",
+                  "content" : [
+                    {
+                      "type" : "text",
+                      "text" : "{{alertWebLink}}\n\n**Affected Items:**\n\n* {{queries.query0.data|mapProperty('displayName')|join('\n* ')}}"
+                    }
+                  ]
+                }
+              ]
+            },
+            "customfield_1234": "text-value",
+            "customfield_5678": {
+                "value": "select-value"
+            },
+            "labels" : [
+              "label1","label2"
+            ],
+          }
+}
+
+alert_rule_labels = [
+    {
+        "labelName": "tagkey1",
+        "labelValue": "tagval"
+    },
+    {
+        "labelName": "tagkey2",
+        "labelValue": "tagval"
+    }
+]
+
+resource_group_id = "<GUID>"
+
+create_alert_rule_r = j1.create_alert_rule(name="4-14-25-create_alert_rule-name3",
                                            description="create_alert_rule-description",
                                            tags=['tag1', 'tag2'],
+                                           labels=alert_rule_labels,
                                            polling_interval="DISABLED",
                                            severity="INFO",
-                                           j1ql="find jupiterone_user")
+                                           j1ql="find jupiterone_user",
+                                           action_configs=create_jira_ticket_action_config,
+                                           resource_group_id=resource_group_id)
 print("create_alert_rule()")
 print(create_alert_rule_r)
 
@@ -380,6 +430,41 @@ alert_rule_config_webhook = [
     }
 ]
 
+alert_rule_config_jira = [
+    {
+          "integrationInstanceId" : "<GUID>",
+          "type" : "CREATE_JIRA_TICKET",
+          "entityClass" : "Record",
+          "summary" : "Jira Task created via JupiterOne Alert Rule",
+          "issueType" : "Task",
+          "project" : "KEY",
+          "additionalFields" : {
+            "description" : {
+              "type" : "doc",
+              "version" : 1,
+              "content" : [
+                {
+                  "type" : "paragraph",
+                  "content" : [
+                    {
+                      "type" : "text",
+                      "text" : "{{alertWebLink}}\n\n**Affected Items:**\n\n* {{queries.query0.data|mapProperty('displayName')|join('\n* ')}}"
+                    }
+                  ]
+                }
+              ]
+            },
+            "customfield_1234": "text-value",
+            "customfield_5678": {
+                "value": "select-value"
+            },
+            "labels" : [
+              "label1","label2"
+            ],
+          }
+    }
+]
+
 alert_rule_config_multiple = [
     {
         "type": "WEBHOOK",
@@ -403,6 +488,19 @@ alert_rule_config_multiple = [
         ]
     }
 ]
+
+alert_rule_labels = [
+    {
+        "labelName": "tagkey1",
+        "labelValue": "tagval"
+    },
+    {
+        "labelName": "tagkey2",
+        "labelValue": "tagval"
+    }
+]
+
+resource_group_id = "<GUID>"
 
 # polling_interval can be DISABLED, THIRTY_MINUTES, ONE_HOUR, FOUR_HOURS, EIGHT_HOURS, TWELVE_HOURS, ONE_DAY, or ONE_WEEK
 # tag_op can be OVERWRITE or APPEND
