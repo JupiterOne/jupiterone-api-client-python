@@ -1,6 +1,5 @@
 import os
 import time
-import json
 import requests
 from requests.adapters import HTTPAdapter, Retry
 
@@ -9,7 +8,7 @@ acct = os.environ.get("JUPITERONE_ACCOUNT")
 token = os.environ.get("JUPITERONE_TOKEN")
 
 # JupiterOne GraphQL API:
-j1_graphql_url = "https://graphql.dev.jupiterone.io"
+j1_graphql_url = "https://graphql.us.jupiterone.io"
 
 # JupiterOne GraphQL API headers
 j1_graphql_headers = {
@@ -63,7 +62,7 @@ while True:
     s.mount('https://', HTTPAdapter(max_retries=retries))
     url_response = s.post(j1_graphql_url, headers=j1_graphql_headers, json=payload)
     download_url = url_response.json()['data']['queryV1']['url']
-    print(download_url)
+    # print(download_url)
 
     download_response = s.get(download_url).json()
 
@@ -77,15 +76,15 @@ while True:
         status = download_response['status'] # update 'status' for next iteration
 
     all_query_results.extend(download_response['data']) # add results to all results list
-    print(len(download_response['data']))
+    # print(len(download_response['data']))
 
     # Update cursor from response
     if 'cursor' in download_response:
         cursor = download_response['cursor']
-        print(cursor)
+        # print(cursor)
 
     else:
         break
 
-# print(all_query_results)
+print(all_query_results)
 print(len(all_query_results))
