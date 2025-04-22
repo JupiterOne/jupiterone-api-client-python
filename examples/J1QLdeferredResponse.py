@@ -1,6 +1,6 @@
 import os
 import time
-import json
+
 import requests
 from requests.adapters import HTTPAdapter, Retry
 
