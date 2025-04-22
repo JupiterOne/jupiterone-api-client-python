@@ -38,7 +38,7 @@ query J1QL(
 """
 
 gql_variables = {
-  "query": "find (snyk_finding | snyk_finding_coordinate | insightvm_finding | github_finding | semgrep_finding)",
+  "query": "FIND Finding",
   "deferredResponse": "FORCE",
   "cursor": "",
   "flags": {
@@ -50,6 +50,7 @@ payload = {
     "query": gql_query,
     "variables": gql_variables
 }
+
 all_query_results = []
 cursor = None
 
@@ -58,7 +59,7 @@ while True:
     payload['variables']['cursor'] = cursor
 
     s = requests.Session()
-    retries = Retry(total=10, backoff_factor=2, status_forcelist=[502, 503, 504, 429])
+    retries = Retry(total=5, backoff_factor=1, status_forcelist=[502, 503, 504, 429])
     s.mount('https://', HTTPAdapter(max_retries=retries))
     url_response = s.post(j1_graphql_url, headers=j1_graphql_headers, json=payload)
     download_url = url_response.json()['data']['queryV1']['url']
@@ -69,7 +70,7 @@ while True:
     status = download_response['status']
 
     while status == 'IN_PROGRESS':
-        time.sleep(1) # Sleep 1 second between checking status
+        time.sleep(0.2) # Sleep 200 milliseconds between checking status
 
         download_response = s.get(download_url).json() # fetch results data from download URL
 
