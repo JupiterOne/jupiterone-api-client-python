@@ -131,7 +131,6 @@ GET_ENTITY_RAW_DATA = """
         entityRawDataLegacy(entityId: $entityId, , source: $source) {
             entityId
             payload {
-    
                 ... on RawDataJSONEntityLegacy {
                     contentType
                     name
@@ -360,7 +359,7 @@ FIND_INTEGRATION_DEFINITION = """
       ...IntegrationDefinitionConfigFragment @include(if: $includeConfig)
       __typename
     }
-    
+
     fragment IntegrationDefinitionConfigFragment on IntegrationDefinition {
       configFields {
         ...ConfigFieldsRecursive
@@ -387,7 +386,7 @@ FIND_INTEGRATION_DEFINITION = """
       }
       __typename
     }
-    
+
     fragment ConfigFieldsRecursive on ConfigField {
       ...ConfigFieldValues
       configFields {
@@ -400,7 +399,7 @@ FIND_INTEGRATION_DEFINITION = """
       }
       __typename
     }
-    
+
     fragment ConfigFieldValues on ConfigField {
       key
       displayName
@@ -450,7 +449,7 @@ INTEGRATION_INSTANCES = """
       }
       __typename
     }
-    
+
     query IntegrationInstances($definitionId: String, $cursor: String, $limit: Int, $filter: ListIntegrationInstancesSearchFilter) {
       integrationInstancesV2(
         definitionId: $definitionId
@@ -507,7 +506,7 @@ INTEGRATION_INSTANCE = """
       collectorPoolId
       __typename
     }
-    
+
     fragment IntegrationInstanceJobValues on IntegrationJob {
       id
       status
@@ -517,7 +516,7 @@ INTEGRATION_INSTANCE = """
       hasSkippedSteps
       __typename
     }
-    
+
     query IntegrationInstance($integrationInstanceId: String!) {
       integrationInstance(id: $integrationInstanceId) {
         ...IntegrationInstanceValues
@@ -576,6 +575,24 @@ CURSOR_QUERY_V1 = """
       __typename
     }
   }
+"""
+DEFERRED_RESPONSE_QUERY = """
+query J1QL(
+  $query: String!
+  $variables: JSON
+  $cursor: String
+  $deferredResponse: DeferredResponseOption
+) {
+  queryV1(
+    query: $query
+    variables: $variables
+    deferredResponse: $deferredResponse
+    cursor: $cursor
+  ) {
+    type
+    url
+  }
+}
 """
 J1QL_FROM_NATURAL_LANGUAGE = """
     query j1qlFromNaturalLanguage($input: J1qlFromNaturalLanguageInput!) {
@@ -660,7 +677,7 @@ CREATE_RULE_INSTANCE = """
         __typename
       }
     }
-    
+
     fragment RuleInstanceFields on QuestionRuleInstance {
       id
       accountId
@@ -726,7 +743,7 @@ UPDATE_RULE_INSTANCE = """
         __typename
       }
     }
-    
+
     fragment RuleInstanceFields on QuestionRuleInstance {
       id
       accountId
@@ -869,7 +886,7 @@ QUESTIONS = """
         __typename
       }
     }
-    
+
     fragment QuestionFields on Question {
       id
       sourceId
