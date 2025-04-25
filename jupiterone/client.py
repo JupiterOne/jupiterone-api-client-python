@@ -343,7 +343,7 @@ class JupiterOneClient:
                     break
 
             else:
-                print(f"Request failed after {max_retries} attempts. Status: {response.status_code}")
+                print(f"Request failed after {max_retries} attempts. Status: {url_response.status_code}")
 
         return all_query_results 
 
