@@ -844,7 +844,7 @@ class JupiterOneClient:
 
             # remove problem fields from previous response
             if variables["update"].get("pollingIntervalCronExpression") is not None:
-                if "__typename" in ["update"]["pollingIntervalCronExpression"]:
+                if "__typename" in variables["update"]["pollingIntervalCronExpression"]:
                     del variables["update"]["pollingIntervalCronExpression"][
                         "__typename"
                     ]
