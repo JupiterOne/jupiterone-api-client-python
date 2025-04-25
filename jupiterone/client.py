@@ -58,11 +58,6 @@ from jupiterone.constants import (
     UPSERT_PARAMETER,
 )
 
-def retry_on_429(exc):
-    """Used to trigger retry on rate limit"""
-    return isinstance(exc, JupiterOneApiRetryError)
-
-
 class JupiterOneClient:
     """Python client class for the JupiterOne GraphQL API"""
 
@@ -87,7 +82,7 @@ class JupiterOneClient:
             "JupiterOne-Account": self.account,
             "Content-Type": "application/json",
         }
-        
+
         # Initialize session with retry logic
         self.session = requests.Session()
         retries = Retry(
@@ -178,14 +173,14 @@ class JupiterOneClient:
             raise JupiterOneApiError("{}:{}".format(response.status_code, content))
 
     def _cursor_query(
-        self, 
-        query: str, 
-        cursor: str = None, 
+        self,
+        query: str,
+        cursor: str = None,
         include_deleted: bool = False,
         max_workers: Optional[int] = None
     ) -> Dict:
         """Performs a V1 graph query using cursor pagination with optional parallel processing
-        
+
         args:
             query (str): Query text
             cursor (str): A pagination cursor for the initial query
@@ -203,7 +198,7 @@ class JupiterOneClient:
             result_limit = False
 
         results: List = []
-        
+
         def fetch_page(cursor: Optional[str] = None) -> Dict:
             variables = {"query": query, "includeDeleted": include_deleted}
             if cursor is not None:
@@ -219,7 +214,7 @@ class JupiterOneClient:
             return data
 
         results.extend(data)
-        
+
         # If no cursor or we've hit the limit, return early
         if not response["data"]["queryV1"].get("cursor") or (result_limit and len(results) >= result_limit):
             return {"data": results[:result_limit] if result_limit else results}
@@ -228,24 +223,24 @@ class JupiterOneClient:
         if max_workers and max_workers > 1:
             with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
                 future_to_cursor = {
-                    executor.submit(fetch_page, response["data"]["queryV1"]["cursor"]): 
+                    executor.submit(fetch_page, response["data"]["queryV1"]["cursor"]):
                     response["data"]["queryV1"]["cursor"]
                 }
-                
+
                 while future_to_cursor:
                     # Wait for the next future to complete
                     done, _ = concurrent.futures.wait(
                         future_to_cursor,
                         return_when=concurrent.futures.FIRST_COMPLETED
                     )
-                    
+
                     for future in done:
                         cursor = future_to_cursor.pop(future)
                         try:
                             response = future.result()
                             page_data = response["data"]["queryV1"]["data"]
                             results.extend(page_data)
-                            
+
                             # Check if we need to fetch more pages
                             if (result_limit and len(results) >= result_limit) or \
                                not response["data"]["queryV1"].get("cursor"):
@@ -254,11 +249,11 @@ class JupiterOneClient:
                                     f.cancel()
                                 future_to_cursor.clear()
                                 break
-                                
+
                             # Schedule next page fetch
                             next_cursor = response["data"]["queryV1"]["cursor"]
                             future_to_cursor[executor.submit(fetch_page, next_cursor)] = next_cursor
-                            
+
                         except Exception as e:
                             # Log error but continue with other pages
                             print(f"Error fetching page with cursor {cursor}: {str(e)}")
@@ -269,7 +264,7 @@ class JupiterOneClient:
                 response = fetch_page(cursor)
                 data = response["data"]["queryV1"]["data"]
                 results.extend(data)
-                
+
                 if result_limit and len(results) >= result_limit:
                     break
                 elif not response["data"]["queryV1"].get("cursor"):
@@ -313,15 +308,15 @@ class JupiterOneClient:
             page += 1
 
         return {"data": results}
-    
+
     def query_with_deferred_response(self, query, cursor=None):
         """
         Execute a J1QL query that returns a deferred response for handling large result sets.
-        
+
         Args:
             query (str): The J1QL query to execute
             cursor (str, optional): Pagination cursor for subsequent requests
-            
+
         Returns:
             list: Combined results from all paginated responses
         """
@@ -347,12 +342,8 @@ class JupiterOneClient:
 
             for attempt in range(1, max_retries + 1):
 
-                session = requests.Session()
-                retries = Retry(total=5, backoff_factor=1, status_forcelist=[502, 503, 504, 429])
-                session.mount('https://', HTTPAdapter(max_retries=retries))
-
                 # Get the download URL
-                url_response = session.post(
+                url_response = self.session.post(
                     self.graphql_url,
                     headers=self.headers,
                     json=payload,
@@ -372,7 +363,7 @@ class JupiterOneClient:
 
                 # Poll the download URL until results are ready
                 while True:
-                    download_response = session.get(download_url, timeout=60).json()
+                    download_response = self.session.get(download_url, timeout=60).json()
                     status = download_response['status']
 
                     if status != 'IN_PROGRESS':
@@ -392,17 +383,13 @@ class JupiterOneClient:
             else:
                 print(f"Request failed after {max_retries} attempts. Status: {url_response.status_code}")
 
-        return all_query_results 
+        return all_query_results
 
     def _execute_syncapi_request(self, endpoint: str, payload: Dict = None) -> Dict:
         """Executes POST request to SyncAPI endpoints"""
 
-        # initiate requests session and implement retry logic of 5 request retries with 1 second between
-        s = requests.Session()
-        retries = Retry(total=5, backoff_factor=1, status_forcelist=[502, 503, 504])
-        s.mount("https://", HTTPAdapter(max_retries=retries))
-
-        response = s.post(
+        # initiate requests session and implement retry logic of 5 request retries with 1 second between retries
+        response = self.session.post(
             self.sync_url + endpoint, headers=self.headers, json=payload, timeout=60
         )
 
@@ -819,7 +806,7 @@ class JupiterOneClient:
     ):
         """Update a single config k:v pair existing on a configured Integration Instance."""
 
-        # fetch existing instnace configuration
+        # fetch existing instance configuration
         instance_config = self.get_integration_instance_details(instance_id=instance_id)
         config_dict = instance_config["data"]["integrationInstance"]["config"]
 
@@ -1239,12 +1226,8 @@ class JupiterOneClient:
     def fetch_downloaded_evaluation_results(self, download_url: str = None):
         """Return full Alert Rule J1QL results from Download URL"""
         # initiate requests session and implement retry logic of 5 request retries with 1 second between
-        s = requests.Session()
-        retries = Retry(total=5, backoff_factor=1, status_forcelist=[502, 503, 504])
-        s.mount("https://", HTTPAdapter(max_retries=retries))
-
         try:
-            response = s.get(download_url, timeout=60)
+            response = self.session.get(download_url, timeout=60)
 
             return response.json()
 
