@@ -47,19 +47,26 @@ the default of "https://api.us.jupiterone.io" is used.
 
 ```python
 QUERY = 'FIND Host'
-query_result = j1.query_v1(QUERY)
+query_result = j1.query_v1(query=QUERY)
 
 # Including deleted entities
-query_result = j1.query_v1(QUERY, include_deleted=True)
+query_result = j1.query_v1(query=QUERY, include_deleted=True)
 
 # Tree query
 QUERY = 'FIND Host RETURN TREE'
-query_result = j1.query_v1(QUERY)
+query_result = j1.query_v1(query=QUERY)
 
-# Using cursor graphQL variable to return full set of paginated results
+# Using cursor query to return full set of paginated results
 QUERY = "FIND (Device | Person)"
-cursor_query_r = j1._cursor_query(QUERY)
+cursor_query_r = j1._cursor_query(query=QUERY)
 
+# Using cursor query with parallel processing
+QUERY = "FIND (Device | Person)"
+cursor_query_r = j1._cursor_query(query=QUERY, max_workers=5)
+
+# Using deferredResponse with J1QL to return large datasets
+QUERY = "FIND UnifiedDevice"
+deferred_response_query_r = j1.query_with_deferred_response(query=QUERY)
 ```
 
 ##### Create an entity:
@@ -67,6 +74,8 @@ cursor_query_r = j1._cursor_query(QUERY)
 Note that the CreateEntity mutation behaves like an upsert, so a non-existent entity will be created or an existing entity will be updated.
 
 ```python
+import time
+
 properties = {
     'myProperty': 'myValue',
     'tag.myTagProperty': 'value_will_be_a_tag'
@@ -80,7 +89,6 @@ entity = j1.create_entity(
    timestamp=int(time.time()) * 1000 # Optional, defaults to current datetime
 )
 print(entity['entity'])
-
 ```
 
 
@@ -96,7 +104,6 @@ j1.update_entity(
     entity_id='<id-of-entity-to-update>',
     properties=properties
 )
-
 ```
 
 
@@ -116,7 +123,6 @@ j1.create_relationship(
     from_entity_id='<id-of-source-entity>',
     to_entity_id='<id-of-destination-entity>'
 )
-
 ```
 
 ##### Update a relationship
@@ -128,35 +134,30 @@ j1.update_relationship(
         "<relationship-property-name>": "<relationship-property-updated-value>",
     },
 )
-
 ```
 
 ##### Delete a relationship
 
 ```python
 j1.delete_relationship(relationship_id='<id-of-relationship-to-delete>')
-
 ```
 
 ##### Fetch Graph Entity Properties
 
 ```python
 j1.fetch_all_entity_properties()
-
 ```
 
 ##### Fetch Graph Entity Tags
 
 ```python
 j1.fetch_all_entity_tags()
-
 ```
 
 ##### Fetch Entity Raw Data
 
 ```python
 j1.fetch_entity_raw_data(entity_id='<id-of-entity>')
-
 ```
 
 ##### Create Integration Instance
@@ -165,14 +166,12 @@ j1.fetch_entity_raw_data(entity_id='<id-of-entity>')
 j1.create_integration_instance(
     instance_name="Integration Name", 
     instance_description="Description Text")
-
 ```
 
 ##### Start Synchronization Job
 
 ```python
 j1.start_sync_job(instance_id='<id-of-integration-instance>')
-
 ```
 
 ##### Upload Batch of Entities
@@ -204,7 +203,6 @@ entities_payload = [
 
 j1.upload_entities_batch_json(instance_job_id='<id-of-integration-sync-job>',
                               entities_list=entities_payload)
-
 ```
 
 ##### Upload Batch of Relationships
@@ -231,7 +229,6 @@ relationships_payload = [
 
 j1.upload_relationships_batch_json(instance_job_id='<id-of-integration-sync-job>',
                                    relationships_list=relationships_payload)
-
 ```
 
 ##### Upload Batch of Entities and Relationships
@@ -283,14 +280,12 @@ combined_payload = {
 
 j1.upload_combined_batch_json(instance_job_id='<id-of-integration-sync-job>',
                               combined_payload=combined_payload)
-
 ```
 
 ##### Finalize Synchronization Job
 
 ```python
 j1.finalize_sync_job(instance_job_id='<id-of-integration-sync-job>')
-
 ```
 
 ##### Fetch Integration Instance Jobs
@@ -305,7 +300,6 @@ j1.fetch_integration_jobs(instance_id='<id-of-integration-instance>')
 ```python
 j1.fetch_integration_job_events(instance_id='<id-of-integration-instance>',
                                 instance_job_id='<id-of-integration-instance-job>')
-
 ```
 
 ##### Create SmartClass
@@ -313,7 +307,6 @@ j1.fetch_integration_job_events(instance_id='<id-of-integration-instance>',
 ```python
 j1.create_smartclass(smartclass_name='SmartClassName',
                      smartclass_description='SmartClass Description Text')
-
 ```
 
 ##### Create SmartClass Query
@@ -322,42 +315,36 @@ j1.create_smartclass(smartclass_name='SmartClassName',
 j1.create_smartclass_query(smartclass_id='<id-of-smartclass>',
                            query='<J1QL-query-to-be-added>',
                            query_description='Query Description Text')
-
 ```
 
 ##### Run SmartClass Evaluation
 
 ```python
 j1.evaluate_smartclass(smartclass_id='<id-of-smartclass>')
-
 ```
 
 ##### Get SmartClass Details
 
 ```python
 j1.get_smartclass_details(smartclass_id='<id-of-smartclass>')
-
 ```
 
 ##### Generate J1QL from Natural Language Prompt
 
 ```python
 j1.generate_j1ql(natural_language_prompt='<natural-language-input-text>')
-
 ```
 
 ##### List Alert Rules
 
 ```python
 j1.list_alert_rules()
-
 ```
 
 ##### Get Alert Rule Details
 
 ```python
 j1.get_alert_rule_details(rule_id='<id-of-alert-rule>')
-
 ```
 
 ##### Create Alert Rule
@@ -372,13 +359,11 @@ j1.create_alert_rule(name="create_alert_rule-name",
                      polling_interval="DISABLED",
                      severity="INFO",
                      j1ql="find jupiterone_user")
-
 ```
 
 ##### Create Alert Rule with Action Config
 
 ```python
-
 webhook_action_config = {
             "type": "WEBHOOK",
             "endpoint": "https://webhook.domain.here/endpoint",
@@ -443,21 +428,17 @@ j1.create_alert_rule(name="create_alert_rule-name",
                     severity="INFO",
                     j1ql="find jupiterone_user",
                     action_configs=webhook_action_config)
-
 ```
 
 ##### Delete Alert Rule
 
 ```python
-
 j1.delete_alert_rule(rule_id='<id-of-alert-rule')
-
 ```
 
 ##### Update Alert Rule
 
 ```python
-
 # polling_interval can be DISABLED, THIRTY_MINUTES, ONE_HOUR, FOUR_HOURS, EIGHT_HOURS, TWELVE_HOURS, ONE_DAY, or ONE_WEEK
 # tag_op can be OVERWRITE or APPEND
 # severity can be INFO, LOW, MEDIUM, HIGH, or CRITICAL
@@ -572,108 +553,77 @@ j1.update_alert_rule(rule_id='<id-of-alert-rule>',
 j1.update_alert_rule(rule_id='<id-of-alert-rule>',
                      tags=['additionalTag1', 'additionalTag2'],
                      tag_op="APPEND")
-
 ```
 
 ##### Evaluate Alert Rule
 
 ```python
-
 j1.evaluate_alert_rule(rule_id='<id-of-alert-rule>')
-
 ```
 
 ##### Get Compliance Framework Item
 
 ```python
-
 j1.get_compliance_framework_item_details(item_id="<id-of-item>")
-
 ```
 
 ##### List Alert Rule Evaluation Results
 
 ```python
-
 j1.list_alert_rule_evaluation_results(rule_id="<id-of-rule>")
-
 ```
 
 ##### Fetch Evaluation Result Download URL
 
 ```python
-
 j1.fetch_evaluation_result_download_url(raw_data_key="RULE_EVALUATION/<id-of-evaluation>/query0.json")
-
 ```
 
 ##### Fetch Evaluation Result Download URL
 
 ```python
-
 j1.fetch_evaluation_result_download_url(raw_data_key="RULE_EVALUATION/<id-of-evaluation>/query0.json")
-
 ```
 
 ##### Fetch Downloaded Evaluation Results
 
 ```python
-
 j1.fetch_downloaded_evaluation_results(download_url="https://download.us.jupiterone.io/<id-of-rule>/RULE_EVALUATION/<id-of-evaluation>/<epoch>/query0.json?token=<TOKEN>&Expires=<epoch>")
-
 ```
 
 ##### Get Integration Definition Details
 
 ```python
-
 # examples: 'aws', 'azure', 'google_cloud'
-
 j1.get_integration_definition_details(integration_type="<integration-type>")
-
 ```
 
 ##### Fetch Integration Instances
 
 ```python
-
 j1.fetch_integration_instances(definition_id="<id-of-definition>")
-
-
 ```
 
 ##### Fetch Integration Instance Details
 
 ```python
-
 j1.get_integration_instance_details(instance_id="<id-of-integration-instance>")
-
-
 ```
 
 ##### Get Account Parameter Details
 
 ```python
-
 j1.get_parameter_details(name="ParameterName")
-
-
 ```
 
 ##### List Account Parameters
 
 ```python
-
 j1.list_account_parameters()
-
-
 ```
 
-##### Create or Update Acount Parameter
+##### Create or Update Account Parameter
 
 ```python
-
 j1.create_update_parameter(name="ParameterName", value="stored_value", secret=False)
-
-
 ```
