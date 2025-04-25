@@ -7,10 +7,7 @@ import time
 import re
 import requests
 from requests.adapters import HTTPAdapter, Retry
-from retrying import retry
 import concurrent.futures
-import aiohttp
-import asyncio
 
 from jupiterone.errors import (
     JupiterOneClientError,
