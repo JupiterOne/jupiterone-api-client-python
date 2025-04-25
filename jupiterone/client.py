@@ -1,18 +1,16 @@
 """ Python SDK for JupiterOne GraphQL API """
-
-# pylint: disable=W0212,no-name-in-module
-# see https://github.com/PyCQA/pylint/issues/409
-
 import json
 from warnings import warn
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Optional
 from datetime import datetime
 import time
-
 import re
 import requests
 from requests.adapters import HTTPAdapter, Retry
 from retrying import retry
+import concurrent.futures
+import aiohttp
+import asyncio
 
 from jupiterone.errors import (
     JupiterOneClientError,
@@ -60,7 +58,6 @@ from jupiterone.constants import (
     UPSERT_PARAMETER,
 )
 
-
 def retry_on_429(exc):
     """Used to trigger retry on rate limit"""
     return isinstance(exc, JupiterOneApiRetryError)
@@ -73,13 +70,6 @@ class JupiterOneClient:
 
     DEFAULT_URL = "https://graphql.us.jupiterone.io"
     SYNC_API_URL = "https://api.us.jupiterone.io"
-
-    RETRY_OPTS = {
-        "wait_exponential_multiplier": 1000,
-        "wait_exponential_max": 10000,
-        "stop_max_delay": 300000,
-        "retry_on_exception": retry_on_429,
-    }
 
     def __init__(
         self,
@@ -97,6 +87,16 @@ class JupiterOneClient:
             "JupiterOne-Account": self.account,
             "Content-Type": "application/json",
         }
+        
+        # Initialize session with retry logic
+        self.session = requests.Session()
+        retries = Retry(
+            total=5,
+            backoff_factor=1,
+            status_forcelist=[429, 502, 503, 504],
+            allowed_methods=["POST", "GET"]
+        )
+        self.session.mount("https://", HTTPAdapter(max_retries=retries))
 
     @property
     def account(self):
@@ -123,7 +123,6 @@ class JupiterOneClient:
         self._token = value
 
     # pylint: disable=R1710
-    @retry(**RETRY_OPTS)
     def _execute_query(self, query: str, variables: Dict = None) -> Dict:
         """Executes query against graphql endpoint"""
 
@@ -134,28 +133,26 @@ class JupiterOneClient:
         # Always ask for variableResultSize
         data.update(flags={"variableResultSize": True})
 
-        # initiate requests session and implement retry logic of 5 request retries with 1 second between
-        s = requests.Session()
-        retries = Retry(total=5, backoff_factor=1, status_forcelist=[502, 503, 504])
-        s.mount("https://", HTTPAdapter(max_retries=retries))
-
-        response = s.post(self.graphql_url, headers=self.headers, json=data, timeout=60)
+        response = self.session.post(
+            self.graphql_url,
+            headers=self.headers,
+            json=data,
+            timeout=60
+        )
 
         # It is still unclear if all responses will have a status
         # code of 200 or if 429 will eventually be used to
         # indicate rate limits being hit.  J1 devs are aware.
         if response.status_code == 200:
-            if response._content:
-                content = json.loads(response._content)
-                if "errors" in content:
-                    errors = content["errors"]
-                    if len(errors) == 1:
-                        if "429" in errors[0]["message"]:
-                            raise JupiterOneApiRetryError(
-                                "JupiterOne API rate limit exceeded"
-                            )
-                    raise JupiterOneApiError(content.get("errors"))
-                return response.json()
+            content = response.json()
+            if "errors" in content:
+                errors = content["errors"]
+                if len(errors) == 1 and "429" in errors[0]["message"]:
+                    raise JupiterOneApiRetryError(
+                        "JupiterOne API rate limit exceeded"
+                    )
+                raise JupiterOneApiError(content.get("errors"))
+            return content
 
         elif response.status_code == 401:
             raise JupiterOneApiError(
@@ -176,18 +173,24 @@ class JupiterOneClient:
             if isinstance(content, (bytes, bytearray)):
                 content = content.decode("utf-8")
             if "application/json" in response.headers.get("Content-Type", "text/plain"):
-                data = json.loads(content)
+                data = response.json()
                 content = data.get("error", data.get("errors", content))
             raise JupiterOneApiError("{}:{}".format(response.status_code, content))
 
     def _cursor_query(
-        self, query: str, cursor: str = None, include_deleted: bool = False
+        self, 
+        query: str, 
+        cursor: str = None, 
+        include_deleted: bool = False,
+        max_workers: Optional[int] = None
     ) -> Dict:
-        """Performs a V1 graph query using cursor pagination
+        """Performs a V1 graph query using cursor pagination with optional parallel processing
+        
         args:
             query (str): Query text
             cursor (str): A pagination cursor for the initial query
             include_deleted (bool): Include recently deleted entities in query/search
+            max_workers (int, optional): Maximum number of parallel workers for fetching pages
         """
 
         # If the query itself includes a LIMIT then we must parse that and check if we've reached
@@ -200,33 +203,77 @@ class JupiterOneClient:
             result_limit = False
 
         results: List = []
-        while True:
+        
+        def fetch_page(cursor: Optional[str] = None) -> Dict:
             variables = {"query": query, "includeDeleted": include_deleted}
-
             if cursor is not None:
                 variables["cursor"] = cursor
+            return self._execute_query(query=CURSOR_QUERY_V1, variables=variables)
 
-            response = self._execute_query(query=CURSOR_QUERY_V1, variables=variables)
-            data = response["data"]["queryV1"]["data"]
+        # First page to get initial cursor and data
+        response = fetch_page(cursor)
+        data = response["data"]["queryV1"]["data"]
 
-            # This means it's a "TREE" query and we have everything
-            if "vertices" in data and "edges" in data:
-                return data
+        # This means it's a "TREE" query and we have everything
+        if "vertices" in data and "edges" in data:
+            return data
 
-            results.extend(data)
+        results.extend(data)
+        
+        # If no cursor or we've hit the limit, return early
+        if not response["data"]["queryV1"].get("cursor") or (result_limit and len(results) >= result_limit):
+            return {"data": results[:result_limit] if result_limit else results}
 
-            if result_limit and len(results) >= result_limit:
-                # We can stop paginating if we've collected enough results based on the requested limit
-                break
-            elif (
-                "cursor" in response["data"]["queryV1"]
-                and response["data"]["queryV1"]["cursor"] is not None
-            ):
-                # We got a cursor and haven't collected enough results
+        # If parallel processing is enabled and we have more pages to fetch
+        if max_workers and max_workers > 1:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+                future_to_cursor = {
+                    executor.submit(fetch_page, response["data"]["queryV1"]["cursor"]): 
+                    response["data"]["queryV1"]["cursor"]
+                }
+                
+                while future_to_cursor:
+                    # Wait for the next future to complete
+                    done, _ = concurrent.futures.wait(
+                        future_to_cursor,
+                        return_when=concurrent.futures.FIRST_COMPLETED
+                    )
+                    
+                    for future in done:
+                        cursor = future_to_cursor.pop(future)
+                        try:
+                            response = future.result()
+                            page_data = response["data"]["queryV1"]["data"]
+                            results.extend(page_data)
+                            
+                            # Check if we need to fetch more pages
+                            if (result_limit and len(results) >= result_limit) or \
+                               not response["data"]["queryV1"].get("cursor"):
+                                # Cancel remaining futures
+                                for f in future_to_cursor:
+                                    f.cancel()
+                                future_to_cursor.clear()
+                                break
+                                
+                            # Schedule next page fetch
+                            next_cursor = response["data"]["queryV1"]["cursor"]
+                            future_to_cursor[executor.submit(fetch_page, next_cursor)] = next_cursor
+                            
+                        except Exception as e:
+                            # Log error but continue with other pages
+                            print(f"Error fetching page with cursor {cursor}: {str(e)}")
+        else:
+            # Sequential processing
+            while True:
                 cursor = response["data"]["queryV1"]["cursor"]
-            else:
-                # No cursor returned so we're done
-                break
+                response = fetch_page(cursor)
+                data = response["data"]["queryV1"]["data"]
+                results.extend(data)
+                
+                if result_limit and len(results) >= result_limit:
+                    break
+                elif not response["data"]["queryV1"].get("cursor"):
+                    break
 
         # If we detected an inline LIMIT make sure we only return that many results
         if result_limit:
@@ -343,7 +390,7 @@ class JupiterOneClient:
                     break
 
             else:
-                print(f"Request failed after {max_retries} attempts. Status: {response.status_code}")
+                print(f"Request failed after {max_retries} attempts. Status: {url_response.status_code}")
 
         return all_query_results 
 
