@@ -304,7 +304,7 @@ FIND_INTEGRATION_DEFINITION = """
         __typename
       }
     }
-    
+
     fragment IntegrationDefinitionsValues on IntegrationDefinition {
       id
       name
@@ -1228,6 +1228,14 @@ UPSERT_PARAMETER = """
     mutation UpsertParameter($name: String!, $value: ParameterValue!, $secret: Boolean) {
       setParameter(name: $name, value: $value, secret: $secret) {
         success
+        __typename
+      }
+    }
+"""
+UPDATE_ENTITYV2 = """
+    mutation UpdateEntityV2($timestamp: Long, $entity: JSON!) {
+      updateEntityV2(timestamp: $timestamp, entity: $entity) {
+        entity
         __typename
       }
     }
