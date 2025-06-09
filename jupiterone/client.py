@@ -53,6 +53,7 @@ from jupiterone.constants import (
     PARAMETER,
     PARAMETER_LIST,
     UPSERT_PARAMETER,
+    UPDATE_ENTITYV2,
 )
 
 class JupiterOneClient:
@@ -1070,7 +1071,9 @@ class JupiterOneClient:
 
     def delete_alert_rule(self, rule_id: str = None):
         """Delete a single Alert Rule configured in J1 account"""
-        variables = {"id": rule_id}
+        variables = {
+            "id": rule_id
+        }
 
         response = self._execute_query(DELETE_RULE_INSTANCE, variables=variables)
 
@@ -1195,7 +1198,9 @@ class JupiterOneClient:
 
     def evaluate_alert_rule(self, rule_id: str = None):
         """Run an Evaluation for a defined Alert Rule configured in J1 account"""
-        variables = {"id": rule_id}
+        variables = {
+            "id": rule_id
+        }
 
         response = self._execute_query(EVALUATE_RULE_INSTANCE, variables=variables)
         return response
@@ -1215,7 +1220,9 @@ class JupiterOneClient:
 
     def fetch_evaluation_result_download_url(self, raw_data_key: str = None):
         """Fetch evaluation result Download URL for Alert Rule configured in J1 account"""
-        variables = {"rawDataKey": raw_data_key}
+        variables = {
+            "rawDataKey": raw_data_key
+        }
 
         response = self._execute_query(GET_RAW_DATA_DOWNLOAD_URL, variables=variables)
         return response
@@ -1236,7 +1243,12 @@ class JupiterOneClient:
         """List all defined Questions configured in J1 account Questions Library"""
         results = []
 
-        data = {"query": QUESTIONS, "flags": {"variableResultSize": True}}
+        data = {
+            "query": QUESTIONS,
+            "flags": {
+                "variableResultSize": True
+            }
+        }
 
         r = requests.post(
             url=self.graphql_url, headers=self.headers, json=data, verify=True
@@ -1270,7 +1282,9 @@ class JupiterOneClient:
 
     def get_parameter_details(self, name: str = None):
         """Fetch Details of a configured Parameter in J1 account"""
-        variables = {"name": name}
+        variables = {
+            "name": name
+        }
 
         response = self._execute_query(PARAMETER, variables=variables)
         return response
@@ -1310,7 +1324,28 @@ class JupiterOneClient:
         secret: bool = False,
     ):
         """Create or Update Account Parameter in J1 account"""
-        variables = {"name": name, "value": value, "secret": secret}
+        variables = {
+            "name": name,
+            "value": value,
+            "secret": secret
+        }
 
         response = self._execute_query(UPSERT_PARAMETER, variables=variables)
         return response
+
+    def update_entity_v2(self, entity_id: str = None, properties: Dict = None) -> Dict:
+        """
+        Update an existing entity by adding new or updating existing properties.
+
+        args:
+            entity_id (str): The _id of the entity to update
+            properties (dict): Dictionary of key/value entity properties
+        """
+        properties['_id'] = entity_id
+
+        variables = {
+            "entity": properties,
+        }
+
+        response = self._execute_query(UPDATE_ENTITYV2, variables=variables)
+        return response["data"]["updateEntityV2"]
