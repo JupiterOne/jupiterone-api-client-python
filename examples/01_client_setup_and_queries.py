@@ -57,7 +57,7 @@ def basic_query_examples(j1):
     
     # 4. Tree query
     print("4. Tree query for host relationships:")
-    j1.query_v1(query='FIND Host with displayName = "server-001" THAT RELATES TO *RETURN TREE')
+    j1.query_v1(query='FIND Host with displayName = "server-001" THAT RELATES TO * RETURN TREE')
     print(f"Tree query completed\n")
     
     # 5. Query with deleted entities
