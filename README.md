@@ -46,6 +46,7 @@ the default of "https://api.us.jupiterone.io" is used.
 ##### Execute a query:
 
 ```python
+# Basic query
 QUERY = 'FIND Host'
 query_result = j1.query_v1(query=QUERY)
 
@@ -56,6 +57,14 @@ query_result = j1.query_v1(query=QUERY, include_deleted=True)
 QUERY = 'FIND Host RETURN TREE'
 query_result = j1.query_v1(query=QUERY)
 
+# Complex query with properties
+QUERY = 'FIND Host as h WITH platform = "linux" RETURN h.displayName, h.platform, h.ipAddress'
+query_result = j1.query_v1(query=QUERY)
+
+# Query with relationships
+QUERY = 'FIND Host as h THAT HAS Application as a RETURN h.displayName, a.displayName.displayName'
+query_result = j1.query_v1(query=QUERY)
+
 # Using cursor query to return full set of paginated results
 QUERY = "FIND (Device | Person)"
 cursor_query_r = j1._cursor_query(query=QUERY)
@@ -64,9 +73,20 @@ cursor_query_r = j1._cursor_query(query=QUERY)
 QUERY = "FIND (Device | Person)"
 cursor_query_r = j1._cursor_query(query=QUERY, max_workers=5)
 
+# Using limit and skip query for pagination
+QUERY = "FIND User"
+limit_skip_result = j1._limit_and_skip_query(query=QUERY, skip=0, limit=100)
+
 # Using deferredResponse with J1QL to return large datasets
 QUERY = "FIND UnifiedDevice"
 deferred_response_query_r = j1.query_with_deferred_response(query=QUERY)
+
+# Deferred response with custom polling
+deferred_response_query_r = j1.query_with_deferred_response(
+    query=QUERY,
+    polling_interval=30,  # seconds
+    max_retries=10
+)
 ```
 
 ##### Create an entity:
@@ -76,6 +96,7 @@ Note that the CreateEntity mutation behaves like an upsert, so a non-existent en
 ```python
 import time
 
+# Basic entity creation
 properties = {
     'myProperty': 'myValue',
     'tag.myTagProperty': 'value_will_be_a_tag'
@@ -89,13 +110,30 @@ entity = j1.create_entity(
    timestamp=int(time.time()) * 1000 # Optional, defaults to current datetime
 )
 print(entity['entity'])
-```
 
+# Create entity with complex properties
+complex_properties = {
+    'displayName': 'My Application Server',
+    'tag.Environment': 'production',
+    'tag.Team': 'engineering',
+    'ipAddress': '192.168.1.100',
+    'port': 8080,
+    'isActive': True
+}
+
+entity = j1.create_entity(
+   entity_key='app-server-001',
+   entity_type='application_server',
+   entity_class='Host',
+   properties=complex_properties
+)
+```
 
 #### Update an existing entity:
 Only send in properties you want to add or update, other existing properties will not be modified.
 
 ```python
+# Basic property update
 properties = {
     'newProperty': 'newPropertyValue'
 }
@@ -104,18 +142,37 @@ j1.update_entity(
     entity_id='<id-of-entity-to-update>',
     properties=properties
 )
-```
 
+# Update with tags and complex properties
+update_properties = {
+    'tag.Status': 'maintenance',
+    'lastUpdated': int(time.time()) * 1000,
+    'isActive': False
+}
+
+j1.update_entity(
+    entity_id='<id-of-entity-to-update>',
+    properties=update_properties
+)
+```
 
 #### Delete an entity:
 
 ```python
+# Delete by entity ID
 j1.delete_entity(entity_id='<id-of-entity-to-delete>')
+
+# Delete with timestamp
+j1.delete_entity(
+    entity_id='<id-of-entity-to-delete>',
+    timestamp=int(time.time()) * 1000
+)
 ```
 
 ##### Create a relationship
 
 ```python
+# Basic relationship creation
 j1.create_relationship(
     relationship_key='this_entity_relates_to_that_entity',
     relationship_type='my_relationship_type',
@@ -123,247 +180,522 @@ j1.create_relationship(
     from_entity_id='<id-of-source-entity>',
     to_entity_id='<id-of-destination-entity>'
 )
+
+# Create relationship with properties
+j1.create_relationship(
+    relationship_key='<user-entity-id>:user_accesses_application:<application-entity-id>',
+    relationship_type='user_accesses_application',
+    relationship_class='ACCESSES',
+    from_entity_id='<user-entity-id>',
+    to_entity_id='<application-entity-id>',
+    properties={
+        'accessLevel': 'read',
+        'grantedOn': int(time.time()) * 1000,
+        'grantedBy': 'admin@company.com'
+    }
+)
+
+# Create relationship with complex properties
+j1.create_relationship(
+    relationship_key='<host-entity-id>:host_installed_software:<software-entity-id>',
+    relationship_type='host_installed_software',
+    relationship_class='INSTALLED',
+    from_entity_id='<host-entity-id>',
+    to_entity_id='<software-entity-id>',
+    properties={
+        'installedOn': int(time.time()) * 1000,
+        'version': '2.1.0',
+        'installPath': '/usr/local/bin/software',
+        'permissions': ['read', 'execute']
+    }
+)
 ```
 
 ##### Update a relationship
 
 ```python
+# Basic relationship update
 j1.update_relationship(
     relationship_id='<id-of-relationship-to-update>',
     properties={
         "<relationship-property-name>": "<relationship-property-updated-value>",
     },
 )
+
+# Update relationship with complex properties
+j1.update_relationship(
+    relationship_id='<id-of-relationship-to-update>',
+    properties={
+        'accessLevel': 'write',
+        'lastModified': int(time.time()) * 1000,
+        'modifiedBy': 'security_team',
+        'expiresOn': int(time.time() + 86400) * 1000  # 24 hours from now
+    }
+)
+
+# Update relationship with tags
+j1.update_relationship(
+    relationship_id='<id-of-relationship-to-update>',
+    properties={
+        'tag.Status': 'active',
+        'tag.Priority': 'high',
+        'tag.ReviewRequired': 'true'
+    }
+)
 ```
 
 ##### Delete a relationship
 
 ```python
+# Delete by relationship ID
 j1.delete_relationship(relationship_id='<id-of-relationship-to-delete>')
+
+# Delete with timestamp
+j1.delete_relationship(
+    relationship_id='<id-of-relationship-to-delete>',
+    timestamp=int(time.time()) * 1000
+)
 ```
 
 ##### Fetch Graph Entity Properties
 
 ```python
-j1.fetch_all_entity_properties()
+# Fetch all entity properties
+properties = j1.fetch_all_entity_properties()
+print(f"Found {len(properties)} entity properties")
+
+# Properties are returned as a list of property objects
+for prop in properties:
+    print(f"Property: {prop.get('name')} - Type: {prop.get('type')}")
 ```
 
 ##### Fetch Graph Entity Tags
 
 ```python
-j1.fetch_all_entity_tags()
+# Fetch all entity tags
+tags = j1.fetch_all_entity_tags()
+print(f"Found {len(tags)} entity tags")
+
+# Tags are returned as a list of tag objects
+for tag in tags:
+    print(f"Tag: {tag.get('name')} - Values: {tag.get('values')}")
 ```
 
 ##### Fetch Entity Raw Data
 
 ```python
-j1.fetch_entity_raw_data(entity_id='<id-of-entity>')
+# Fetch raw data for a specific entity
+raw_data = j1.fetch_entity_raw_data(entity_id='<id-of-entity>')
+print(f"Raw data keys: {list(raw_data.keys())}")
+
+# Access specific raw data sections
+if 'aws' in raw_data:
+    aws_data = raw_data['aws']
+    print(f"AWS data: {aws_data}")
+
+if 'azure' in raw_data:
+    azure_data = raw_data['azure']
+    print(f"Azure data: {azure_data}")
 ```
 
 ##### Create Integration Instance
 
 ```python
-j1.create_integration_instance(
-    instance_name="Integration Name", 
-    instance_description="Description Text")
+# Basic integration instance creation
+instance = j1.create_integration_instance(
+    instance_name="AWS Production Account", 
+    instance_description="Production AWS account integration"
+)
+print(f"Created instance: {instance['instance']['_id']}")
+
+# Create integration instance with resource group assignment
+instance = j1.create_integration_instance(
+    instance_name="AWS Development Account", 
+    instance_description="Development AWS account integration",
+    resource_group_id="your-resource-group-id"
+)
+
+# Create integration instance with custom definition and resource group
+instance = j1.create_integration_instance(
+    instance_name="Custom Integration", 
+    instance_description="Custom integration for internal systems",
+    integration_definition_id="your-integration-definition-id",
+    resource_group_id="your-resource-group-id"
+)
 ```
 
 ##### Start Synchronization Job
 
 ```python
-j1.start_sync_job(instance_id='<id-of-integration-instance>')
+# Start sync job for an integration instance
+sync_job = j1.start_sync_job(instance_id='<id-of-integration-instance>')
+print(f"Started sync job: {sync_job['job']['_id']}")
+
+# The returned job ID is used for subsequent operations
+job_id = sync_job['job']['_id']
 ```
 
 ##### Upload Batch of Entities
 
 ```python
+# Prepare entities payload
 entities_payload = [
     {
-      "_key": "1",
-      "_type": "pythonclient",
-      "_class": "API",
-      "displayName": "pythonclient1",
-      "propertyName": "value"
+      "_key": "server-001",
+      "_type": "aws_ec2_instance",
+      "_class": "Host",
+      "displayName": "web-server-001",
+      "instanceId": "i-1234567890abcdef0",
+      "instanceType": "t3.micro",
+      "state": "running",
+      "tag.Environment": "production",
+      "tag.Team": "engineering"
     },
     {
-      "_key": "2",
-      "_type": "pythonclient",
-      "_class": "API",
-      "displayName": "pythonclient2",
-      "propertyName": "value"
+      "_key": "server-002",
+      "_type": "aws_ec2_instance",
+      "_class": "Host",
+      "displayName": "web-server-002",
+      "instanceId": "i-0987654321fedcba0",
+      "instanceType": "t3.small",
+      "state": "running",
+      "tag.Environment": "staging",
+      "tag.Team": "engineering"
     },
     {
-      "_key": "3",
-      "_type": "pythonclient",
-      "_class": "API",
-      "displayName": "pythonclient3",
-      "propertyName": "value"
+      "_key": "database-001",
+      "_type": "aws_rds_instance",
+      "_class": "Database",
+      "displayName": "prod-database",
+      "dbInstanceIdentifier": "prod-db",
+      "engine": "postgres",
+      "dbInstanceClass": "db.t3.micro",
+      "tag.Environment": "production",
+      "tag.Team": "data"
     }
 ]
 
-j1.upload_entities_batch_json(instance_job_id='<id-of-integration-sync-job>',
-                              entities_list=entities_payload)
+# Upload entities batch
+result = j1.upload_entities_batch_json(
+    instance_job_id='<id-of-integration-sync-job>',
+    entities_list=entities_payload
+)
+print(f"Uploaded {len(entities_payload)} entities")
 ```
 
 ##### Upload Batch of Relationships
 
 ```python
+# Prepare relationships payload
 relationships_payload = [
     {
-      "_key": "1:2",
-      "_class": "EXTENDS",
-      "_type": "pythonclient_extends_pythonclient",
-      "_fromEntityKey": "1",
-      "_toEntityKey": "2",
-      "relationshipProperty": "value"
+      "_key": "server-001:aws_ec2_instance_connects_aws_rds_instance:database-001",
+      "_class": "CONNECTS",
+      "_type": "aws_ec2_instance_connects_aws_rds_instance",
+      "_fromEntityKey": "server-001",
+      "_toEntityKey": "database-001",
+      "port": 5432,
+      "protocol": "tcp",
+      "encrypted": True
     },
     {
-      "_key": "2:3",
-      "_class": "EXTENDS",
-      "_type": "pythonclient_extends_pythonclient",
-      "_fromEntityKey": "2",
-      "_toEntityKey": "3",
-      "relationshipProperty": "value"
+      "_key": "server-002:aws_ec2_instance_connects_aws_rds_instance:database-001",
+      "_class": "CONNECTS",
+      "_type": "aws_ec2_instance_connects_aws_rds_instance",
+      "_fromEntityKey": "server-002",
+      "_toEntityKey": "database-001",
+      "port": 5432,
+      "protocol": "tcp",
+      "encrypted": True
+    },
+    {
+      "_key": "user-001:aws_iam_user_owns_aws_ec2_instance:server-001",
+      "_class": "OWNS",
+      "_type": "aws_iam_user_owns_aws_ec2_instance",
+      "_fromEntityKey": "user-001",
+      "_toEntityKey": "server-001",
+      "ownershipType": "creator"
     }
 ]
 
-j1.upload_relationships_batch_json(instance_job_id='<id-of-integration-sync-job>',
-                                   relationships_list=relationships_payload)
+# Upload relationships batch
+result = j1.upload_relationships_batch_json(
+    instance_job_id='<id-of-integration-sync-job>',
+    relationships_list=relationships_payload
+)
+print(f"Uploaded {len(relationships_payload)} relationships")
 ```
 
 ##### Upload Batch of Entities and Relationships
 
 ```python
+# Prepare combined payload
 combined_payload = {
     "entities": [
     {
-      "_key": "4",
-      "_type": "pythonclient",
-      "_class": "API",
-      "displayName": "pythonclient4",
-      "propertyName": "value"
+      "_key": "vpc-001",
+      "_type": "aws_vpc",
+      "_class": "Network",
+      "displayName": "production-vpc",
+      "vpcId": "vpc-12345678",
+      "cidrBlock": "10.0.0.0/16",
+      "state": "available",
+      "tag.Environment": "production",
+      "tag.Purpose": "web_servers"
     },
     {
-      "_key": "5",
-      "_type": "pythonclient",
-      "_class": "API",
-      "displayName": "pythonclient5",
-      "propertyName": "value"
-    },
-    {
-      "_key": "6",
-      "_type": "pythonclient",
-      "_class": "API",
-      "displayName": "pythonclient6",
-      "propertyName": "value"
+      "_key": "subnet-001",
+      "_type": "aws_subnet",
+      "_class": "Network",
+      "displayName": "public-subnet-1a",
+      "subnetId": "subnet-12345678",
+      "cidrBlock": "10.0.1.0/24",
+      "availabilityZone": "us-east-1a",
+      "state": "available"
     }
 ],
     "relationships": [
     {
-      "_key": "4:5",
-      "_class": "EXTENDS",
-      "_type": "pythonclient_extends_pythonclient",
-      "_fromEntityKey": "4",
-      "_toEntityKey": "5",
-      "relationshipProperty": "value"
+      "_key": "vpc-001:aws_vpc_contains_aws_subnet:subnet-001",
+      "_class": "CONTAINS",
+      "_type": "aws_vpc_contains_aws_subnet",
+      "_fromEntityKey": "vpc-001",
+      "_toEntityKey": "subnet-001"
     },
     {
-      "_key": "5:6",
-      "_class": "EXTENDS",
-      "_type": "pythonclient_extends_pythonclient",
-      "_fromEntityKey": "5",
-      "_toEntityKey": "6",
-      "relationshipProperty": "value"
+      "_key": "subnet-001:aws_subnet_contains_aws_ec2_instance:server-001",
+      "_class": "CONTAINS",
+      "_type": "aws_subnet_contains_aws_ec2_instance",
+      "_fromEntityKey": "subnet-001",
+      "_toEntityKey": "server-001"
     }
 ]
 }
 
-j1.upload_combined_batch_json(instance_job_id='<id-of-integration-sync-job>',
-                              combined_payload=combined_payload)
+# Upload combined batch
+result = j1.upload_combined_batch_json(
+    instance_job_id='<id-of-integration-sync-job>',
+    combined_payload=combined_payload
+)
+print(f"Uploaded {len(combined_payload['entities'])} entities and {len(combined_payload['relationships'])} relationships")
 ```
 
 ##### Finalize Synchronization Job
 
 ```python
-j1.finalize_sync_job(instance_job_id='<id-of-integration-sync-job>')
+# Finalize the sync job
+result = j1.finalize_sync_job(instance_job_id='<id-of-integration-sync-job>')
+print(f"Finalized sync job: {result['job']['_id']}")
+
+# Check job status
+if result['job']['status'] == 'COMPLETED':
+    print("Sync job completed successfully")
+elif result['job']['status'] == 'FAILED':
+    print(f"Sync job failed: {result['job'].get('error', 'Unknown error')}")
 ```
 
 ##### Fetch Integration Instance Jobs
 
 ```python
+# Fetch all jobs for an integration instance
+jobs = j1.fetch_integration_jobs(instance_id='<id-of-integration-instance>')
+print(f"Found {len(jobs)} jobs for instance")
 
-j1.fetch_integration_jobs(instance_id='<id-of-integration-instance>')
+# Process job information
+for job in jobs:
+    print(f"Job ID: {job['_id']}")
+    print(f"Status: {job['status']}")
+    print(f"Started: {job.get('startedOn')}")
+    print(f"Completed: {job.get('completedOn')}")
+    print("---")
 ```
 
 ##### Fetch Integration Instance Job Events
 
 ```python
-j1.fetch_integration_job_events(instance_id='<id-of-integration-instance>',
-                                instance_job_id='<id-of-integration-instance-job>')
+# Fetch events for a specific job
+events = j1.fetch_integration_job_events(
+    instance_id='<id-of-integration-instance>',
+    instance_job_id='<id-of-integration-instance-job>'
+)
+print(f"Found {len(events)} events for job")
+
+# Process event information
+for event in events:
+    print(f"Event: {event.get('event')}")
+    print(f"Timestamp: {event.get('timestamp')}")
+    print(f"Message: {event.get('message')}")
+    print("---")
 ```
 
 ##### Create SmartClass
 
 ```python
-j1.create_smartclass(smartclass_name='SmartClassName',
-                     smartclass_description='SmartClass Description Text')
+# Create a new SmartClass
+smartclass = j1.create_smartclass(
+    smartclass_name='ProductionServers',
+    smartclass_description='All production servers across cloud providers'
+)
+print(f"Created SmartClass: {smartclass['smartclass']['_id']}")
 ```
 
 ##### Create SmartClass Query
 
 ```python
-j1.create_smartclass_query(smartclass_id='<id-of-smartclass>',
-                           query='<J1QL-query-to-be-added>',
-                           query_description='Query Description Text')
+# Add a query to the SmartClass
+query = 'FIND Host WITH tag.Environment = "production"'
+smartclass_query = j1.create_smartclass_query(
+    smartclass_id='<id-of-smartclass>',
+    query=query,
+    query_description='Find all hosts tagged as production'
+)
+print(f"Added query to SmartClass: {smartclass_query['query']['_id']}")
+
+# Add multiple queries to build a comprehensive SmartClass
+queries = [
+    ('FIND Host WITH tag.Environment = "production"', 'Production hosts'),
+    ('FIND Database WITH tag.Environment = "production"', 'Production databases'),
+    ('FIND Application WITH tag.Environment = "production"', 'Production applications')
+]
+
+for query_text, description in queries:
+    j1.create_smartclass_query(
+        smartclass_id='<id-of-smartclass>',
+        query=query_text,
+        query_description=description
+    )
 ```
 
 ##### Run SmartClass Evaluation
 
 ```python
-j1.evaluate_smartclass(smartclass_id='<id-of-smartclass>')
+# Evaluate the SmartClass
+evaluation = j1.evaluate_smartclass(smartclass_id='<id-of-smartclass>')
+print(f"Started SmartClass evaluation: {evaluation['evaluation']['_id']}")
+
+# Check evaluation status
+if evaluation['evaluation']['status'] == 'COMPLETED':
+    print("SmartClass evaluation completed")
+    print(f"Entities found: {evaluation['evaluation'].get('entityCount', 0)}")
 ```
 
 ##### Get SmartClass Details
 
 ```python
-j1.get_smartclass_details(smartclass_id='<id-of-smartclass>')
+# Get detailed information about a SmartClass
+smartclass_details = j1.get_smartclass_details(smartclass_id='<id-of-smartclass>')
+print(f"SmartClass: {smartclass_details['smartclass']['name']}")
+print(f"Description: {smartclass_details['smartclass']['description']}")
+print(f"Queries: {len(smartclass_details.get('queries', []))}")
+
+# List all queries in the SmartClass
+for query in smartclass_details.get('queries', []):
+    print(f"Query: {query['query']}")
+    print(f"Description: {query['description']}")
+    print("---")
 ```
 
 ##### Generate J1QL from Natural Language Prompt
 
 ```python
-j1.generate_j1ql(natural_language_prompt='<natural-language-input-text>')
+# Generate J1QL from natural language
+prompt = "Find all AWS EC2 instances that are running and tagged as production"
+j1ql_result = j1.generate_j1ql(natural_language_prompt=prompt)
+print(f"Generated J1QL: {j1ql_result['j1ql']}")
+
+# More complex natural language queries
+complex_prompts = [
+    "Show me all databases that are not encrypted",
+    "Find users who have admin access to production systems",
+    "List all applications that haven't been updated in the last 30 days",
+    "Show me all network connections between development and production environments"
+]
+
+for prompt in complex_prompts:
+    result = j1.generate_j1ql(natural_language_prompt=prompt)
+    print(f"Prompt: {prompt}")
+    print(f"Generated J1QL: {result['j1ql']}")
+    print("---")
 ```
 
 ##### List Alert Rules
 
 ```python
-j1.list_alert_rules()
+# List all alert rules
+alert_rules = j1.list_alert_rules()
+print(f"Found {len(alert_rules)} alert rules")
+
+# Process alert rule information
+for rule in alert_rules:
+    print(f"Rule ID: {rule['_id']}")
+    print(f"Name: {rule['name']}")
+    print(f"Description: {rule['description']}")
+    print(f"Severity: {rule['severity']}")
+    print(f"Status: {rule['status']}")
+    print("---")
 ```
 
 ##### Get Alert Rule Details
 
 ```python
-j1.get_alert_rule_details(rule_id='<id-of-alert-rule>')
+# Get detailed information about a specific alert rule
+rule_details = j1.get_alert_rule_details(rule_id='<id-of-alert-rule>')
+print(f"Rule: {rule_details['rule']['name']}")
+print(f"Description: {rule_details['rule']['description']}")
+print(f"J1QL: {rule_details['rule']['j1ql']}")
+print(f"Severity: {rule_details['rule']['severity']}")
+print(f"Polling Interval: {rule_details['rule']['pollingInterval']}")
+
+# Check action configurations
+if 'actionConfigs' in rule_details['rule']:
+    print("Action Configurations:")
+    for action in rule_details['rule']['actionConfigs']:
+        print(f"  Type: {action['type']}")
+        if action['type'] == 'WEBHOOK':
+            print(f"  Endpoint: {action['endpoint']}")
+        elif action['type'] == 'TAG_ENTITIES':
+            print(f"  Tags: {action['tags']}")
 ```
 
 ##### Create Alert Rule
 
 ```python
+# Basic alert rule creation
 # polling_interval can be DISABLED, THIRTY_MINUTES, ONE_HOUR, FOUR_HOURS, EIGHT_HOURS, TWELVE_HOURS, ONE_DAY, or ONE_WEEK
 # severity can be INFO, LOW, MEDIUM, HIGH, or CRITICAL
 
-j1.create_alert_rule(name="create_alert_rule-name",
-                     description="create_alert_rule-description",
-                     tags=['tag1', 'tag2'],
-                     polling_interval="DISABLED",
-                     severity="INFO",
-                     j1ql="find jupiterone_user")
+alert_rule = j1.create_alert_rule(
+    name="Unencrypted Databases",
+    description="Alert when databases are found without encryption",
+    tags=['security', 'compliance'],
+    polling_interval="ONE_DAY",
+    severity="HIGH",
+    j1ql="FIND Database WITH encrypted = false"
+)
+print(f"Created alert rule: {alert_rule['rule']['_id']}")
+
+# Create alert rule with more complex J1QL
+complex_rule = j1.create_alert_rule(
+    name="Production Access Violations",
+    description="Alert when non-admin users access production resources",
+    tags=['security', 'access-control', 'production'],
+    polling_interval="THIRTY_MINUTES",
+    severity="CRITICAL",
+    j1ql="""
+    FIND User AS u 
+    THAT HAS AccessPolicy AS ap 
+    THAT ALLOWS * AS resource 
+    WHERE resource.tag.Environment = 'production' 
+    AND ap.accessLevel = 'admin' 
+    AND u.tag.Role != 'admin'
+    """
+)
 ```
 
 ##### Create Alert Rule with Action Config
 
 ```python
+# Webhook action configuration
 webhook_action_config = {
             "type": "WEBHOOK",
             "endpoint": "https://webhook.domain.here/endpoint",
@@ -376,6 +708,7 @@ webhook_action_config = {
             }
 }
 
+# Tag entities action configuration
 tag_entities_action_config = {
             "type": "TAG_ENTITIES",
             "entities": "{{queries.query0.data}}",
@@ -387,6 +720,7 @@ tag_entities_action_config = {
             ]
 }
 
+# Jira ticket creation action configuration
 create_jira_ticket_action_config = {
           "integrationInstanceId" : "5b0eee42-60f5-467a-8125-08666f1383da",
           "type" : "CREATE_JIRA_TICKET",
@@ -421,19 +755,46 @@ create_jira_ticket_action_config = {
           }
 }
 
-j1.create_alert_rule(name="create_alert_rule-name",
-                    description="create_alert_rule-description",
-                    tags=['tag1', 'tag2'],
-                    polling_interval="DISABLED",
-                    severity="INFO",
-                    j1ql="find jupiterone_user",
-                    action_configs=webhook_action_config)
+# Create alert rule with webhook action
+alert_rule = j1.create_alert_rule(
+    name="Security Violation Alert",
+    description="Alert security team of policy violations",
+    tags=['security', 'automation'],
+    polling_interval="ONE_HOUR",
+    severity="HIGH",
+    j1ql="FIND Finding WITH severity = 'HIGH'",
+    action_configs=webhook_action_config
+)
+
+# Create alert rule with multiple actions
+multiple_actions = [
+    webhook_action_config,
+    tag_entities_action_config
+]
+
+alert_rule = j1.create_alert_rule(
+    name="Comprehensive Security Alert",
+    description="Alert and tag security violations",
+    tags=['security', 'compliance'],
+    polling_interval="FOUR_HOURS",
+    severity="MEDIUM",
+    j1ql="FIND Finding WITH severity = ('HIGH' OR 'CRITICAL')",
+    action_configs=multiple_actions
+)
 ```
 
 ##### Delete Alert Rule
 
 ```python
-j1.delete_alert_rule(rule_id='<id-of-alert-rule')
+# Delete an alert rule
+result = j1.delete_alert_rule(rule_id='<id-of-alert-rule>')
+print(f"Deleted alert rule: {result['rule']['_id']}")
+
+# Verify deletion by attempting to get details (should fail)
+try:
+    j1.get_alert_rule_details(rule_id='<id-of-alert-rule>')
+except Exception as e:
+    print(f"Rule successfully deleted: {e}")
 ```
 
 ##### Update Alert Rule
@@ -444,12 +805,14 @@ j1.delete_alert_rule(rule_id='<id-of-alert-rule')
 # severity can be INFO, LOW, MEDIUM, HIGH, or CRITICAL
 # action_configs_op can be OVERWRITE or APPEND
 
+# Basic alert rule configuration
 alert_rule_config_alert = [
     {
         "type": "CREATE_ALERT"
     }
 ]
 
+# Tag entities configuration
 alert_rule_config_tag = [
     {
         "type": "TAG_ENTITIES",
@@ -463,6 +826,7 @@ alert_rule_config_tag = [
     }
 ]
 
+# Webhook configuration
 alert_rule_config_webhook = [
     {
         "type": "WEBHOOK",
@@ -477,6 +841,7 @@ alert_rule_config_webhook = [
     }
 ]
 
+# Jira ticket configuration
 create_jira_ticket_action_config = {
           "integrationInstanceId" : "5b0eee42-60f5-467a-8125-08666f1383da",
           "type" : "CREATE_JIRA_TICKET",
@@ -511,6 +876,7 @@ create_jira_ticket_action_config = {
           }
 }
 
+# Multiple action configurations
 alert_rule_config_multiple = [
     {
         "type": "WEBHOOK",
@@ -535,95 +901,291 @@ alert_rule_config_multiple = [
     }
 ]
 
-j1.update_alert_rule(rule_id="<id-of-alert-rule>",
-                     name="Updated Alert Rule Name",
-                     description="Updated Alert Rule Description",
-                     j1ql="find jupiterone_user",
-                     polling_interval="ONE_WEEK",
-                     tags=['tag1', 'tag2', 'tag3'],
-                     tag_op="OVERWRITE",
-                     severity="INFO",
-                     action_configs=alert_rule_config_tag,
-                     action_configs_op="OVERWRITE")
+# Update alert rule with comprehensive changes
+updated_rule = j1.update_alert_rule(
+    rule_id="<id-of-alert-rule>",
+    name="Updated Alert Rule Name",
+    description="Updated Alert Rule Description",
+    j1ql="FIND Finding WITH severity = 'HIGH'",
+    polling_interval="ONE_WEEK",
+    tags=['tag1', 'tag2', 'tag3'],
+    tag_op="OVERWRITE",
+    severity="INFO",
+    action_configs=alert_rule_config_tag,
+    action_configs_op="OVERWRITE"
+)
 
-j1.update_alert_rule(rule_id='<id-of-alert-rule>',
-                     tags=['newTag1', 'newTag1'],
-                     tag_op="OVERWRITE")
+# Update only tags (overwrite existing)
+j1.update_alert_rule(
+    rule_id='<id-of-alert-rule>',
+    tags=['newTag1', 'newTag2'],
+    tag_op="OVERWRITE"
+)
 
-j1.update_alert_rule(rule_id='<id-of-alert-rule>',
-                     tags=['additionalTag1', 'additionalTag2'],
-                     tag_op="APPEND")
+# Append additional tags
+j1.update_alert_rule(
+    rule_id='<id-of-alert-rule>',
+    tags=['additionalTag1', 'additionalTag2'],
+    tag_op="APPEND"
+)
+
+# Update only the J1QL query
+j1.update_alert_rule(
+    rule_id='<id-of-alert-rule>',
+    j1ql="FIND Finding WITH severity = ('HIGH' OR 'CRITICAL')"
+)
+
+# Update polling interval and severity
+j1.update_alert_rule(
+    rule_id='<id-of-alert-rule>',
+    polling_interval="THIRTY_MINUTES",
+    severity="HIGH"
+)
 ```
 
 ##### Evaluate Alert Rule
 
 ```python
-j1.evaluate_alert_rule(rule_id='<id-of-alert-rule>')
+# Manually evaluate an alert rule
+evaluation = j1.evaluate_alert_rule(rule_id='<id-of-alert-rule>')
+print(f"Started evaluation: {evaluation['evaluation']['_id']}")
+
+# Check evaluation status
+if evaluation['evaluation']['status'] == 'COMPLETED':
+    print("Evaluation completed successfully")
+    print(f"Entities found: {evaluation['evaluation'].get('entityCount', 0)}")
+elif evaluation['evaluation']['status'] == 'FAILED':
+    print(f"Evaluation failed: {evaluation['evaluation'].get('error', 'Unknown error')}")
 ```
 
 ##### Get Compliance Framework Item
 
 ```python
-j1.get_compliance_framework_item_details(item_id="<id-of-item>")
+# Get details of a compliance framework item
+item_details = j1.get_compliance_framework_item_details(item_id="<id-of-item>")
+print(f"Item: {item_details['item']['name']}")
+print(f"Description: {item_details['item']['description']}")
+print(f"Category: {item_details['item']['category']}")
+print(f"Status: {item_details['item']['status']}")
+
+# Access compliance requirements
+if 'requirements' in item_details['item']:
+    print("Requirements:")
+    for req in item_details['item']['requirements']:
+        print(f"  - {req['description']}")
 ```
 
 ##### List Alert Rule Evaluation Results
 
 ```python
-j1.list_alert_rule_evaluation_results(rule_id="<id-of-rule>")
+# List evaluation results for a specific rule
+evaluations = j1.list_alert_rule_evaluation_results(rule_id="<id-of-rule>")
+print(f"Found {len(evaluations)} evaluations")
+
+# Process evaluation results
+for evaluation in evaluations:
+    print(f"Evaluation ID: {evaluation['_id']}")
+    print(f"Status: {evaluation['status']}")
+    print(f"Started: {evaluation.get('startedOn')}")
+    print(f"Completed: {evaluation.get('completedOn')}")
+    print(f"Entities found: {evaluation.get('entityCount', 0)}")
+    print("---")
 ```
 
 ##### Fetch Evaluation Result Download URL
 
 ```python
-j1.fetch_evaluation_result_download_url(raw_data_key="RULE_EVALUATION/<id-of-evaluation>/query0.json")
-```
+# Get download URL for evaluation results
+download_url = j1.fetch_evaluation_result_download_url(
+    raw_data_key="RULE_EVALUATION/<id-of-evaluation>/query0.json"
+)
+print(f"Download URL: {download_url['url']}")
 
-##### Fetch Evaluation Result Download URL
-
-```python
-j1.fetch_evaluation_result_download_url(raw_data_key="RULE_EVALUATION/<id-of-evaluation>/query0.json")
+# The URL is typically valid for a limited time
+print(f"URL expires: {download_url.get('expires')}")
 ```
 
 ##### Fetch Downloaded Evaluation Results
 
 ```python
-j1.fetch_downloaded_evaluation_results(download_url="https://download.us.jupiterone.io/<id-of-rule>/RULE_EVALUATION/<id-of-evaluation>/<epoch>/query0.json?token=<TOKEN>&Expires=<epoch>")
+# Download and process evaluation results
+download_url = "https://download.us.jupiterone.io/<id-of-rule>/RULE_EVALUATION/<id-of-evaluation>/<epoch>/query0.json?token=<TOKEN>&Expires=<epoch>"
+results = j1.fetch_downloaded_evaluation_results(download_url=download_url)
+
+print(f"Downloaded {len(results)} results")
+
+# Process the results
+for result in results:
+    print(f"Entity: {result.get('displayName', result.get('_id'))}")
+    print(f"Type: {result.get('_type')}")
+    print(f"Class: {result.get('_class')}")
+    print("---")
 ```
 
 ##### Get Integration Definition Details
 
 ```python
+# Get details for AWS integration
 # examples: 'aws', 'azure', 'google_cloud'
-j1.get_integration_definition_details(integration_type="<integration-type>")
+aws_details = j1.get_integration_definition_details(integration_type="aws")
+print(f"AWS Integration: {aws_details['definition']['name']}")
+print(f"Description: {aws_details['definition']['description']}")
+
+# Get details for Azure integration
+azure_details = j1.get_integration_definition_details(integration_type="azure")
+print(f"Azure Integration: {azure_details['definition']['name']}")
+
+# Get details for Google Cloud integration
+gcp_details = j1.get_integration_definition_details(integration_type="google_cloud")
+print(f"Google Cloud Integration: {gcp_details['definition']['name']}")
+
+# Access configuration fields
+if 'configFields' in aws_details['definition']:
+    print("AWS Configuration Fields:")
+    for field in aws_details['definition']['configFields']:
+        print(f"  - {field['name']}: {field['type']}")
 ```
 
 ##### Fetch Integration Instances
 
 ```python
-j1.fetch_integration_instances(definition_id="<id-of-definition>")
+# Fetch all instances of a specific integration type
+aws_instances = j1.fetch_integration_instances(definition_id="<id-of-definition>")
+print(f"Found {len(aws_instances)} AWS integration instances")
+
+# Process instance information
+for instance in aws_instances:
+    print(f"Instance ID: {instance['_id']}")
+    print(f"Name: {instance['name']}")
+    print(f"Description: {instance['description']}")
+    print(f"Status: {instance['status']}")
+    print(f"Last sync: {instance.get('lastSyncJob', {}).get('completedOn')}")
+    print("---")
 ```
 
 ##### Fetch Integration Instance Details
 
 ```python
-j1.get_integration_instance_details(instance_id="<id-of-integration-instance>")
+# Get detailed information about a specific integration instance
+instance_details = j1.get_integration_instance_details(instance_id="<id-of-integration-instance>")
+print(f"Instance: {instance_details['instance']['name']}")
+print(f"Description: {instance_details['instance']['description']}")
+print(f"Status: {instance_details['instance']['status']}")
+print(f"Definition: {instance_details['instance']['definition']['name']}")
+
+# Access configuration
+if 'config' in instance_details['instance']:
+    print("Configuration:")
+    for key, value in instance_details['instance']['config'].items():
+        if key != 'password':  # Don't print sensitive data
+            print(f"  {key}: {value}")
+
+# Access recent jobs
+if 'recentJobs' in instance_details['instance']:
+    print("Recent Jobs:")
+    for job in instance_details['instance']['recentJobs']:
+        print(f"  Job ID: {job['_id']}")
+        print(f"  Status: {job['status']}")
+        print(f"  Started: {job.get('startedOn')}")
+        print(f"  Completed: {job.get('completedOn')}")
 ```
 
 ##### Get Account Parameter Details
 
 ```python
-j1.get_parameter_details(name="ParameterName")
+# Get details of a specific parameter
+param_details = j1.get_parameter_details(name="ParameterName")
+print(f"Parameter: {param_details['parameter']['name']}")
+print(f"Value: {param_details['parameter']['value']}")
+print(f"Secret: {param_details['parameter']['secret']}")
+print(f"Created: {param_details['parameter']['createdOn']}")
+print(f"Updated: {param_details['parameter']['updatedOn']}")
+
+# Get details for common parameters
+common_params = [
+    "AWS_ACCESS_KEY_ID",
+    "AWS_SECRET_ACCESS_KEY",
+    "AZURE_CLIENT_ID",
+    "GCP_PROJECT_ID"
+]
+
+for param_name in common_params:
+    try:
+        details = j1.get_parameter_details(name=param_name)
+        print(f"{param_name}: {'***' if details['parameter']['secret'] else details['parameter']['value']}")
+    except Exception as e:
+        print(f"{param_name}: Not found")
 ```
 
 ##### List Account Parameters
 
 ```python
-j1.list_account_parameters()
+# List all account parameters
+parameters = j1.list_account_parameters()
+print(f"Found {len(parameters)} parameters")
+
+# Process parameter information
+for param in parameters:
+    print(f"Parameter: {param['name']}")
+    print(f"Secret: {param['secret']}")
+    print(f"Created: {param['createdOn']}")
+    print(f"Updated: {param['updatedOn']}")
+    if not param['secret']:
+        print(f"Value: {param['value']}")
+    print("---")
+
+# Filter parameters by type
+secret_params = [p for p in parameters if p['secret']]
+non_secret_params = [p for p in parameters if not p['secret']]
+
+print(f"Secret parameters: {len(secret_params)}")
+print(f"Non-secret parameters: {len(non_secret_params)}")
 ```
 
 ##### Create or Update Account Parameter
 
 ```python
-j1.create_update_parameter(name="ParameterName", value="stored_value", secret=False)
+# Create a new parameter
+result = j1.create_update_parameter(
+    name="API_ENDPOINT", 
+    value="https://api.example.com", 
+    secret=False
+)
+print(f"Created/Updated parameter: {result['parameter']['name']}")
+
+# Create a secret parameter
+result = j1.create_update_parameter(
+    name="DATABASE_PASSWORD", 
+    value="super-secret-password", 
+    secret=True
+)
+print(f"Created/Updated secret parameter: {result['parameter']['name']}")
+
+# Update an existing parameter
+result = j1.create_update_parameter(
+    name="API_ENDPOINT", 
+    value="https://new-api.example.com", 
+    secret=False
+)
+print(f"Updated parameter: {result['parameter']['name']}")
+
+# Common parameter creation examples
+common_parameters = [
+    ("AWS_ACCESS_KEY_ID", "AKIAIOSFODNN7EXAMPLE", True),
+    ("AWS_SECRET_ACCESS_KEY", "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY", True),
+    ("AZURE_CLIENT_ID", "12345678-1234-1234-1234-123456789012", True),
+    ("AZURE_CLIENT_SECRET", "azure-secret-key", True),
+    ("GCP_PROJECT_ID", "my-gcp-project", False),
+    ("SLACK_WEBHOOK_URL", "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX", True),
+    ("JIRA_URL", "https://company.atlassian.net", False),
+    ("JIRA_USERNAME", "jira-user@company.com", False),
+    ("JIRA_API_TOKEN", "jira-api-token", True)
+]
+
+for name, value, is_secret in common_parameters:
+    try:
+        result = j1.create_update_parameter(name=name, value=value, secret=is_secret)
+        print(f"Created/Updated {name}")
+    except Exception as e:
+        print(f"Failed to create/update {name}: {e}")
 ```

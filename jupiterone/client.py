@@ -574,6 +574,7 @@ class JupiterOneClient:
         instance_name: str = None,
         instance_description: str = None,
         integration_definition_id: str = "8013680b-311a-4c2e-b53b-c8735fd97a5c",
+        resource_group_id: str = None,
     ):
         """Creates a new Custom Integration Instance.
 
@@ -582,6 +583,8 @@ class JupiterOneClient:
             instance_description (str): The "Description" for integration instance
             integration_definition_id (str): The "Integration definition ID" for integration instance,
             if no parameter is passed, then the Custom Integration definition ID will be used.
+            resource_group_id (str): The "Resource Group ID" for integration instance,
+            if provided, the integration instance will be assigned to the specified resource group.
         """
         variables = {
             "instance": {
@@ -594,6 +597,9 @@ class JupiterOneClient:
                 "ingestionSourcesOverrides": [],
             }
         }
+
+        if resource_group_id:
+            variables["instance"]["resourceGroupId"] = resource_group_id
 
         response = self._execute_query(CREATE_INSTANCE, variables=variables)
         return response["data"]["createIntegrationInstance"]

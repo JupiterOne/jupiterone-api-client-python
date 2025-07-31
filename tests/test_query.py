@@ -2,6 +2,8 @@ import json
 import pytest
 import responses
 from collections import Counter
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from jupiterone.client import JupiterOneClient
 from jupiterone.constants import QUERY_V1
@@ -411,7 +413,11 @@ def test_bad_gateway_error_query_v1():
         content_type='application/json',
     )
 
+    # Create a client without retry logic to test 502 error handling
     j1 = JupiterOneClient(account='testAccount', token='bogusToken')
+    # Disable retries for this test by setting total=0
+    j1.session.mount("https://", HTTPAdapter(max_retries=Retry(total=0)))
+
     query = "find Host with _id='1' return tree"
 
     with pytest.raises(JupiterOneApiError) as exc_info:
