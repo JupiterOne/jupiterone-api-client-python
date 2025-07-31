@@ -163,9 +163,23 @@ j1.fetch_entity_raw_data(entity_id='<id-of-entity>')
 ##### Create Integration Instance
 
 ```python
+# Basic integration instance creation
 j1.create_integration_instance(
     instance_name="Integration Name", 
     instance_description="Description Text")
+
+# Create integration instance with resource group assignment
+j1.create_integration_instance(
+    instance_name="Integration Name", 
+    instance_description="Description Text",
+    resource_group_id="your-resource-group-id")
+
+# Create integration instance with custom definition and resource group
+j1.create_integration_instance(
+    instance_name="Integration Name", 
+    instance_description="Description Text",
+    integration_definition_id="your-integration-definition-id",
+    resource_group_id="your-resource-group-id")
 ```
 
 ##### Start Synchronization Job
