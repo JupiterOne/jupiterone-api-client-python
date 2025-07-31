@@ -11,7 +11,6 @@ This file demonstrates how to:
 """
 
 import os
-import time
 from jupiterone import JupiterOneClient
 
 def setup_client():
@@ -251,7 +250,7 @@ def batch_upload_examples(j1, job_id):
     ]
     
     try:
-        entities_result = j1.upload_entities_batch_json(
+        j1.upload_entities_batch_json(
             instance_job_id=job_id,
             entities_list=entities_payload
         )
@@ -286,7 +285,7 @@ def batch_upload_examples(j1, job_id):
     ]
     
     try:
-        relationships_result = j1.upload_relationships_batch_json(
+        j1.upload_relationships_batch_json(
             instance_job_id=job_id,
             relationships_list=relationships_payload
         )
@@ -340,7 +339,7 @@ def batch_upload_examples(j1, job_id):
     }
     
     try:
-        combined_result = j1.upload_combined_batch_json(
+        j1.upload_combined_batch_json(
             instance_job_id=job_id,
             combined_payload=combined_payload
         )
@@ -379,7 +378,7 @@ def bulk_delete_example(j1, job_id):
         print("Uploaded entities for deletion test")
         
         # Then bulk delete them
-        delete_result = j1.bulk_delete_entities(
+        j1.bulk_delete_entities(
             instance_job_id=job_id,
             entities_list=entities_to_delete
         )
@@ -416,9 +415,6 @@ def main():
         print("=== Batch Upload Examples (Structure Only) ===\n")
         print("Note: These examples require a valid sync job ID to run")
         print("The structure is shown for reference\n")
-        
-        # Example job ID (replace with actual job ID when testing)
-        example_job_id = "example-job-id"
         
         # Show batch upload structure
         print("Batch upload structure would include:")

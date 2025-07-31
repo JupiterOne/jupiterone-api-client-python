@@ -10,7 +10,6 @@ This file demonstrates how to:
 """
 
 import os
-import time
 from jupiterone import JupiterOneClient
 
 def setup_client():
@@ -57,8 +56,8 @@ def basic_query_examples(j1):
     print(f"Found {len(hosts_with_apps)} host-application relationships\n")
     
     # 4. Tree query
-    print("4. Tree query for host hierarchy:")
-    tree_result = j1.query_v1(query='FIND Host RETURN TREE LIMIT 5')
+    print("4. Tree query for host relationships:")
+    j1.query_v1(query='FIND Host with displayName = "server-001" THAT RELATES TO *RETURN TREE')
     print(f"Tree query completed\n")
     
     # 5. Query with deleted entities
@@ -81,7 +80,7 @@ def pagination_examples(j1):
     
     # 2. Limit and skip pagination
     print("2. Limit and skip pagination:")
-    limit_skip_result = j1._limit_and_skip_query(
+    j1._limit_and_skip_query(
         query="FIND User",
         skip=0,
         limit=100
@@ -91,9 +90,7 @@ def pagination_examples(j1):
     # 3. Deferred response for very large datasets
     print("3. Deferred response for large datasets:")
     deferred_result = j1.query_with_deferred_response(
-        query="FIND UnifiedDevice",
-        polling_interval=30,  # seconds
-        max_retries=10
+        query="FIND UnifiedDevice"
     )
     print(f"Deferred response query completed with {len(deferred_result)} results\n")
 
@@ -123,7 +120,7 @@ def complex_query_examples(j1):
     ORDER BY count(h) DESC 
     LIMIT 10
     """
-    agg_result = j1.query_v1(query=agg_query)
+    j1.query_v1(query=agg_query)
     print(f"Aggregation query completed\n")
     
     # 3. Time-based query

@@ -106,7 +106,7 @@ def update_entity_examples(j1, entity_id):
     
     # 2. Update with tags
     print("2. Updating entity tags:")
-    tag_update = j1.update_entity(
+    j1.update_entity(
         entity_id=entity_id,
         properties={
             'tag.Status': 'maintenance',
@@ -118,7 +118,7 @@ def update_entity_examples(j1, entity_id):
     
     # 3. Update with complex properties
     print("3. Updating with complex properties:")
-    complex_update = j1.update_entity(
+    j1.update_entity(
         entity_id=entity_id,
         properties={
             'isActive': False,
@@ -148,7 +148,7 @@ def delete_entity_examples(j1, entity_id):
     
     # 2. Deletion with timestamp
     print("2. Deleting with specific timestamp:")
-    timestamp_delete = j1.delete_entity(
+    j1.delete_entity(
         entity_id=entity_id,
         timestamp=int(time.time()) * 1000
     )
@@ -316,7 +316,8 @@ def main():
             try:
                 j1.delete_entity(entity_id=entity['entity']['_id'])
                 print(f"Cleaned up: {entity['entity']['_id']}")
-            except:
+            except Exception:
+                # Entity may already be deleted or not exist
                 pass
         
         print("\n✓ All entity management examples completed successfully!")

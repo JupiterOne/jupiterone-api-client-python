@@ -10,7 +10,6 @@ This file demonstrates how to:
 """
 
 import os
-import time
 from jupiterone import JupiterOneClient
 
 def setup_client():
@@ -97,33 +96,33 @@ def alert_rule_with_actions_examples(j1):
         ]
     }
     
-    # 3. Jira ticket creation action configuration
-    jira_action_config = {
-        "integrationInstanceId": "your-jira-integration-id",  # Replace with actual ID
-        "type": "CREATE_JIRA_TICKET",
-        "entityClass": "Record",
-        "summary": "Security Violation Detected",
-        "issueType": "Bug",
-        "project": "SEC",
-        "additionalFields": {
-            "description": {
-                "type": "doc",
-                "version": 1,
-                "content": [
-                    {
-                        "type": "paragraph",
-                        "content": [
-                            {
-                                "type": "text",
-                                "text": "{{alertWebLink}}\n\n**Affected Items:**\n\n* {{queries.query0.data|mapProperty('displayName')|join('\n* ')}}"
-                            }
-                        ]
-                    }
-                ]
-            },
-            "labels": ["security", "automated", "jupiterone"]
-        }
-    }
+    # 3. Jira ticket creation action configuration (commented out as it requires specific integration ID)
+    # jira_action_config = {
+    #     "integrationInstanceId": "your-jira-integration-id",  # Replace with actual ID
+    #     "type": "CREATE_JIRA_TICKET",
+    #     "entityClass": "Record",
+    #     "summary": "Security Violation Detected",
+    #     "issueType": "Bug",
+    #     "project": "SEC",
+    #     "additionalFields": {
+    #         "description": {
+    #             "type": "doc",
+    #             "version": 1,
+    #             "content": [
+    #                 {
+    #                     "type": "paragraph",
+    #                     "content": [
+    #                         {
+    #                             "type": "text",
+    #                             "text": "{{alertWebLink}}\n\n**Affected Items:**\n\n* {{queries.query0.data|mapProperty('displayName')|join('\n* ')}}"
+    #                         }
+    #                     ]
+    #                 }
+    #             ]
+    #         },
+    #         "labels": ["security", "automated", "jupiterone"]
+    #     }
+    # }
     
     # Create alert rule with webhook action
     print("1. Creating alert rule with webhook action:")

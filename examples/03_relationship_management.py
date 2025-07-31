@@ -131,7 +131,7 @@ def update_relationship_examples(j1, relationship_id):
     
     # 2. Update with complex properties
     print("2. Updating with complex properties:")
-    complex_update = j1.update_relationship(
+    j1.update_relationship(
         relationship_id=relationship_id,
         properties={
             'accessLevel': 'admin',
@@ -149,7 +149,7 @@ def update_relationship_examples(j1, relationship_id):
     
     # 3. Update with tags
     print("3. Updating relationship tags:")
-    tag_update = j1.update_relationship(
+    j1.update_relationship(
         relationship_id=relationship_id,
         properties={
             'tag.Status': 'active',
@@ -172,7 +172,7 @@ def delete_relationship_examples(j1, relationship_id):
     
     # 2. Deletion with timestamp
     print("2. Deleting with specific timestamp:")
-    timestamp_delete = j1.delete_relationship(
+    j1.delete_relationship(
         relationship_id=relationship_id,
         timestamp=int(time.time()) * 1000
     )
@@ -384,7 +384,8 @@ def main():
             try:
                 j1.delete_relationship(relationship_id=rel['relationship']['_id'])
                 print(f"Cleaned up relationship: {rel['relationship']['_id']}")
-            except:
+            except Exception:
+                # Relationship may already be deleted or not exist
                 pass
         
         # Clean up entities
@@ -392,7 +393,8 @@ def main():
             j1.delete_entity(entity_id=from_entity_id)
             j1.delete_entity(entity_id=to_entity_id)
             print(f"Cleaned up entities")
-        except:
+        except Exception:
+            # Entities may already be deleted or not exist
             pass
         
         print("\n✓ All relationship management examples completed successfully!")

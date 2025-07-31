@@ -310,13 +310,10 @@ def pagination_techniques_examples(j1):
     print()
     
     # 3. Deferred response with custom polling
-    print("3. Deferred response with custom polling:")
+    print("3. Deferred response for large datasets:")
     try:
         deferred_results = j1.query_with_deferred_response(
-            query="FIND UnifiedDevice",
-            polling_interval=60,  # Poll every 60 seconds
-            max_retries=5,  # Maximum 5 retries
-            timeout=300  # 5 minute timeout
+            query="FIND UnifiedDevice"
         )
         print(f"Deferred response query completed with {len(deferred_results)} results")
     except Exception as e:
