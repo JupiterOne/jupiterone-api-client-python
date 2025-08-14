@@ -414,7 +414,7 @@ class TestCreateQuestion:
         }
 
         # Create question with some None values
-        result = self.client.create_question(
+        self.client.create_question(
             title="Optional Fields Test",
             queries=[{"query": "FIND Host"}],
             description=None,  # Should not be included
