@@ -1,7 +1,6 @@
 """Test create_question method"""
 
 import pytest
-import responses
 from unittest.mock import Mock, patch
 from jupiterone.client import JupiterOneClient
 from jupiterone.constants import CREATE_QUESTION
