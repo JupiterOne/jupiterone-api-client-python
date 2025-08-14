@@ -7,6 +7,10 @@ This file demonstrates how to:
 2. Create questions with various configuration options
 3. List existing questions in your account
 4. Use questions for security monitoring and compliance
+
+NOTE: This example includes robust error handling for the compliance field
+to handle potential GraphQL schema mismatches where compliance data might
+be returned as a list instead of a dictionary.
 """
 
 import os
@@ -150,6 +154,10 @@ def advanced_question_examples(j1):
     
     # 1. Question with compliance metadata
     print("1. Creating a question with compliance metadata:")
+    # Note: The compliance field access has been made robust to handle potential
+    # GraphQL schema mismatches where compliance data might be returned as a list
+    # instead of a dictionary. This was causing the original error:
+    # "'list' object has no attribute 'get'"
     try:
         compliance_mapped_question = j1.create_question(
             title="CIS AWS Foundations Benchmark 2.3",
@@ -170,11 +178,47 @@ def advanced_question_examples(j1):
         )
         
         print(f"Created compliance-mapped question: {compliance_mapped_question['title']}")
-        if 'compliance' in compliance_mapped_question:
-            print(f"Compliance standard: {compliance_mapped_question['compliance'].get('standard')}")
+        
+        # Debug: Show the entire response structure
+        print(f"Full question response keys: {list(compliance_mapped_question.keys())}")
+        print(f"Question ID: {compliance_mapped_question.get('id', 'No ID')}")
+        
+        try:
+            if 'compliance' in compliance_mapped_question:
+                compliance_data = compliance_mapped_question['compliance']
+                # Debug: Show the actual structure
+                print(f"Compliance data structure: {type(compliance_data)}")
+                print(f"Compliance data content: {compliance_data}")
+                
+                # Handle both list and dictionary responses for compliance
+                if isinstance(compliance_data, dict):
+                    print(f"Compliance standard: {compliance_data.get('standard', 'Not specified')}")
+                    if 'requirements' in compliance_data:
+                        reqs = compliance_data['requirements']
+                        if isinstance(reqs, list):
+                            print(f"Compliance requirements: {', '.join(map(str, reqs))}")
+                        else:
+                            print(f"Compliance requirements (unexpected type): {type(reqs)} - {reqs}")
+                elif isinstance(compliance_data, list):
+                    print(f"Compliance data returned as list with {len(compliance_data)} items")
+                    # If it's a list, try to access the first item if it exists
+                    if compliance_data and isinstance(compliance_data[0], dict):
+                        print(f"First compliance item: {compliance_data[0]}")
+                else:
+                    print(f"Compliance data type: {type(compliance_data)}")
+            else:
+                print("No compliance field found in response")
+        except Exception as compliance_error:
+            print(f"Error accessing compliance data: {compliance_error}")
+            print(f"Compliance field type: {type(compliance_mapped_question.get('compliance', 'Not present'))}")
+            # Show more debugging info
+            print(f"Full response for debugging: {compliance_mapped_question}")
         print()
     except Exception as e:
-        print(f"Error creating compliance-mapped question: {e}\n")
+        print(f"Error creating compliance-mapped question: {e}")
+        print(f"Error type: {type(e).__name__}")
+        print(f"Error details: {str(e)}")
+        print()
     
     # 2. Question with variables (parameterized queries)
     print("2. Creating a parameterized question with variables:")
