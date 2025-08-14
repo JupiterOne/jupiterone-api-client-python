@@ -105,6 +105,30 @@ This directory contains comprehensive examples demonstrating how to use the Jupi
 - Performance optimization techniques
 - Data synchronization workflows
 
+### 7. **07_account_parameters_list_example.py**
+**Purpose**: Account parameter management
+- List all account parameters
+- Create/update account parameters
+- Fetch parameter details
+- Secret parameter handling
+
+**Key Methods Demonstrated**:
+- `list_account_parameters()` - List all parameters
+- `create_update_parameter()` - Create or update parameters
+- `get_parameter_details()` - Get parameter details
+
+### 8. **08_questions_management.py**
+**Purpose**: Questions creation and management
+- Create questions with single and multiple queries
+- Configure question properties (tags, compliance, variables)
+- Create questions for security monitoring and compliance
+- List existing questions in the account
+- Advanced question features (parameterization, resource groups)
+
+**Key Methods Demonstrated**:
+- `create_question()` - Create questions with J1QL queries
+- `list_questions()` - List all questions in the account
+
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -142,6 +166,12 @@ python 05_alert_rules_and_smartclasses.py
 
 # Run advanced operations examples
 python 06_advanced_operations.py
+
+# Run account parameters examples
+python 07_account_parameters_list_example.py
+
+# Run questions management examples
+python 08_questions_management.py
 ```
 
 ## 📋 Example Categories

@@ -920,6 +920,41 @@ QUESTIONS = """
       __typename
     }
 """
+CREATE_QUESTION = """
+    mutation CreateQuestion($question: CreateQuestionInput!) {
+        createQuestion(question: $question) {
+            id
+            title
+            description
+            tags
+            queries {
+                name
+                query
+                version
+                resultsAre
+                __typename
+            }
+            compliance {
+                standard
+                requirements
+                controls
+                __typename
+            }
+            variables {
+                name
+                required
+                default
+                __typename
+            }
+            accountId
+            integrationDefinitionId
+            showTrend
+            pollingInterval
+            lastUpdatedTimestamp
+            __typename
+        }
+    }
+"""
 COMPLIANCE_FRAMEWORK_ITEM = """
 query complianceFrameworkItem($input: ComplianceFrameworkItemInput!) {
   complianceFrameworkItem(input: $input) {

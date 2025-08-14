@@ -43,6 +43,7 @@ from jupiterone.constants import (
     UPDATE_RULE_INSTANCE,
     EVALUATE_RULE_INSTANCE,
     QUESTIONS,
+    CREATE_QUESTION,
     COMPLIANCE_FRAMEWORK_ITEM,
     LIST_COLLECTION_RESULTS,
     GET_RAW_DATA_DOWNLOAD_URL,
@@ -1278,6 +1279,101 @@ class JupiterOneClient:
             results.extend(r["data"]["questions"]["questions"])
 
         return results
+
+    def create_question(
+        self,
+        title: str,
+        queries: List[Dict],
+        resource_group_id: str = None,
+        **kwargs
+    ):
+        """Creates a new Question in the J1 account.
+        
+        Args:
+            title (str): The title of the question (required)
+            queries (List[Dict]): List of query objects containing:
+                - query (str): The J1QL query string
+                - name (str): Name for the query
+                - version (str): Query version (defaults to 'v1')
+                - resultsAre (str): Query result type (defaults to 'INFORMATIVE')
+            resource_group_id (str, optional): ID of the resource group to associate with
+            **kwargs: Additional optional parameters:
+                - description (str): Description of the question
+                - tags (List[str]): List of tags to apply to the question
+                - compliance (Dict): Compliance metadata
+                - variables (List[Dict]): Variable definitions for the queries
+                - showTrend (bool): Whether to show trend data
+                - pollingInterval (str): How often to run the queries
+                - integrationDefinitionId (str): Integration definition ID if applicable
+                
+        Returns:
+            Dict: The created question object
+            
+        Example:
+            question = j1_client.create_question(
+                title="Security Compliance Check",
+                queries=[{
+                    "query": "FIND Host WITH open=true",
+                    "name": "OpenHosts",
+                    "version": "v1",
+                    "resultsAre": "INFORMATIVE"
+                }],
+                resource_group_id="resource-group-id",
+                description="Check for open hosts",
+                tags=["security", "compliance"]
+            )
+        """
+        # Validate required fields
+        if not title:
+            raise ValueError("title is required")
+        if not queries or not isinstance(queries, list) or len(queries) == 0:
+            raise ValueError("queries must be a non-empty list")
+            
+        # Process each query to ensure required fields
+        processed_queries = []
+        for idx, query in enumerate(queries):
+            if not isinstance(query, dict):
+                raise ValueError(f"Query at index {idx} must be a dictionary")
+            if "query" not in query:
+                raise ValueError(f"Query at index {idx} must have a 'query' field")
+                
+            processed_query = {
+                "query": query["query"],
+                "name": query.get("name", f"Query{idx}"),
+                "resultsAre": query.get("resultsAre", "INFORMATIVE")
+            }
+            
+            # Only add version if provided
+            if "version" in query:
+                processed_query["version"] = query["version"]
+                
+            processed_queries.append(processed_query)
+        
+        # Build the question input object
+        question_input = {
+            "title": title,
+            "queries": processed_queries
+        }
+        
+        # Add optional fields from kwargs
+        if resource_group_id:
+            question_input["resourceGroupId"] = resource_group_id
+            
+        # Add other optional fields if provided
+        optional_fields = [
+            "description", "tags", "compliance", "variables", 
+            "showTrend", "pollingInterval", "integrationDefinitionId"
+        ]
+        
+        for field in optional_fields:
+            if field in kwargs and kwargs[field] is not None:
+                question_input[field] = kwargs[field]
+        
+        # Execute the GraphQL mutation
+        variables = {"question": question_input}
+        response = self._execute_query(CREATE_QUESTION, variables=variables)
+        
+        return response["data"]["createQuestion"]
 
     def get_compliance_framework_item_details(self, item_id: str = None):
         """Fetch Details of a Compliance Framework Requirement configured in J1 account"""
