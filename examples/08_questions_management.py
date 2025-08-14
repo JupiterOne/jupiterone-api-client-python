@@ -14,7 +14,6 @@ be returned as a list instead of a dictionary.
 """
 
 import os
-import json
 import time
 from jupiterone import JupiterOneClient
 
