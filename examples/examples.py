@@ -575,22 +575,26 @@ print("list_questions()")
 print(f"Total questions found: {len(list_questions_r)}")
 print(json.dumps(list_questions_r[:2], indent=1))  # Show first 2 questions
 
-# list_questions with filtering (if supported)
-# Note: The current implementation doesn't support filtering parameters,
-# but the GraphQL schema shows support for searchQuery, tags, etc.
-print("\nlist_questions() - Sample question details:")
-if list_questions_r:
-    sample_question = list_questions_r[0]
-    print(f"  Title: {sample_question.get('title', 'No title')}")
-    print(f"  ID: {sample_question.get('id', 'No ID')}")
-    print(f"  Description: {sample_question.get('description', 'No description')}")
-    print(f"  Tags: {sample_question.get('tags', [])}")
-    print(f"  Number of queries: {len(sample_question.get('queries', []))}")
-    if sample_question.get('queries'):
-        for i, query in enumerate(sample_question['queries']):
-            print(f"    Query {i+1}: {query.get('name', 'Unnamed')} - {query.get('query', 'No query')[:50]}...")
-else:
-    print("  No questions found in the account")
+# list_questions with search query
+print("\nlist_questions() - With search query:")
+security_questions = j1.list_questions(search_query="security")
+print(f"Security-related questions found: {len(security_questions)}")
+if security_questions:
+    print(f"  First security question: {security_questions[0].get('title', 'No title')}")
+
+# list_questions with tags filter
+print("\nlist_questions() - With tags filter:")
+compliance_questions = j1.list_questions(tags=["compliance"])
+print(f"Compliance-tagged questions found: {len(compliance_questions)}")
+if compliance_questions:
+    print(f"  First compliance question: {compliance_questions[0].get('title', 'No title')}")
+
+# list_questions with combined search and tags
+print("\nlist_questions() - With search and tags:")
+security_compliance = j1.list_questions(search_query="encryption", tags=["security", "compliance"])
+print(f"Security/compliance encryption questions found: {len(security_compliance)}")
+if security_compliance:
+    print(f"  First matching question: {security_compliance[0].get('title', 'No title')}")
 
 # list_questions - analyze question types and compliance
 print("\nlist_questions() - Analysis:")

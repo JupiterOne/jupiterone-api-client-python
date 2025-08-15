@@ -4,6 +4,7 @@ import pytest
 from unittest.mock import patch, Mock
 from jupiterone.client import JupiterOneClient
 from jupiterone.constants import QUESTIONS
+from typing import List
 
 
 class TestListQuestions:
@@ -464,6 +465,355 @@ class TestListQuestions:
         # Missing fields should be None or not present
         assert 'title' not in question or question['title'] is None
 
+    @patch('jupiterone.client.requests.post')
+    def test_list_questions_with_search_query(self, mock_post):
+        """Test questions listing with search query parameter"""
+        # Mock response for search query
+        mock_response = Mock()
+        mock_response.json.return_value = {
+            "data": {
+                "questions": {
+                    "questions": [
+                        {
+                            "id": "question-1",
+                            "title": "Security Compliance Check",
+                            "description": "Check for security compliance issues",
+                            "tags": ["security", "compliance"],
+                            "queries": [{"name": "SecurityQuery", "query": "FIND Finding WITH severity='HIGH'"}],
+                            "compliance": None,
+                            "variables": [],
+                            "accountId": "test-account",
+                            "showTrend": False,
+                            "pollingInterval": "ONE_DAY",
+                            "lastUpdatedTimestamp": "2024-01-01T00:00:00Z"
+                        }
+                    ],
+                    "totalHits": 1,
+                    "pageInfo": {
+                        "endCursor": None,
+                        "hasNextPage": False
+                    }
+                }
+            }
+        }
+        mock_post.return_value = mock_response
+
+        # Call list_questions with search query
+        result = self.client.list_questions(search_query="security")
+
+        # Verify result
+        assert len(result) == 1
+        assert result[0]['title'] == "Security Compliance Check"
+        assert "security" in result[0]['tags']
+
+        # Verify API call with search query
+        mock_post.assert_called_once()
+        call_args = mock_post.call_args
+        assert call_args[1]['json']['variables']['searchQuery'] == "security"
+
+    @patch('jupiterone.client.requests.post')
+    def test_list_questions_with_tags_filter(self, mock_post):
+        """Test questions listing with tags filter parameter"""
+        # Mock response for tags filter
+        mock_response = Mock()
+        mock_response.json.return_value = {
+            "data": {
+                "questions": {
+                    "questions": [
+                        {
+                            "id": "question-1",
+                            "title": "CIS AWS Compliance",
+                            "description": "CIS AWS Foundations compliance checks",
+                            "tags": ["cis", "aws", "compliance"],
+                            "queries": [{"name": "CISQuery", "query": "FIND aws_instance WITH encrypted=false"}],
+                            "compliance": {
+                                "standard": "CIS AWS Foundations",
+                                "requirements": ["2.1", "2.2"],
+                                "controls": ["Data Protection"]
+                            },
+                            "variables": [],
+                            "accountId": "test-account",
+                            "showTrend": True,
+                            "pollingInterval": "ONE_HOUR",
+                            "lastUpdatedTimestamp": "2024-01-01T00:00:00Z"
+                        }
+                    ],
+                    "totalHits": 1,
+                    "pageInfo": {
+                        "endCursor": None,
+                        "hasNextPage": False
+                    }
+                }
+            }
+        }
+        mock_post.return_value = mock_response
+
+        # Call list_questions with tags filter
+        result = self.client.list_questions(tags=["cis", "aws"])
+
+        # Verify result
+        assert len(result) == 1
+        assert result[0]['title'] == "CIS AWS Compliance"
+        assert "cis" in result[0]['tags']
+        assert "aws" in result[0]['tags']
+
+        # Verify API call with tags filter
+        mock_post.assert_called_once()
+        call_args = mock_post.call_args
+        assert call_args[1]['json']['variables']['tags'] == ["cis", "aws"]
+
+    @patch('jupiterone.client.requests.post')
+    def test_list_questions_with_search_and_tags(self, mock_post):
+        """Test questions listing with both search query and tags filter"""
+        # Mock response for combined search and tags
+        mock_response = Mock()
+        mock_response.json.return_value = {
+            "data": {
+                "questions": {
+                    "questions": [
+                        {
+                            "id": "question-1",
+                            "title": "Encryption Security Check",
+                            "description": "Check for encryption compliance in security context",
+                            "tags": ["security", "compliance", "encryption"],
+                            "queries": [{"name": "EncryptionQuery", "query": "FIND DataStore WITH encrypted=false"}],
+                            "compliance": {
+                                "standard": "PCI-DSS",
+                                "requirements": ["3.4"],
+                                "controls": ["Data Protection"]
+                            },
+                            "variables": [],
+                            "accountId": "test-account",
+                            "showTrend": False,
+                            "pollingInterval": "ONE_DAY",
+                            "lastUpdatedTimestamp": "2024-01-01T00:00:00Z"
+                        }
+                    ],
+                    "totalHits": 1,
+                    "pageInfo": {
+                        "endCursor": None,
+                        "hasNextPage": False
+                    }
+                }
+            }
+        }
+        mock_post.return_value = mock_response
+
+        # Call list_questions with both search query and tags
+        result = self.client.list_questions(
+            search_query="encryption",
+            tags=["security", "compliance"]
+        )
+
+        # Verify result
+        assert len(result) == 1
+        assert result[0]['title'] == "Encryption Security Check"
+        assert "encryption" in result[0]['tags']
+        assert "security" in result[0]['tags']
+        assert "compliance" in result[0]['tags']
+
+        # Verify API call with both parameters
+        mock_post.assert_called_once()
+        call_args = mock_post.call_args
+        variables = call_args[1]['json']['variables']
+        assert variables['searchQuery'] == "encryption"
+        assert variables['tags'] == ["security", "compliance"]
+
+    @patch('jupiterone.client.requests.post')
+    def test_list_questions_with_pagination_and_filters(self, mock_post):
+        """Test questions listing with filters and pagination"""
+        # Mock first page response with filters
+        first_response = Mock()
+        first_response.json.return_value = {
+            "data": {
+                "questions": {
+                    "questions": [
+                        {
+                            "id": "question-1",
+                            "title": "Security Question 1",
+                            "tags": ["security"],
+                            "queries": [{"name": "SecurityQuery1", "query": "FIND Host"}],
+                            "compliance": None,
+                            "variables": [],
+                            "accountId": "test-account",
+                            "showTrend": False,
+                            "pollingInterval": "ONE_DAY",
+                            "lastUpdatedTimestamp": "2024-01-01T00:00:00Z"
+                        }
+                    ],
+                    "totalHits": 2,
+                    "pageInfo": {
+                        "endCursor": "cursor-1",
+                        "hasNextPage": True
+                    }
+                }
+            }
+        }
+
+        # Mock second page response with filters
+        second_response = Mock()
+        second_response.json.return_value = {
+            "data": {
+                "questions": {
+                    "questions": [
+                        {
+                            "id": "question-2",
+                            "title": "Security Question 2",
+                            "tags": ["security"],
+                            "queries": [{"name": "SecurityQuery2", "query": "FIND User"}],
+                            "compliance": None,
+                            "variables": [],
+                            "accountId": "test-account",
+                            "showTrend": False,
+                            "pollingInterval": "ONE_DAY",
+                            "lastUpdatedTimestamp": "2024-01-02T00:00:00Z"
+                        }
+                    ],
+                    "totalHits": 2,
+                    "pageInfo": {
+                        "endCursor": None,
+                        "hasNextPage": False
+                    }
+                }
+            }
+        }
+
+        # Set up mock to return different responses for each call
+        mock_post.side_effect = [first_response, second_response]
+
+        # Call list_questions with filters
+        result = self.client.list_questions(
+            search_query="security",
+            tags=["security"]
+        )
+
+        # Verify result
+        assert len(result) == 2
+        assert result[0]['title'] == "Security Question 1"
+        assert result[1]['title'] == "Security Question 2"
+
+        # Verify API calls (2 calls for 2 pages)
+        assert mock_post.call_count == 2
+
+        # Check first call with filters
+        first_call = mock_post.call_args_list[0]
+        first_variables = first_call[1]['json']['variables']
+        assert first_variables['searchQuery'] == "security"
+        assert first_variables['tags'] == ["security"]
+
+        # Check second call with filters and cursor
+        second_call = mock_post.call_args_list[1]
+        second_variables = second_call[1]['json']['variables']
+        assert second_variables['searchQuery'] == "security"
+        assert second_variables['tags'] == ["security"]
+        assert second_variables['cursor'] == "cursor-1"
+
+    @patch('jupiterone.client.requests.post')
+    def test_list_questions_no_parameters(self, mock_post):
+        """Test questions listing with no parameters (default behavior)"""
+        # Mock response for no parameters
+        mock_response = Mock()
+        mock_response.json.return_value = {
+            "data": {
+                "questions": {
+                    "questions": [
+                        {
+                            "id": "question-1",
+                            "title": "Default Question",
+                            "tags": ["default"],
+                            "queries": [{"name": "DefaultQuery", "query": "FIND *"}],
+                            "compliance": None,
+                            "variables": [],
+                            "accountId": "test-account",
+                            "showTrend": False,
+                            "pollingInterval": "ONE_DAY",
+                            "lastUpdatedTimestamp": "2024-01-01T00:00:00Z"
+                        }
+                    ],
+                    "totalHits": 1,
+                    "pageInfo": {
+                        "endCursor": None,
+                        "hasNextPage": False
+                    }
+                }
+            }
+        }
+        mock_post.return_value = mock_response
+
+        # Call list_questions with no parameters
+        result = self.client.list_questions()
+
+        # Verify result
+        assert len(result) == 1
+        assert result[0]['title'] == "Default Question"
+
+        # Verify API call with no variables
+        mock_post.assert_called_once()
+        call_args = mock_post.call_args
+        assert call_args[1]['json']['variables'] == {}
+
+    @patch('jupiterone.client.requests.post')
+    def test_list_questions_empty_search_results(self, mock_post):
+        """Test questions listing with search that returns no results"""
+        # Mock empty response for search
+        mock_response = Mock()
+        mock_response.json.return_value = {
+            "data": {
+                "questions": {
+                    "questions": [],
+                    "totalHits": 0,
+                    "pageInfo": {
+                        "endCursor": None,
+                        "hasNextPage": False
+                    }
+                }
+            }
+        }
+        mock_post.return_value = mock_response
+
+        # Call list_questions with search query
+        result = self.client.list_questions(search_query="nonexistent")
+
+        # Verify result
+        assert len(result) == 0
+        assert result == []
+
+        # Verify API call with search query
+        mock_post.assert_called_once()
+        call_args = mock_post.call_args
+        assert call_args[1]['json']['variables']['searchQuery'] == "nonexistent"
+
+    @patch('jupiterone.client.requests.post')
+    def test_list_questions_empty_tags_results(self, mock_post):
+        """Test questions listing with tags filter that returns no results"""
+        # Mock empty response for tags filter
+        mock_response = Mock()
+        mock_response.json.return_value = {
+            "data": {
+                "questions": {
+                    "questions": [],
+                    "totalHits": 0,
+                    "pageInfo": {
+                        "endCursor": None,
+                        "hasNextPage": False
+                    }
+                }
+            }
+        }
+        mock_post.return_value = mock_response
+
+        # Call list_questions with tags filter
+        result = self.client.list_questions(tags=["nonexistent_tag"])
+
+        # Verify result
+        assert len(result) == 0
+        assert result == []
+
+        # Verify API call with tags filter
+        mock_post.assert_called_once()
+        call_args = mock_post.call_args
+        assert call_args[1]['json']['variables']['tags'] == ["nonexistent_tag"]
+
     def test_list_questions_method_exists(self):
         """Test that list_questions method exists and is callable"""
         assert hasattr(self.client, 'list_questions')
@@ -475,3 +825,41 @@ class TestListQuestions:
         assert method.__doc__ is not None
         assert "List all defined Questions" in method.__doc__
         assert "J1 account Questions Library" in method.__doc__
+
+    def test_list_questions_parameter_validation(self):
+        """Test that list_questions method accepts the correct parameter types"""
+        # Test that method exists with new signature
+        assert hasattr(self.client, 'list_questions')
+        method = getattr(self.client, 'list_questions')
+        
+        # Test that method can be called with different parameter combinations
+        import inspect
+        sig = inspect.signature(method)
+        params = list(sig.parameters.keys())
+        
+        # Should have self, search_query, and tags parameters
+        assert 'search_query' in params
+        assert 'tags' in params
+        
+        # Check parameter types
+        search_query_param = sig.parameters['search_query']
+        tags_param = sig.parameters['tags']
+        
+        # search_query should be optional string
+        assert search_query_param.default is None
+        assert search_query_param.annotation == str or search_query_param.annotation == 'str'
+        
+        # tags should be optional List[str]
+        assert tags_param.default is None
+        assert tags_param.annotation == List[str] or 'List[str]' in str(tags_param.annotation)
+
+    def test_list_questions_docstring_updated(self):
+        """Test that list_questions method documentation includes new parameters"""
+        method = getattr(self.client, 'list_questions')
+        docstring = method.__doc__
+        
+        assert docstring is not None
+        assert "search_query" in docstring
+        assert "tags" in docstring
+        assert "searchQuery" in docstring or "search query" in docstring
+        assert "List[str]" in docstring or "List of tags" in docstring

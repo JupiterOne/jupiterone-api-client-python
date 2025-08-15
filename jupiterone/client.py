@@ -1246,12 +1246,44 @@ class JupiterOneClient:
 
             return e
 
-    def list_questions(self):
-        """List all defined Questions configured in J1 Account Questions Library"""
+    def list_questions(self, search_query: str = None, tags: List[str] = None):
+        """List all defined Questions configured in J1 Account Questions Library
+        
+        Args:
+            search_query (str, optional): Search query to filter questions by title or description
+            tags (List[str], optional): List of tags to filter questions by
+            
+        Returns:
+            List[Dict]: List of question objects
+            
+        Example:
+            # List all questions
+            all_questions = j1_client.list_questions()
+            
+            # Search for security-related questions
+            security_questions = j1_client.list_questions(search_query="security")
+            
+            # Filter by specific tags
+            compliance_questions = j1_client.list_questions(tags=["compliance", "cis"])
+            
+            # Combine search and tags
+            security_compliance = j1_client.list_questions(
+                search_query="encryption", 
+                tags=["security", "compliance"]
+            )
+        """
         results = []
+
+        # Build variables for the GraphQL query
+        variables = {}
+        if search_query:
+            variables["searchQuery"] = search_query
+        if tags:
+            variables["tags"] = tags
 
         data = {
             "query": QUESTIONS,
+            "variables": variables,
             "flags": {
                 "variableResultSize": True
             }
@@ -1267,10 +1299,16 @@ class JupiterOneClient:
             cursor = r["data"]["questions"]["pageInfo"]["endCursor"]
 
             # cursor query until last page fetched
+            # Preserve existing variables and add cursor
+            cursor_variables = variables.copy()
+            cursor_variables["cursor"] = cursor
+            
             data = {
                 "query": QUESTIONS,
-                "variables": {"cursor": cursor},
-                "flags": {"variableResultSize": True},
+                "variables": cursor_variables,
+                "flags": {
+                    "variableResultSize": True
+                },
             }
 
             r = requests.post(

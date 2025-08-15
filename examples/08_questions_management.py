@@ -315,6 +315,40 @@ def list_questions_example(j1):
         if len(questions) > 5:
             print(f"\n... and {len(questions) - 5} more questions")
             
+        # Demonstrate filtering capabilities
+        print("\n=== Filtering Examples ===")
+        
+        # Search by content
+        print("\n1. Searching for security-related questions:")
+        security_questions = j1.list_questions(search_query="security")
+        print(f"  Found {len(security_questions)} questions with 'security' in title/description")
+        if security_questions:
+            print(f"  Example: {security_questions[0]['title']}")
+        
+        # Filter by tags
+        print("\n2. Filtering by compliance tags:")
+        compliance_questions = j1.list_questions(tags=["compliance"])
+        print(f"  Found {len(compliance_questions)} questions tagged with 'compliance'")
+        if compliance_questions:
+            print(f"  Example: {compliance_questions[0]['title']}")
+        
+        # Combine search and tags
+        print("\n3. Combining search and tags:")
+        security_compliance = j1.list_questions(
+            search_query="encryption", 
+            tags=["security", "compliance"]
+        )
+        print(f"  Found {len(security_compliance)} questions matching both criteria")
+        if security_compliance:
+            print(f"  Example: {security_compliance[0]['title']}")
+        
+        # Search for specific compliance standards
+        print("\n4. Searching for CIS compliance questions:")
+        cis_questions = j1.list_questions(search_query="CIS")
+        print(f"  Found {len(cis_questions)} questions related to CIS")
+        if cis_questions:
+            print(f"  Example: {cis_questions[0]['title']}")
+            
     except Exception as e:
         print(f"Error listing questions: {e}")
 

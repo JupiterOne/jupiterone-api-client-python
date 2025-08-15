@@ -204,7 +204,9 @@ python 08_questions_management.py
 
 ### 📊 Questions Management
 - Question creation with J1QL queries
-- Question listing and analysis
+- Question listing and analysis with filtering options
+- Search questions by title/description using `search_query` parameter
+- Filter questions by tags using `tags` parameter
 - Compliance metadata management
 - Question categorization and filtering
 - Question lifecycle management
@@ -280,10 +282,24 @@ j1 = JupiterOneClient(
 ```
 
 ### Questions Analysis
-Examples show how to analyze questions data:
+Examples show how to analyze questions data with filtering:
 ```python
 # List all questions
 questions = j1.list_questions()
+
+# Search questions by content
+security_questions = j1.list_questions(search_query="security")
+encryption_questions = j1.list_questions(search_query="encryption")
+
+# Filter questions by tags
+compliance_questions = j1.list_questions(tags=["compliance"])
+cis_questions = j1.list_questions(tags=["cis", "aws"])
+
+# Combine search and tags
+security_compliance = j1.list_questions(
+    search_query="encryption", 
+    tags=["security", "compliance"]
+)
 
 # Analyze by compliance standards
 compliance_standards = {}
