@@ -1,8 +1,7 @@
 """Test create_question method"""
 
 import pytest
-import responses
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 from jupiterone.client import JupiterOneClient
 from jupiterone.constants import CREATE_QUESTION
 
@@ -415,7 +414,7 @@ class TestCreateQuestion:
         }
 
         # Create question with some None values
-        result = self.client.create_question(
+        self.client.create_question(
             title="Optional Fields Test",
             queries=[{"query": "FIND Host"}],
             description=None,  # Should not be included
