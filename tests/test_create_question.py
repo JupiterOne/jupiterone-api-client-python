@@ -310,7 +310,7 @@ class TestCreateQuestion:
         }
 
         # Create question without query names
-        result = self.client.create_question(
+        self.client.create_question(
             title="Auto Naming Test",
             queries=[
                 {"query": "FIND Host"},
@@ -340,7 +340,7 @@ class TestCreateQuestion:
         }
 
         # Create question without resultsAre
-        result = self.client.create_question(
+        self.client.create_question(
             title="Default Results Test",
             queries=[{"query": "FIND Host"}]
         )
@@ -389,7 +389,7 @@ class TestCreateQuestion:
             }
         }
 
-        result = self.client.create_question(
+        self.client.create_question(
             title="Version Test 2",
             queries=[{"query": "FIND Host", "version": "v1"}]
         )
