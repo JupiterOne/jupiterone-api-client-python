@@ -365,7 +365,7 @@ class TestCreateQuestion:
         }
 
         # Create question without version
-        result = self.client.create_question(
+        self.client.create_question(
             title="Version Test",
             queries=[{"query": "FIND Host"}]
         )
