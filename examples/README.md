@@ -129,6 +129,24 @@ This directory contains comprehensive examples demonstrating how to use the Jupi
 - `create_question()` - Create questions with J1QL queries
 - `list_questions()` - List all questions in the account
 
+### 9. **examples.py**
+**Purpose**: Comprehensive examples of all major SDK methods
+- Client setup and basic operations
+- Entity and relationship management
+- Integration and sync job operations
+- Alert rules and SmartClass operations
+- Questions management and analysis
+- Account parameter operations
+
+**Key Methods Demonstrated**:
+- All major SDK methods including:
+- `list_questions()` - List and analyze all questions in the account
+- `create_question()` - Create questions with various configurations
+- Entity lifecycle management methods
+- Relationship management methods
+- Integration and sync job methods
+- Alert rule and SmartClass methods
+
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -183,6 +201,13 @@ python 08_questions_management.py
 - Aggregation queries
 - Time-based queries
 - Complex multi-step queries
+
+### 📊 Questions Management
+- Question creation with J1QL queries
+- Question listing and analysis
+- Compliance metadata management
+- Question categorization and filtering
+- Question lifecycle management
 
 ### 🏗️ Entity Management
 - Entity creation with various property types
@@ -252,6 +277,25 @@ j1 = JupiterOneClient(
     url=os.getenv('JUPITERONE_URL', 'https://graphql.us.jupiterone.io'),
     sync_url=os.getenv('JUPITERONE_SYNC_URL', 'https://api.us.jupiterone.io')
 )
+```
+
+### Questions Analysis
+Examples show how to analyze questions data:
+```python
+# List all questions
+questions = j1.list_questions()
+
+# Analyze by compliance standards
+compliance_standards = {}
+for question in questions:
+    if 'compliance' in question and question['compliance']:
+        compliance = question['compliance']
+        if isinstance(compliance, dict) and 'standard' in compliance:
+            standard = compliance['standard']
+            compliance_standards[standard] = compliance_standards.get(standard, 0) + 1
+
+# Find questions by tags
+security_questions = [q for q in questions if 'tags' in q and q['tags'] and any('security' in tag.lower() for tag in q['tags'])]
 ```
 
 ## 📝 Notes

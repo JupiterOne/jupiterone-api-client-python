@@ -568,3 +568,81 @@ print(json.dumps(r, indent=1))
 
 r = j1.create_update_parameter(name="ParameterName", value="stored_value", secret=False)
 print(json.dumps(r, indent=1))
+
+# list_questions
+list_questions_r = j1.list_questions()
+print("list_questions()")
+print(f"Total questions found: {len(list_questions_r)}")
+print(json.dumps(list_questions_r[:2], indent=1))  # Show first 2 questions
+
+# list_questions with filtering (if supported)
+# Note: The current implementation doesn't support filtering parameters,
+# but the GraphQL schema shows support for searchQuery, tags, etc.
+print("\nlist_questions() - Sample question details:")
+if list_questions_r:
+    sample_question = list_questions_r[0]
+    print(f"  Title: {sample_question.get('title', 'No title')}")
+    print(f"  ID: {sample_question.get('id', 'No ID')}")
+    print(f"  Description: {sample_question.get('description', 'No description')}")
+    print(f"  Tags: {sample_question.get('tags', [])}")
+    print(f"  Number of queries: {len(sample_question.get('queries', []))}")
+    if sample_question.get('queries'):
+        for i, query in enumerate(sample_question['queries']):
+            print(f"    Query {i+1}: {query.get('name', 'Unnamed')} - {query.get('query', 'No query')[:50]}...")
+else:
+    print("  No questions found in the account")
+
+# list_questions - analyze question types and compliance
+print("\nlist_questions() - Analysis:")
+if list_questions_r:
+    # Count questions by compliance standard
+    compliance_standards = {}
+    question_types = {}
+    
+    for question in list_questions_r:
+        # Analyze compliance standards
+        if 'compliance' in question and question['compliance']:
+            compliance = question['compliance']
+            if isinstance(compliance, dict) and 'standard' in compliance:
+                standard = compliance['standard']
+                compliance_standards[standard] = compliance_standards.get(standard, 0) + 1
+        
+        # Analyze question types by tags
+        if 'tags' in question and question['tags']:
+            for tag in question['tags']:
+                question_types[tag] = question_types.get(tag, 0) + 1
+    
+    print(f"  Total questions: {len(list_questions_r)}")
+    print(f"  Compliance standards found: {len(compliance_standards)}")
+    if compliance_standards:
+        print("    Standards:")
+        for standard, count in compliance_standards.items():
+            print(f"      {standard}: {count} questions")
+    
+    print(f"  Question categories (by tags): {len(question_types)}")
+    if question_types:
+        print("    Top categories:")
+        sorted_tags = sorted(question_types.items(), key=lambda x: x[1], reverse=True)[:5]
+        for tag, count in sorted_tags:
+            print(f"      {tag}: {count} questions")
+
+# list_questions - find specific types of questions
+print("\nlist_questions() - Finding specific questions:")
+if list_questions_r:
+    # Find security-related questions
+    security_questions = [q for q in list_questions_r if 'tags' in q and q['tags'] and any('security' in tag.lower() for tag in q['tags'])]
+    print(f"  Security-related questions: {len(security_questions)}")
+    
+    # Find compliance-related questions
+    compliance_questions = [q for q in list_questions_r if 'compliance' in q and q['compliance']]
+    print(f"  Compliance-related questions: {len(compliance_questions)}")
+    
+    # Find questions with variables
+    variable_questions = [q for q in list_questions_r if 'variables' in q and q['variables']]
+    print(f"  Questions with variables: {len(variable_questions)}")
+    
+    # Find questions with polling enabled
+    polling_questions = [q for q in list_questions_r if 'pollingInterval' in q and q['pollingInterval'] and q['pollingInterval'] != 'DISABLED']
+    print(f"  Questions with polling enabled: {len(polling_questions)}")
+
+print()

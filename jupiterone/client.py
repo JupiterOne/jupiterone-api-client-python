@@ -1247,7 +1247,7 @@ class JupiterOneClient:
             return e
 
     def list_questions(self):
-        """List all defined Questions configured in J1 account Questions Library"""
+        """List all defined Questions configured in J1 Account Questions Library"""
         results = []
 
         data = {
