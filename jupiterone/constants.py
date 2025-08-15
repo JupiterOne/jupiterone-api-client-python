@@ -920,6 +920,48 @@ QUESTIONS = """
       __typename
     }
 """
+
+GET_QUESTION = """
+    query question($id: ID!) {
+      question(id: $id) {
+        ...QuestionFields
+        __typename
+      }
+    }
+
+    fragment QuestionFields on Question {
+      id
+      sourceId
+      title
+      description
+      tags
+      lastUpdatedTimestamp
+      queries {
+        name
+        query
+        version
+        resultsAre
+        __typename
+      }
+      compliance {
+        standard
+        requirements
+        controls
+        __typename
+      }
+      variables {
+        name
+        required
+        default
+        __typename
+      }
+      accountId
+      integrationDefinitionId
+      showTrend
+      pollingInterval
+      __typename
+    }
+"""
 CREATE_QUESTION = """
     mutation CreateQuestion($question: CreateQuestionInput!) {
         createQuestion(question: $question) {

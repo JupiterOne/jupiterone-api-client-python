@@ -649,4 +649,41 @@ if list_questions_r:
     polling_questions = [q for q in list_questions_r if 'pollingInterval' in q and q['pollingInterval'] and q['pollingInterval'] != 'DISABLED']
     print(f"  Questions with polling enabled: {len(polling_questions)}")
 
+# get_question_details - get specific question details
+print("\nget_question_details() - Get specific question:")
+if list_questions_r:
+    # Get details of the first question
+    first_question_id = list_questions_r[0]['id']
+    try:
+        question_details = j1.get_question_details(question_id=first_question_id)
+        print(f"  Retrieved details for question: {question_details['title']}")
+        print(f"  Question ID: {question_details['id']}")
+        print(f"  Description: {question_details.get('description', 'No description')}")
+        print(f"  Tags: {question_details.get('tags', [])}")
+        print(f"  Number of queries: {len(question_details.get('queries', []))}")
+        print(f"  Show trend: {question_details.get('showTrend', False)}")
+        print(f"  Polling interval: {question_details.get('pollingInterval', 'Not set')}")
+        
+        # Show compliance details if available
+        if question_details.get('compliance'):
+            compliance = question_details['compliance']
+            if isinstance(compliance, dict):
+                print(f"  Compliance standard: {compliance.get('standard', 'Not specified')}")
+                if 'requirements' in compliance:
+                    reqs = compliance['requirements']
+                    if isinstance(reqs, list):
+                        print(f"  Compliance requirements: {', '.join(map(str, reqs))}")
+        
+        # Show variables if available
+        if question_details.get('variables'):
+            variables = question_details['variables']
+            print(f"  Variables: {len(variables)}")
+            for var in variables:
+                print(f"    - {var.get('name', 'Unnamed')}: required={var.get('required', False)}, default={var.get('default', 'None')}")
+                
+    except Exception as e:
+        print(f"  Error getting question details: {e}")
+else:
+    print("  No questions available to get details for")
+
 print()

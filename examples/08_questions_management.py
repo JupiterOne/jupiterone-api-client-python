@@ -352,6 +352,91 @@ def list_questions_example(j1):
     except Exception as e:
         print(f"Error listing questions: {e}")
 
+def get_question_details_example(j1):
+    """Demonstrate getting specific question details."""
+    
+    print("=== Get Question Details Example ===\n")
+    
+    print("First, let's get a list of questions to find one to examine:")
+    try:
+        questions = j1.list_questions()
+        
+        if questions:
+            # Get details of the first question
+            first_question = questions[0]
+            question_id = first_question['id']
+            question_title = first_question['title']
+            
+            print(f"Getting detailed information for question: {question_title}")
+            print(f"Question ID: {question_id}")
+            
+            # Get full question details
+            question_details = j1.get_question_details(question_id=question_id)
+            
+            print(f"\nDetailed Question Information:")
+            print(f"  Title: {question_details['title']}")
+            print(f"  ID: {question_details['id']}")
+            print(f"  Source ID: {question_details.get('sourceId', 'Not specified')}")
+            print(f"  Description: {question_details.get('description', 'No description')}")
+            print(f"  Tags: {', '.join(question_details.get('tags', []))}")
+            print(f"  Last Updated: {question_details.get('lastUpdatedTimestamp', 'Not specified')}")
+            print(f"  Account ID: {question_details.get('accountId', 'Not specified')}")
+            print(f"  Show Trend: {question_details.get('showTrend', False)}")
+            print(f"  Polling Interval: {question_details.get('pollingInterval', 'Not set')}")
+            
+            # Display queries
+            queries = question_details.get('queries', [])
+            print(f"\n  Queries ({len(queries)}):")
+            for i, query in enumerate(queries):
+                print(f"    Query {i+1}: {query.get('name', 'Unnamed')}")
+                print(f"      - Query: {query.get('query', 'No query')}")
+                print(f"      - Version: {query.get('version', 'Not specified')}")
+                print(f"      - Results Are: {query.get('resultsAre', 'Not specified')}")
+            
+            # Display compliance information
+            compliance = question_details.get('compliance')
+            if compliance:
+                print(f"\n  Compliance Information:")
+                if isinstance(compliance, dict):
+                    print(f"    Standard: {compliance.get('standard', 'Not specified')}")
+                    requirements = compliance.get('requirements', [])
+                    if requirements:
+                        print(f"    Requirements: {', '.join(map(str, requirements))}")
+                    controls = compliance.get('controls', [])
+                    if controls:
+                        print(f"    Controls: {', '.join(map(str, controls))}")
+                else:
+                    print(f"    Compliance data type: {type(compliance)}")
+                    print(f"    Compliance content: {compliance}")
+            else:
+                print(f"\n  Compliance Information: None")
+            
+            # Display variables
+            variables = question_details.get('variables', [])
+            if variables:
+                print(f"\n  Variables ({len(variables)}):")
+                for var in variables:
+                    print(f"    - Name: {var.get('name', 'Unnamed')}")
+                    print(f"      Required: {var.get('required', False)}")
+                    print(f"      Default: {var.get('default', 'None')}")
+            else:
+                print(f"\n  Variables: None")
+                
+            # Display integration information
+            integration_def_id = question_details.get('integrationDefinitionId')
+            if integration_def_id:
+                print(f"\n  Integration Definition ID: {integration_def_id}")
+            else:
+                print(f"\n  Integration Definition ID: None")
+                
+        else:
+            print("No questions found in the account to examine")
+            
+    except Exception as e:
+        print(f"Error getting question details: {e}")
+        print(f"Error type: {type(e).__name__}")
+        print(f"Error details: {str(e)}")
+
 def question_use_cases(j1):
     """Demonstrate real-world use cases for questions."""
     
@@ -430,6 +515,9 @@ def main():
     time.sleep(1)
     
     list_questions_example(j1)
+    time.sleep(1)
+
+    get_question_details_example(j1)
     
     question_use_cases(j1)
     

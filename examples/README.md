@@ -128,6 +128,7 @@ This directory contains comprehensive examples demonstrating how to use the Jupi
 **Key Methods Demonstrated**:
 - `create_question()` - Create questions with J1QL queries
 - `list_questions()` - List all questions in the account
+- `get_question_details()` - Get detailed information for a specific question by ID
 
 ### 9. **examples.py**
 **Purpose**: Comprehensive examples of all major SDK methods
@@ -141,6 +142,7 @@ This directory contains comprehensive examples demonstrating how to use the Jupi
 **Key Methods Demonstrated**:
 - All major SDK methods including:
 - `list_questions()` - List and analyze all questions in the account
+- `get_question_details()` - Get detailed information for specific questions
 - `create_question()` - Create questions with various configurations
 - Entity lifecycle management methods
 - Relationship management methods
@@ -300,6 +302,14 @@ security_compliance = j1.list_questions(
     search_query="encryption", 
     tags=["security", "compliance"]
 )
+
+# Get detailed information for a specific question
+question_details = j1.get_question_details(
+    question_id="f90f9aa1-f9ff-47f7-ab34-ce8fa11c7add"
+)
+print(f"Question title: {question_details['title']}")
+print(f"Compliance standard: {question_details.get('compliance', {}).get('standard')}")
+print(f"Number of queries: {len(question_details.get('queries', []))}")
 
 # Analyze by compliance standards
 compliance_standards = {}

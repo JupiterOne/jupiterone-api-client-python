@@ -43,6 +43,7 @@ from jupiterone.constants import (
     UPDATE_RULE_INSTANCE,
     EVALUATE_RULE_INSTANCE,
     QUESTIONS,
+    GET_QUESTION,
     CREATE_QUESTION,
     COMPLIANCE_FRAMEWORK_ITEM,
     LIST_COLLECTION_RESULTS,
@@ -1317,6 +1318,33 @@ class JupiterOneClient:
             results.extend(r["data"]["questions"]["questions"])
 
         return results
+
+    def get_question_details(self, question_id: str = None):
+        """Get details of a specific question by ID
+        
+        Args:
+            question_id (str): The unique ID of the question to retrieve
+            
+        Returns:
+            Dict: The question object with all its details
+            
+        Example:
+            question_details = j1_client.get_question_details(
+                question_id="f90f9aa1-f9ff-47f7-ab34-ce8fa11c7add"
+            )
+            
+        Raises:
+            ValueError: If question_id is not provided
+            JupiterOneApiError: If the question is not found or other API errors occur
+        """
+        if not question_id:
+            raise ValueError("question_id is required")
+            
+        variables = {"id": question_id}
+        
+        response = self._execute_query(GET_QUESTION, variables=variables)
+        
+        return response["data"]["question"]
 
     def create_question(
         self,

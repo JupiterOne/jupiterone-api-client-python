@@ -5,6 +5,7 @@ from unittest.mock import patch, Mock
 from jupiterone.client import JupiterOneClient
 from jupiterone.constants import QUESTIONS
 from typing import List
+from jupiterone.errors import JupiterOneApiError
 
 
 class TestListQuestions:
@@ -863,3 +864,245 @@ class TestListQuestions:
         assert "tags" in docstring
         assert "searchQuery" in docstring or "search query" in docstring
         assert "List[str]" in docstring or "List of tags" in docstring
+
+
+class TestGetQuestionDetails:
+    """Test get_question_details method"""
+
+    def setup_method(self):
+        """Set up test fixtures"""
+        self.client = JupiterOneClient(account="test-account", token="test-token")
+
+    @patch('jupiterone.client.JupiterOneClient._execute_query')
+    def test_get_question_details_success(self, mock_execute):
+        """Test successful retrieval of question details"""
+        # Mock response
+        mock_execute.return_value = {
+            "data": {
+                "question": {
+                    "id": "question-123",
+                    "sourceId": "source-123",
+                    "title": "Test Question",
+                    "description": "Test question description",
+                    "tags": ["test", "security"],
+                    "lastUpdatedTimestamp": "2024-01-01T00:00:00Z",
+                    "queries": [
+                        {
+                            "name": "TestQuery",
+                            "query": "FIND Host WITH open=true",
+                            "version": "v1",
+                            "resultsAre": "BAD"
+                        }
+                    ],
+                    "compliance": {
+                        "standard": "CIS",
+                        "requirements": ["2.1", "2.2"],
+                        "controls": ["Network Security"]
+                    },
+                    "variables": [
+                        {
+                            "name": "environment",
+                            "required": True,
+                            "default": "production"
+                        }
+                    ],
+                    "accountId": "test-account",
+                    "integrationDefinitionId": "integration-123",
+                    "showTrend": True,
+                    "pollingInterval": "ONE_HOUR"
+                }
+            }
+        }
+
+        # Call get_question_details
+        result = self.client.get_question_details(question_id="question-123")
+
+        # Verify result
+        assert result['id'] == "question-123"
+        assert result['title'] == "Test Question"
+        assert result['description'] == "Test question description"
+        assert result['tags'] == ["test", "security"]
+        assert result['sourceId'] == "source-123"
+        assert result['accountId'] == "test-account"
+        assert result['showTrend'] is True
+        assert result['pollingInterval'] == "ONE_HOUR"
+
+        # Verify queries
+        queries = result['queries']
+        assert len(queries) == 1
+        assert queries[0]['name'] == "TestQuery"
+        assert queries[0]['query'] == "FIND Host WITH open=true"
+        assert queries[0]['version'] == "v1"
+        assert queries[0]['resultsAre'] == "BAD"
+
+        # Verify compliance
+        compliance = result['compliance']
+        assert compliance['standard'] == "CIS"
+        assert compliance['requirements'] == ["2.1", "2.2"]
+        assert compliance['controls'] == ["Network Security"]
+
+        # Verify variables
+        variables = result['variables']
+        assert len(variables) == 1
+        assert variables[0]['name'] == "environment"
+        assert variables[0]['required'] is True
+        assert variables[0]['default'] == "production"
+
+        # Verify API call
+        mock_execute.assert_called_once()
+        call_args = mock_execute.call_args
+        assert call_args[1]['variables']['id'] == "question-123"
+
+    @patch('jupiterone.client.JupiterOneClient._execute_query')
+    def test_get_question_details_minimal_response(self, mock_execute):
+        """Test question details with minimal response data"""
+        # Mock minimal response
+        mock_execute.return_value = {
+            "data": {
+                "question": {
+                    "id": "question-456",
+                    "title": "Minimal Question",
+                    "tags": [],
+                    "queries": [],
+                    "compliance": None,
+                    "variables": [],
+                    "accountId": "test-account",
+                    "showTrend": False,
+                    "pollingInterval": "DISABLED"
+                }
+            }
+        }
+
+        # Call get_question_details
+        result = self.client.get_question_details(question_id="question-456")
+
+        # Verify result
+        assert result['id'] == "question-456"
+        assert result['title'] == "Minimal Question"
+        assert result['tags'] == []
+        assert result['queries'] == []
+        assert result['compliance'] is None
+        assert result['variables'] == []
+        assert result['showTrend'] is False
+        assert result['pollingInterval'] == "DISABLED"
+
+    @patch('jupiterone.client.JupiterOneClient._execute_query')
+    def test_get_question_details_with_compliance_list(self, mock_execute):
+        """Test question details when compliance is returned as a list"""
+        # Mock response with compliance as list (edge case)
+        mock_execute.return_value = {
+            "data": {
+                "question": {
+                    "id": "question-789",
+                    "title": "List Compliance Question",
+                    "tags": ["compliance"],
+                    "queries": [{"name": "Query1", "query": "FIND Host"}],
+                    "compliance": [
+                        {
+                            "standard": "CIS",
+                            "requirements": ["1.1"],
+                            "controls": ["Access Control"]
+                        }
+                    ],
+                    "variables": [],
+                    "accountId": "test-account",
+                    "showTrend": False,
+                    "pollingInterval": "ONE_DAY"
+                }
+            }
+        }
+
+        # Call get_question_details
+        result = self.client.get_question_details(question_id="question-789")
+
+        # Verify result
+        assert result['id'] == "question-789"
+        assert result['title'] == "List Compliance Question"
+        
+        # Verify compliance (should handle list gracefully)
+        compliance = result['compliance']
+        assert isinstance(compliance, list)
+        assert len(compliance) == 1
+        assert compliance[0]['standard'] == "CIS"
+
+    @patch('jupiterone.client.JupiterOneClient._execute_query')
+    def test_get_question_details_not_found(self, mock_execute):
+        """Test question details when question is not found"""
+        # Mock response for question not found
+        mock_execute.return_value = {
+            "data": {
+                "question": None
+            }
+        }
+
+        # Call get_question_details
+        result = self.client.get_question_details(question_id="nonexistent")
+
+        # Verify result
+        assert result is None
+
+    @patch('jupiterone.client.JupiterOneClient._execute_query')
+    def test_get_question_details_api_error(self, mock_execute):
+        """Test question details with API error"""
+        # Mock API error response
+        mock_execute.side_effect = JupiterOneApiError("Question not found")
+
+        # Call get_question_details and expect error
+        with pytest.raises(JupiterOneApiError):
+            self.client.get_question_details(question_id="invalid-id")
+
+    def test_get_question_details_no_id(self):
+        """Test get_question_details without providing question_id"""
+        # Call get_question_details without ID
+        with pytest.raises(ValueError, match="question_id is required"):
+            self.client.get_question_details()
+
+    def test_get_question_details_empty_id(self):
+        """Test get_question_details with empty question_id"""
+        # Call get_question_details with empty ID
+        with pytest.raises(ValueError, match="question_id is required"):
+            self.client.get_question_details(question_id="")
+
+    def test_get_question_details_none_id(self):
+        """Test get_question_details with None question_id"""
+        # Call get_question_details with None ID
+        with pytest.raises(ValueError, match="question_id is required"):
+            self.client.get_question_details(question_id=None)
+
+    def test_get_question_details_method_exists(self):
+        """Test that get_question_details method exists and is callable"""
+        assert hasattr(self.client, 'get_question_details')
+        assert callable(self.client.get_question_details)
+
+    def test_get_question_details_docstring(self):
+        """Test that get_question_details method has proper documentation"""
+        method = getattr(self.client, 'get_question_details')
+        docstring = method.__doc__
+        
+        assert docstring is not None
+        assert "Get details of a specific question by ID" in docstring
+        assert "question_id" in docstring
+        assert "Returns" in docstring
+        assert "Example" in docstring
+        assert "Raises" in docstring
+
+    def test_get_question_details_parameter_validation(self):
+        """Test that get_question_details method accepts the correct parameter types"""
+        # Test that method exists with correct signature
+        assert hasattr(self.client, 'get_question_details')
+        method = getattr(self.client, 'get_question_details')
+        
+        # Test that method can be called with different parameter combinations
+        import inspect
+        sig = inspect.signature(method)
+        params = list(sig.parameters.keys())
+        
+        # Should have self and question_id parameters
+        assert 'question_id' in params
+        
+        # Check parameter types
+        question_id_param = sig.parameters['question_id']
+        
+        # question_id should be optional string
+        assert question_id_param.default is None
+        assert question_id_param.annotation == str or question_id_param.annotation == 'str'
