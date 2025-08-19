@@ -628,6 +628,44 @@ def update_question_examples(j1):
     except Exception as e:
         print(f"  ❌ Error updating variables: {e}\n")
 
+def delete_question_examples(j1):
+    """Demonstrate deleting existing questions."""
+    
+    print("=== Delete Question Examples ===\n")
+    
+    # Get question ID from user input
+    print("1. Enter the question ID to delete:")
+    print("   (You can find question IDs by running the list_questions_example first)")
+    print()
+    
+    # For demonstration purposes, use a placeholder ID
+    # In a real application, you would use: question_id = input("Enter question ID: ")
+    question_id = "your-question-id-here"  # Replace with actual question ID
+    
+    if question_id == "your-question-id-here":
+        print("  ⚠️  Please replace 'your-question-id-here' with an actual question ID")
+        print("  Example: question_id = 'fcc0507d-0473-43a2-b083-9d5571b92ae7'")
+        print()
+        return
+    
+    print(f"  Question ID to delete: {question_id}")
+    print()
+    
+    # Delete the question
+    print("2. Deleting the question:")
+    try:
+        deleted_question = j1.delete_question(question_id=question_id)
+        
+        print(f"  ✅ Successfully deleted question!")
+        print(f"  Deleted question title: {deleted_question['title']}")
+        print(f"  Deleted question ID: {deleted_question['id']}")
+        print(f"  Number of queries in deleted question: {len(deleted_question['queries'])}")
+        print()
+        
+    except Exception as e:
+        print(f"  ❌ Error deleting question: {e}")
+        print()
+
 def question_use_cases(j1):
     """Demonstrate real-world use cases for questions."""
     
@@ -719,6 +757,40 @@ def question_use_cases(j1):
         }
     )
     """)
+    
+    # Use Case 5: Question Deletion and Cleanup
+    print("\nUse Case 5: Question Deletion and Cleanup")
+    print("-" * 50)
+    print("Delete questions that are no longer needed:")
+    print("""
+    # Delete a single question
+    deleted_question = j1.delete_question(
+        question_id="question-id-to-delete"
+    )
+    print(f"Deleted: {deleted_question['title']}")
+    
+    # Batch delete deprecated questions
+    deprecated_questions = j1.list_questions(tags=["deprecated"])
+    for question in deprecated_questions:
+        try:
+            deleted = j1.delete_question(question_id=question['id'])
+            print(f"Deleted deprecated question: {deleted['title']}")
+        except Exception as e:
+            print(f"Failed to delete {question['title']}: {e}")
+    
+    # Safe deletion with backup
+    question_to_delete = j1.get_question_details(question_id="question-id")
+    backup_question = j1.create_question(
+        title=f"{question_to_delete['title']} - BACKUP",
+        queries=question_to_delete['queries'],
+        description=f"Backup before deletion: {question_to_delete.get('description', '')}",
+        tags=question_to_delete.get('tags', []) + ["backup"]
+    )
+    
+    # Now delete the original
+    j1.delete_question(question_id="question-id")
+    print("Original question deleted, backup preserved")
+    """)
 
 def main():
     """Run all question management examples."""
@@ -748,6 +820,9 @@ def main():
     time.sleep(1)
     
     update_question_examples(j1)
+    time.sleep(1)
+    
+    delete_question_examples(j1)
     time.sleep(1)
     
     question_use_cases(j1)

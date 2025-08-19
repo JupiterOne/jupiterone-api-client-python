@@ -59,6 +59,7 @@ from jupiterone.constants import (
     UPDATE_ENTITYV2,
     INVOKE_INTEGRATION_INSTANCE,
     UPDATE_QUESTION,
+    DELETE_QUESTION,
 )
 
 class JupiterOneClient:
@@ -1541,6 +1542,46 @@ class JupiterOneClient:
         
         response = self._execute_query(UPDATE_QUESTION, variables)
         return response["data"]["updateQuestion"]
+
+    def delete_question(self, question_id: str) -> Dict:
+        """
+        Delete an existing question from the J1 account.
+        
+        Args:
+            question_id (str): The unique ID of the question to delete (required)
+            
+        Returns:
+            Dict: The deleted question object with all its details
+            
+        Raises:
+            ValueError: If question_id is not provided
+            JupiterOneApiError: If the question deletion fails or other API errors occur
+            
+        Example:
+            # Delete a question by ID
+            deleted_question = j1_client.delete_question(
+                question_id="fcc0507d-0473-43a2-b083-9d5571b92ae7"
+            )
+            
+            print(f"Question '{deleted_question['title']}' has been deleted")
+            print(f"Deleted question ID: {deleted_question['id']}")
+            print(f"Number of queries in deleted question: {len(deleted_question['queries'])}")
+            
+            # Access other deleted question details
+            if deleted_question.get('compliance'):
+                print(f"Compliance standard: {deleted_question['compliance']['standard']}")
+            
+            if deleted_question.get('tags'):
+                print(f"Tags: {', '.join(deleted_question['tags'])}")
+        """
+        if not question_id:
+            raise ValueError("question_id is required")
+        
+        # Execute the GraphQL mutation
+        variables = {"id": question_id}
+        
+        response = self._execute_query(DELETE_QUESTION, variables)
+        return response["data"]["deleteQuestion"]
 
     def get_compliance_framework_item_details(self, item_id: str = None):
         """Fetch Details of a Compliance Framework Requirement configured in J1 account"""

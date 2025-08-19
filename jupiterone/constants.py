@@ -1370,3 +1370,37 @@ UPDATE_QUESTION = """
       __typename
     }
 """
+
+DELETE_QUESTION = """
+    mutation DeleteQuestion($id: ID!) {
+      deleteQuestion(id: $id) {
+        id
+        title
+        description
+        queries {
+          query
+          name
+          version
+          __typename
+        }
+        compliance {
+          standard
+          requirements
+          controls
+          __typename
+        }
+        variables {
+          name
+          required
+          default
+          __typename
+        }
+        tags
+        accountId
+        integrationDefinitionId
+        showTrend
+        pollingInterval
+        __typename
+      }
+    }
+"""
