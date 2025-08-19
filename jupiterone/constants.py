@@ -28,18 +28,14 @@ CREATE_ENTITY = """
   }
 """
 DELETE_ENTITY = """
-  mutation DeleteEntity($entityId: String!, $timestamp: Long) {
-    deleteEntity(entityId: $entityId, timestamp: $timestamp) {
-      entity {
-        _id
-      }
-      vertex {
-        id
-        entity {
-          _id
-        }
-        properties
-      }
+  mutation DeleteEntity($entityId: String!, $timestamp: Long, $hardDelete: Boolean) {
+    deleteEntityV2(
+      entityId: $entityId
+      timestamp: $timestamp
+      hardDelete: $hardDelete
+    ) {
+      entity
+      __typename
     }
   }
 """

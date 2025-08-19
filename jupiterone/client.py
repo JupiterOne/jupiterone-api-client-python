@@ -490,15 +490,19 @@ class JupiterOneClient:
         response = self._execute_query(query=CREATE_ENTITY, variables=variables)
         return response["data"]["createEntity"]
 
-    def delete_entity(self, entity_id: str = None) -> Dict:
-        """Deletes an entity from the graph.  Note this is a hard delete.
+    def delete_entity(self, entity_id: str = None, timestamp: int = None, hard_delete: bool = True) -> Dict:
+        """Deletes an entity from the graph.
 
         args:
             entity_id (str): Entity ID for entity to delete
+            timestamp (int, optional): Timestamp for the deletion. Defaults to None.
+            hard_delete (bool): Whether to perform a hard delete. Defaults to True.
         """
-        variables = {"entityId": entity_id}
+        variables = {"entityId": entity_id, "hardDelete": hard_delete}
+        if timestamp:
+            variables["timestamp"] = timestamp
         response = self._execute_query(DELETE_ENTITY, variables=variables)
-        return response["data"]["deleteEntity"]
+        return response["data"]["deleteEntityV2"]
 
     def update_entity(self, entity_id: str = None, properties: Dict = None) -> Dict:
         """
@@ -1517,3 +1521,49 @@ class JupiterOneClient:
 
         response = self._execute_query(UPDATE_ENTITYV2, variables=variables)
         return response["data"]["updateEntityV2"]
+
+    def get_cft_upload_url(self, integration_instance_id: str, filename: str, dataset_id: str) -> Dict:
+        """
+        Get an upload URL for Custom File Transfer integration.
+        
+        args:
+            integration_instance_id (str): The integration instance ID
+            filename (str): The filename to upload
+            dataset_id (str): The dataset ID for the upload
+            
+        Returns:
+            Dict: Response containing uploadUrl and expiresIn
+            
+        Example:
+            upload_info = j1_client.get_cft_upload_url(
+                integration_instance_id="123e4567-e89b-12d3-a456-426614174000",
+                filename="data.csv",
+                dataset_id="dataset-123"
+            )
+            upload_url = upload_info['uploadUrl']
+        """
+        query = """
+        mutation integrationFileTransferUploadUrl(
+            $integrationInstanceId: String!
+            $filename: String!
+            $datasetId: String!
+        ) {
+            integrationFileTransferUploadUrl(
+                integrationInstanceId: $integrationInstanceId
+                filename: $filename
+                datasetId: $datasetId
+            ) {
+                uploadUrl
+                expiresIn
+            }
+        }
+        """
+        
+        variables = {
+            "integrationInstanceId": integration_instance_id,
+            "filename": filename,
+            "datasetId": dataset_id
+        }
+        
+        response = self._execute_query(query, variables)
+        return response["data"]["integrationFileTransferUploadUrl"]
