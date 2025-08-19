@@ -1313,3 +1313,16 @@ UPDATE_ENTITYV2 = """
       }
     }
 """
+
+INVOKE_INTEGRATION_INSTANCE = """
+    mutation InvokeIntegrationInstance(
+        $id: String!
+    ) {
+        invokeIntegrationInstance(
+            id: $id
+        ) {
+            success
+            integrationJobId
+        }
+    }
+"""

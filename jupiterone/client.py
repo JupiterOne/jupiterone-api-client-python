@@ -1,5 +1,6 @@
 """ Python SDK for JupiterOne GraphQL API """
 import json
+import os
 from warnings import warn
 from typing import Dict, List, Union, Optional
 from datetime import datetime
@@ -56,6 +57,7 @@ from jupiterone.constants import (
     PARAMETER_LIST,
     UPSERT_PARAMETER,
     UPDATE_ENTITYV2,
+    INVOKE_INTEGRATION_INSTANCE,
 )
 
 class JupiterOneClient:
@@ -1567,3 +1569,132 @@ class JupiterOneClient:
         
         response = self._execute_query(query, variables)
         return response["data"]["integrationFileTransferUploadUrl"]
+
+    def upload_cft_file(self, upload_url: str, file_path: str) -> Dict:
+        """
+        Upload a CSV file to the Custom File Transfer integration using the provided upload URL.
+        
+        args:
+            upload_url (str): The upload URL obtained from get_cft_upload_url()
+            file_path (str): Local path to the CSV file to upload
+            
+        Returns:
+            Dict: Dictionary containing the full response data and status code:
+                - status_code (int): HTTP status code of the upload response
+                - response_data (dict): Full response data from the upload request
+                - success (bool): Whether the upload was successful (status code 200-299)
+                - headers (dict): Response headers from the upload request
+                
+        Raises:
+            FileNotFoundError: If the file doesn't exist
+            ValueError: If the file is not a CSV file
+            
+        Example:
+            # First get the upload URL
+            upload_info = j1_client.get_cft_upload_url(
+                integration_instance_id="123e4567-e89b-12d3-a456-426614174000",
+                filename="data.csv",
+                dataset_id="dataset-123"
+            )
+            
+            # Then upload the CSV file
+            result = j1_client.upload_cft_file(
+                upload_url=upload_info['uploadUrl'],
+                file_path="/path/to/local/data.csv"
+            )
+            
+            if result['success']:
+                print("CSV file uploaded successfully!")
+                print(f"Status code: {result['status_code']}")
+                print(f"Response headers: {result['headers']}")
+            else:
+                print(f"Upload failed with status code: {result['status_code']}")
+                print(f"Response data: {result['response_data']}")
+        """
+        # Verify file exists
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"File not found: {file_path}")
+        
+        # Verify file is a CSV file
+        if not file_path.lower().endswith('.csv'):
+            raise ValueError(f"File must be a CSV file. Got: {file_path}")
+        
+        # Upload the CSV file with fixed content type
+        with open(file_path, 'rb') as f:
+            response = self.session.put(
+                upload_url, 
+                data=f, 
+                headers={'Content-Type': 'text/csv'},
+                timeout=300  # 5 minute timeout for file uploads
+            )
+        
+        # Prepare response data
+        response_data = {}
+        try:
+            # Try to parse JSON response if available
+            if response.headers.get('content-type', '').startswith('application/json'):
+                response_data = response.json()
+            else:
+                response_data = {'text': response.text}
+        except (ValueError, json.JSONDecodeError):
+            # If JSON parsing fails, use text content
+            response_data = {'text': response.text}
+        
+        # Return comprehensive response information
+        return {
+            'status_code': response.status_code,
+            'response_data': response_data,
+            'success': 200 <= response.status_code < 300,
+            'headers': dict(response.headers)
+        }
+
+    def invoke_cft_integration(self, integration_instance_id: str) -> Union[bool, str]:
+        """
+        Invoke a Custom File Transfer integration instance to process uploaded files.
+        
+        args:
+            integration_instance_id (str): The ID of the integration instance to invoke
+            
+        Returns:
+            Union[bool, str]: 
+                - True: Integration was successfully invoked
+                - False: Integration invocation failed
+                - 'ALREADY_RUNNING': Integration is already executing
+                
+        Example:
+            # Invoke the CFT integration to process uploaded files
+            result = j1_client.invoke_cft_integration(
+                integration_instance_id="123e4567-e89b-12d3-a456-426614174000"
+            )
+            
+            if result == True:
+                print("Integration invoked successfully!")
+            elif result == 'ALREADY_RUNNING':
+                print("Integration is already running")
+            else:
+                print("Integration invocation failed")
+        """
+        variables = {"id": integration_instance_id}
+        
+        try:
+            response = self._execute_query(INVOKE_INTEGRATION_INSTANCE, variables)
+            
+            if 'data' in response and response['data'] is not None:
+                if 'invokeIntegrationInstance' in response['data']:
+                    return response['data']['invokeIntegrationInstance']['success']
+                else:
+                    print(f"Unexpected response format: 'invokeIntegrationInstance' not found in data")
+                    return False
+            else:
+                print(f"Unexpected response format: {response}")
+                return False
+                
+        except JupiterOneApiError as e:
+            # Check if it's an "already executing" error
+            if hasattr(e, 'errors') and e.errors:
+                for error in e.errors:
+                    if error.get('extensions', {}).get('code') == 'ALREADY_EXECUTING_ERROR':
+                        return 'ALREADY_RUNNING'
+            
+            # Re-raise the error if it's not an "already executing" error
+            raise
