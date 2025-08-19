@@ -3,7 +3,6 @@ import pytest
 import responses
 
 from jupiterone.client import JupiterOneClient
-from jupiterone.constants import DELETE_ENTITY
 
 
 @responses.activate

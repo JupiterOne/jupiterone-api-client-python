@@ -1,7 +1,6 @@
 """Test Custom File Transfer (CFT) methods"""
 
 import pytest
-import responses
 import tempfile
 import os
 from unittest.mock import Mock, patch, mock_open
