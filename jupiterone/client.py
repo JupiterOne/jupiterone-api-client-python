@@ -58,6 +58,7 @@ from jupiterone.constants import (
     UPSERT_PARAMETER,
     UPDATE_ENTITYV2,
     INVOKE_INTEGRATION_INSTANCE,
+    UPDATE_QUESTION,
 )
 
 class JupiterOneClient:
@@ -1446,6 +1447,100 @@ class JupiterOneClient:
         response = self._execute_query(CREATE_QUESTION, variables=variables)
         
         return response["data"]["createQuestion"]
+
+    def update_question(
+        self,
+        question_id: str,
+        title: str = None,
+        description: str = None,
+        queries: List[Dict] = None,
+        tags: List[str] = None,
+        **kwargs
+    ) -> Dict:
+        """
+        Update an existing question in the J1 account.
+        
+        Args:
+            question_id (str): The unique ID of the question to update (required)
+            title (str, optional): New title for the question
+            description (str, optional): New description for the question
+            queries (List[Dict], optional): Updated list of queries
+            tags (List[str], optional): Updated list of tags
+            **kwargs: Additional optional parameters:
+                - compliance (Dict): Compliance metadata
+                - variables (List[Dict]): Variable definitions for the queries
+                - showTrend (bool): Whether to show trend data
+                - pollingInterval (str): How often to run the queries
+                
+        Returns:
+            Dict: The updated question object
+            
+        Raises:
+            ValueError: If question_id is not provided
+            JupiterOneApiError: If the question update fails or other API errors occur
+            
+        Example:
+            # Update question title and description
+            updated_question = j1_client.update_question(
+                question_id="fcc0507d-0473-43a2-b083-9d5571b92ae7",
+                title="Environment-Specific Resource Audit - UPDATED",
+                description="Audit resources by environment and cost center tags"
+            )
+            
+            # Update queries and tags
+            updated_question = j1_client.update_question(
+                question_id="fcc0507d-0473-43a2-b083-9d5571b92ae7",
+                queries=[{
+                    "name": "EnvironmentResources",
+                    "query": "FIND * WITH tag.Production = true",
+                    "version": None,
+                    "resultsAre": "INFORMATIVE"
+                }],
+                tags=["audit", "tagging", "cost-management"]
+            )
+            
+            # Comprehensive update
+            updated_question = j1_client.update_question(
+                question_id="fcc0507d-0473-43a2-b083-9d5571b92ae7",
+                title="Environment-Specific Resource Audit - UPDATED",
+                description="Audit resources by environment and cost center tags",
+                queries=[{
+                    "name": "EnvironmentResources",
+                    "query": "FIND * WITH tag.Production = true",
+                    "version": None,
+                    "resultsAre": "INFORMATIVE"
+                }],
+                tags=["audit", "tagging", "cost-management"]
+            )
+        """
+        if not question_id:
+            raise ValueError("question_id is required")
+        
+        # Build the update object with only provided fields
+        update_data = {}
+        
+        if title is not None:
+            update_data["title"] = title
+        if description is not None:
+            update_data["description"] = description
+        if queries is not None:
+            update_data["queries"] = queries
+        if tags is not None:
+            update_data["tags"] = tags
+            
+        # Add any additional fields from kwargs
+        for key, value in kwargs.items():
+            if value is not None:
+                update_data[key] = value
+        
+        # Execute the GraphQL mutation
+        variables = {
+            "id": question_id,
+            "update": update_data
+        }
+        
+        response = self._execute_query(UPDATE_QUESTION, variables)
+        return response["data"]["updateQuestion"]
 
     def get_compliance_framework_item_details(self, item_id: str = None):
         """Fetch Details of a Compliance Framework Requirement configured in J1 account"""

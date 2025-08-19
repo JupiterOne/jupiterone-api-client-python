@@ -437,6 +437,197 @@ def get_question_details_example(j1):
         print(f"Error type: {type(e).__name__}")
         print(f"Error details: {str(e)}")
 
+def update_question_examples(j1):
+    """Demonstrate updating existing questions."""
+    
+    print("=== Update Question Examples ===\n")
+    
+    # First, let's get a list of questions to find one to update
+    print("1. Finding a question to update:")
+    try:
+        questions = j1.list_questions()
+        
+        if questions:
+            # Get the first question for demonstration
+            question_to_update = questions[0]
+            question_id = question_to_update['id']
+            question_title = question_to_update['title']
+            
+            print(f"  Found question: {question_title}")
+            print(f"  Question ID: {question_id}")
+            print(f"  Current tags: {', '.join(question_to_update.get('tags', []))}")
+            print(f"  Current description: {question_to_update.get('description', 'No description')[:50]}...")
+            print()
+            
+            # Example 1: Update title and description
+            print("2. Updating question title and description:")
+            try:
+                updated_question = j1.update_question(
+                    question_id=question_id,
+                    title=f"{question_title} - UPDATED",
+                    description="This question has been updated with new information and improved clarity."
+                )
+                
+                print(f"  ✅ Successfully updated question!")
+                print(f"  New title: {updated_question['title']}")
+                print(f"  New description: {updated_question['description']}")
+                print()
+                
+            except Exception as e:
+                print(f"  ❌ Error updating title/description: {e}\n")
+            
+            # Example 2: Update tags
+            print("3. Updating question tags:")
+            try:
+                current_tags = question_to_update.get('tags', [])
+                new_tags = current_tags + ["updated", "maintained", "reviewed"]
+                
+                updated_question = j1.update_question(
+                    question_id=question_id,
+                    tags=new_tags
+                )
+                
+                print(f"  ✅ Successfully updated tags!")
+                print(f"  New tags: {', '.join(updated_question['tags'])}")
+                print()
+                
+            except Exception as e:
+                print(f"  ❌ Error updating tags: {e}\n")
+            
+            # Example 3: Update queries
+            print("4. Updating question queries:")
+            try:
+                current_queries = question_to_update.get('queries', [])
+                if current_queries:
+                    # Update the first query with improved version
+                    updated_queries = current_queries.copy()
+                    if len(updated_queries) > 0:
+                        updated_queries[0] = {
+                            **updated_queries[0],
+                            "query": f"{updated_queries[0].get('query', '')} LIMIT 100",
+                            "resultsAre": "INFORMATIVE"
+                        }
+                    
+                    updated_question = j1.update_question(
+                        question_id=question_id,
+                        queries=updated_queries
+                    )
+                    
+                    print(f"  ✅ Successfully updated queries!")
+                    print(f"  Number of queries: {len(updated_question['queries'])}")
+                    print(f"  First query updated: {updated_question['queries'][0]['query'][:50]}...")
+                    print()
+                else:
+                    print("  ⚠️  No queries found to update")
+                    print()
+                    
+            except Exception as e:
+                print(f"  ❌ Error updating queries: {e}\n")
+            
+            # Example 4: Comprehensive update
+            print("5. Comprehensive question update:")
+            try:
+                comprehensive_update = j1.update_question(
+                    question_id=question_id,
+                    title="Comprehensive Security Audit Question - UPDATED",
+                    description="This question has been comprehensively updated to include multiple security checks and improved query performance.",
+                    tags=["security", "audit", "comprehensive", "updated", "maintained"],
+                    showTrend=True,
+                    pollingInterval="ONE_DAY"
+                )
+                
+                print(f"  ✅ Successfully completed comprehensive update!")
+                print(f"  Final title: {comprehensive_update['title']}")
+                print(f"  Final tags: {', '.join(comprehensive_update['tags'])}")
+                print(f"  Show trend: {comprehensive_update.get('showTrend', False)}")
+                print(f"  Polling interval: {comprehensive_update.get('pollingInterval', 'Not set')}")
+                print()
+                
+            except Exception as e:
+                print(f"  ❌ Error in comprehensive update: {e}\n")
+            
+            # Example 5: Update specific fields only
+            print("6. Updating specific fields only:")
+            try:
+                # Only update the description, leave everything else unchanged
+                specific_update = j1.update_question(
+                    question_id=question_id,
+                    description="This question focuses on specific security controls and compliance requirements."
+                )
+                
+                print(f"  ✅ Successfully updated description only!")
+                print(f"  Description updated: {specific_update['description'][:50]}...")
+                print(f"  Title remains: {specific_update['title']}")
+                print(f"  Tags remain: {', '.join(specific_update['tags'])}")
+                print()
+                
+            except Exception as e:
+                print(f"  ❌ Error updating specific fields: {e}\n")
+                
+        else:
+            print("  ⚠️  No questions found in the account to update")
+            print()
+            
+    except Exception as e:
+        print(f"  ❌ Error finding questions to update: {e}\n")
+    
+    # Example 7: Update with compliance metadata
+    print("7. Updating question with compliance metadata:")
+    try:
+        if questions:
+            compliance_update = j1.update_question(
+                question_id=question_id,
+                compliance={
+                    "standard": "CIS Controls",
+                    "requirements": ["6.1", "6.2"],
+                    "controls": ["Data Protection", "Access Control"]
+                }
+            )
+            
+            print(f"  ✅ Successfully updated compliance metadata!")
+            if 'compliance' in compliance_update:
+                compliance_data = compliance_update['compliance']
+                if isinstance(compliance_data, dict):
+                    print(f"  Standard: {compliance_data.get('standard', 'Not specified')}")
+                    print(f"  Requirements: {', '.join(map(str, compliance_data.get('requirements', [])))}")
+                    print(f"  Controls: {', '.join(map(str, compliance_data.get('controls', [])))}")
+                else:
+                    print(f"  Compliance data type: {type(compliance_data)}")
+            print()
+            
+    except Exception as e:
+        print(f"  ❌ Error updating compliance metadata: {e}\n")
+    
+    # Example 8: Update with variables
+    print("8. Updating question with variables:")
+    try:
+        if questions:
+            variables_update = j1.update_question(
+                question_id=question_id,
+                variables=[
+                    {
+                        "name": "environment",
+                        "required": True,
+                        "default": "production"
+                    },
+                    {
+                        "name": "severity",
+                        "required": False,
+                        "default": "high"
+                    }
+                ]
+            )
+            
+            print(f"  ✅ Successfully updated variables!")
+            if 'variables' in variables_update:
+                print(f"  Number of variables: {len(variables_update['variables'])}")
+                for var in variables_update['variables']:
+                    print(f"    - {var['name']} (required: {var.get('required', False)}, default: {var.get('default', 'None')})")
+            print()
+            
+    except Exception as e:
+        print(f"  ❌ Error updating variables: {e}\n")
+
 def question_use_cases(j1):
     """Demonstrate real-world use cases for questions."""
     
@@ -492,6 +683,42 @@ def question_use_cases(j1):
         pollingInterval="ONE_WEEK"
     )
     """)
+    
+    # Use Case 4: Question Maintenance and Updates
+    print("\nUse Case 4: Question Maintenance and Updates")
+    print("-" * 50)
+    print("Maintain and update existing questions:")
+    print("""
+    # Update question title and description
+    updated_question = j1.update_question(
+        question_id="existing-question-id",
+        title="Updated Security Question Title",
+        description="Updated description with new security requirements"
+    )
+    
+    # Update queries for better performance
+    updated_question = j1.update_question(
+        question_id="existing-question-id",
+        queries=[
+            {
+                "name": "ImprovedQuery",
+                "query": "FIND * WITH tag.Security='critical' LIMIT 1000",
+                "version": "v2",
+                "resultsAre": "BAD"
+            }
+        ]
+    )
+    
+    # Add compliance metadata
+    updated_question = j1.update_question(
+        question_id="existing-question-id",
+        compliance={
+            "standard": "ISO 27001",
+            "requirements": ["A.9.1", "A.9.2"],
+            "controls": ["Access Control"]
+        }
+    )
+    """)
 
 def main():
     """Run all question management examples."""
@@ -518,6 +745,10 @@ def main():
     time.sleep(1)
 
     get_question_details_example(j1)
+    time.sleep(1)
+    
+    update_question_examples(j1)
+    time.sleep(1)
     
     question_use_cases(j1)
     

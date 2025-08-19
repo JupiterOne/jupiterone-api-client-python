@@ -1326,3 +1326,47 @@ INVOKE_INTEGRATION_INSTANCE = """
         }
     }
 """
+
+UPDATE_QUESTION = """
+    mutation UpdateQuestion($id: ID!, $update: QuestionUpdate!) {
+      updateQuestion(id: $id, update: $update) {
+        ...QuestionFields
+        __typename
+      }
+    }
+
+    fragment QuestionFields on Question {
+      id
+      sourceId
+      title
+      name
+      description
+      tags
+      lastUpdatedTimestamp
+      queries {
+        name
+        query
+        version
+        resultsAre
+        __typename
+      }
+      compliance {
+        standard
+        requirements
+        controls
+        __typename
+      }
+      variables {
+        name
+        required
+        default
+        __typename
+      }
+      tags
+      accountId
+      integrationDefinitionId
+      showTrend
+      pollingInterval
+      __typename
+    }
+"""
