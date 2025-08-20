@@ -1358,7 +1358,6 @@ class JupiterOneClient:
         self,
         title: str,
         queries: List[Dict],
-        resource_group_id: str = None,
         **kwargs
     ):
         """Creates a new Question in the J1 account.
@@ -1370,7 +1369,6 @@ class JupiterOneClient:
                 - name (str): Name for the query
                 - version (str): Query version (defaults to 'v1')
                 - resultsAre (str): Query result type (defaults to 'INFORMATIVE')
-            resource_group_id (str, optional): ID of the resource group to associate with
             **kwargs: Additional optional parameters:
                 - description (str): Description of the question
                 - tags (List[str]): List of tags to apply to the question
@@ -1392,7 +1390,6 @@ class JupiterOneClient:
                     "version": "v1",
                     "resultsAre": "INFORMATIVE"
                 }],
-                resource_group_id="resource-group-id",
                 description="Check for open hosts",
                 tags=["security", "compliance"]
             )
@@ -1429,11 +1426,7 @@ class JupiterOneClient:
             "queries": processed_queries
         }
         
-        # Add optional fields from kwargs
-        if resource_group_id:
-            question_input["resourceGroupId"] = resource_group_id
-            
-        # Add other optional fields if provided
+        # Add optional fields if provided
         optional_fields = [
             "description", "tags", "compliance", "variables", 
             "showTrend", "pollingInterval", "integrationDefinitionId"
@@ -1533,6 +1526,10 @@ class JupiterOneClient:
         for key, value in kwargs.items():
             if value is not None:
                 update_data[key] = value
+        
+        # Validate that at least one update field is provided
+        if not update_data:
+            raise ValueError("At least one update field must be provided")
         
         # Execute the GraphQL mutation
         variables = {
@@ -1810,6 +1807,9 @@ class JupiterOneClient:
             else:
                 print("Integration invocation failed")
         """
+        if not integration_instance_id:
+            raise ValueError("integration_instance_id is required")
+            
         variables = {"id": integration_instance_id}
         
         try:

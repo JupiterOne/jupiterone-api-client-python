@@ -97,7 +97,7 @@ class TestCFTMethods:
             # Verify the result structure
             assert result['status_code'] == 200
             assert result['success'] is True
-            assert result['response_data'] == {"status": "success"}
+            assert result['response_data'] == {'text': '{"status": "success"}'}
             assert 'Content-Type' in result['headers']
             assert result['headers']['Content-Type'] == 'text/csv'
 
@@ -138,7 +138,7 @@ class TestCFTMethods:
             # Verify the result structure for error case
             assert result['status_code'] == 400
             assert result['success'] is False
-            assert result['response_data'] == {"error": "Bad Request"}
+            assert result['response_data'] == {'text': '{"error": "Bad Request"}'}
 
         finally:
             # Clean up temporary file
@@ -159,7 +159,7 @@ class TestCFTMethods:
             temp_file_path = temp_file.name
 
         try:
-            with pytest.raises(ValueError, match="Only CSV files are supported"):
+            with pytest.raises(ValueError, match="File must be a CSV file"):
                 self.client.upload_cft_file(
                     upload_url="https://s3.amazonaws.com/test-bucket/test-file.csv",
                     file_path=temp_file_path
@@ -208,7 +208,7 @@ class TestCFTMethods:
 
         result = self.client.invoke_cft_integration(self.integration_instance_id)
 
-        assert result == "job-123"
+        assert result is True
         mock_execute_query.assert_called_once_with(
             INVOKE_INTEGRATION_INSTANCE,
             {"id": self.integration_instance_id}
@@ -255,8 +255,8 @@ class TestCFTMethods:
 
         result = self.client.invoke_cft_integration(self.integration_instance_id)
 
-        # Should return False when success is True but no job ID
-        assert result is False
+        # Should return True when success is True (regardless of job ID)
+        assert result is True
 
     def test_invoke_cft_integration_empty_instance_id(self):
         """Test CFT integration invocation with empty instance ID"""

@@ -45,19 +45,19 @@ class TestCreateQuestion:
         call_args = mock_execute.call_args
 
         # Check the mutation was called with correct parameters
-        self.assertEqual(call_args[0][0], CREATE_QUESTION)
+        assert call_args[0][0] == CREATE_QUESTION
 
         # Check variables
         variables = call_args[1]['variables']
-        self.assertEqual(variables['question']['title'], "Test Question")
-        self.assertEqual(len(variables['question']['queries']), 1)
-        self.assertEqual(variables['question']['queries'][0]['query'], "FIND Host")
-        self.assertEqual(variables['question']['queries'][0]['name'], "Query0")
-        self.assertEqual(variables['question']['queries'][0]['resultsAre'], "INFORMATIVE")
+        assert variables['question']['title'] == "Test Question"
+        assert len(variables['question']['queries']) == 1
+        assert variables['question']['queries'][0]['query'] == "FIND Host"
+        assert variables['question']['queries'][0]['name'] == "Query0"
+        assert variables['question']['queries'][0]['resultsAre'] == "INFORMATIVE"
 
         # Check result
-        self.assertEqual(result['id'], "question-123")
-        self.assertEqual(result['title'], "Test Question")
+        assert result['id'] == "question-123"
+        assert result['title'] == "Test Question"
 
     @patch('jupiterone.client.JupiterOneClient._execute_query')
     def test_create_question_with_all_options(self, mock_execute):
@@ -77,8 +77,7 @@ class TestCreateQuestion:
                     }],
                     "tags": ["security", "test"],
                     "showTrend": True,
-                    "pollingInterval": "ONE_HOUR",
-                    "resourceGroupId": "rg-123"
+                    "pollingInterval": "ONE_HOUR"
                 }
             }
         }
@@ -92,7 +91,6 @@ class TestCreateQuestion:
                 "version": "v1",
                 "resultsAre": "BAD"
             }],
-            resource_group_id="rg-123",
             description="Complex description",
             tags=["security", "test"],
             showTrend=True,
@@ -103,16 +101,15 @@ class TestCreateQuestion:
         variables = mock_execute.call_args[1]['variables']
         question_input = variables['question']
 
-        self.assertEqual(question_input['title'], "Complex Question")
-        self.assertEqual(question_input['resourceGroupId'], "rg-123")
-        self.assertEqual(question_input['description'], "Complex description")
-        self.assertEqual(question_input['tags'], ["security", "test"])
-        self.assertEqual(question_input['showTrend'], True)
-        self.assertEqual(question_input['pollingInterval'], "ONE_HOUR")
+        assert question_input['title'] == "Complex Question"
+        assert question_input['description'] == "Complex description"
+        assert question_input['tags'] == ["security", "test"]
+        assert question_input['showTrend'] == True
+        assert question_input['pollingInterval'] == "ONE_HOUR"
 
         # Check result
-        self.assertEqual(result['id'], "question-456")
-        self.assertEqual(result['showTrend'], True)
+        assert result['id'] == "question-456"
+        assert result['showTrend'] == True
 
     @patch('jupiterone.client.JupiterOneClient._execute_query')
     def test_create_question_with_compliance(self, mock_execute):
@@ -151,12 +148,12 @@ class TestCreateQuestion:
         variables = mock_execute.call_args[1]['variables']
         question_input = variables['question']
 
-        self.assertEqual(question_input['compliance']['standard'], "CIS")
-        self.assertEqual(question_input['compliance']['requirements'], ["2.1", "2.2"])
-        self.assertEqual(question_input['compliance']['controls'], ["Network Security"])
+        assert question_input['compliance']['standard'] == "CIS"
+        assert question_input['compliance']['requirements'] == ["2.1", "2.2"]
+        assert question_input['compliance']['controls'] == ["Network Security"]
 
         # Check result
-        self.assertEqual(result['compliance']['standard'], "CIS")
+        assert result['compliance']['standard'] == "CIS"
 
     @patch('jupiterone.client.JupiterOneClient._execute_query')
     def test_create_question_with_variables(self, mock_execute):
@@ -198,13 +195,13 @@ class TestCreateQuestion:
         variables = mock_execute.call_args[1]['variables']
         question_input = variables['question']
 
-        self.assertEqual(len(question_input['variables']), 1)
-        self.assertEqual(question_input['variables'][0]['name'], "environment")
-        self.assertEqual(question_input['variables'][0]['required'], True)
-        self.assertEqual(question_input['variables'][0]['default'], "production")
+        assert len(question_input['variables']) == 1
+        assert question_input['variables'][0]['name'] == "environment"
+        assert question_input['variables'][0]['required'] == True
+        assert question_input['variables'][0]['default'] == "production"
 
         # Check result
-        self.assertEqual(len(result['variables']), 1)
+        assert len(result['variables']) == 1
 
     @patch('jupiterone.client.JupiterOneClient._execute_query')
     def test_create_question_multiple_queries(self, mock_execute):
@@ -252,12 +249,12 @@ class TestCreateQuestion:
         variables = mock_execute.call_args[1]['variables']
         question_input = variables['question']
 
-        self.assertEqual(len(question_input['queries']), 2)
-        self.assertEqual(question_input['queries'][0]['name'], "Query1")
-        self.assertEqual(question_input['queries'][1]['name'], "Query2")
+        assert len(question_input['queries']) == 2
+        assert question_input['queries'][0]['name'] == "Query1"
+        assert question_input['queries'][1]['name'] == "Query2"
 
         # Check result
-        self.assertEqual(len(result['queries']), 2)
+        assert len(result['queries']) == 2
 
     def test_create_question_validation_title_required(self):
         """Test validation that title is required"""
@@ -321,8 +318,8 @@ class TestCreateQuestion:
         variables = mock_execute.call_args[1]['variables']
         question_input = variables['question']
 
-        self.assertEqual(question_input['queries'][0]['name'], "Query0")
-        self.assertEqual(question_input['queries'][1]['name'], "Query1")
+        assert question_input['queries'][0]['name'] == "Query0"
+        assert question_input['queries'][1]['name'] == "Query1"
 
     @patch('jupiterone.client.JupiterOneClient._execute_query')
     def test_create_question_results_are_default(self, mock_execute):
@@ -348,7 +345,7 @@ class TestCreateQuestion:
         variables = mock_execute.call_args[1]['variables']
         question_input = variables['question']
 
-        self.assertEqual(question_input['queries'][0]['resultsAre'], "INFORMATIVE")
+        assert question_input['queries'][0]['resultsAre'] == "INFORMATIVE"
 
     @patch('jupiterone.client.JupiterOneClient._execute_query')
     def test_create_question_version_optional(self, mock_execute):
@@ -375,7 +372,7 @@ class TestCreateQuestion:
         question_input = variables['question']
 
         # Version should not be in the query if not provided
-        self.assertNotIn('version', question_input['queries'][0])
+        assert 'version' not in question_input['queries'][0]
 
         # Create question with version
         mock_execute.return_value = {
@@ -398,7 +395,7 @@ class TestCreateQuestion:
         question_input = variables['question']
 
         # Version should be included when provided
-        self.assertEqual(question_input['queries'][0]['version'], "v1")
+        assert question_input['queries'][0]['version'] == "v1"
 
     @patch('jupiterone.client.JupiterOneClient._execute_query')
     def test_create_question_optional_fields_handling(self, mock_execute):
@@ -428,12 +425,12 @@ class TestCreateQuestion:
         question_input = variables['question']
 
         # None values should not be included
-        self.assertNotIn('description', question_input)
-        self.assertNotIn('tags', question_input)
+        assert 'description' not in question_input
+        assert 'tags' not in question_input
 
         # Non-None values should be included
-        self.assertEqual(question_input['showTrend'], False)
-        self.assertEqual(question_input['pollingInterval'], "ONE_DAY")
+        assert question_input['showTrend'] == False
+        assert question_input['pollingInterval'] == "ONE_DAY"
 
     @patch('jupiterone.client.JupiterOneClient._execute_query')
     def test_create_question_integration_definition_id(self, mock_execute):
@@ -460,7 +457,7 @@ class TestCreateQuestion:
         variables = mock_execute.call_args[1]['variables']
         question_input = variables['question']
 
-        self.assertEqual(question_input['integrationDefinitionId'], "integration-123")
+        assert question_input['integrationDefinitionId'] == "integration-123"
 
         # Check result
-        self.assertEqual(result['integrationDefinitionId'], "integration-123")
+        assert result['integrationDefinitionId'] == "integration-123"

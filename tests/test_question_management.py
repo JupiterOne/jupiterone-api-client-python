@@ -43,8 +43,8 @@ class TestQuestionManagement:
         # Check the mutation was called with correct parameters
         assert call_args[0][0] == UPDATE_QUESTION
         
-        # Check variables
-        variables = call_args[1]['variables']
+        # Check variables - they are in the second positional argument
+        variables = call_args[0][1]
         assert variables['id'] == self.question_id
         assert variables['update']['title'] == "Updated Question Title"
         assert 'description' not in variables['update']
@@ -80,8 +80,8 @@ class TestQuestionManagement:
         mock_execute_query.assert_called_once()
         call_args = mock_execute_query.call_args
         
-        # Check variables
-        variables = call_args[1]['variables']
+        # Check variables - they are in the second positional argument
+        variables = call_args[0][1]
         assert variables['id'] == self.question_id
         assert variables['update']['description'] == "Updated description"
         assert 'title' not in variables['update']
@@ -117,8 +117,8 @@ class TestQuestionManagement:
         mock_execute_query.assert_called_once()
         call_args = mock_execute_query.call_args
         
-        # Check variables
-        variables = call_args[1]['variables']
+        # Check variables - they are in the second positional argument
+        variables = call_args[0][1]
         assert variables['id'] == self.question_id
         assert variables['update']['tags'] == new_tags
         assert 'title' not in variables['update']
@@ -156,8 +156,8 @@ class TestQuestionManagement:
         mock_execute_query.assert_called_once()
         call_args = mock_execute_query.call_args
         
-        # Check variables
-        variables = call_args[1]['variables']
+        # Check variables - they are in the second positional argument
+        variables = call_args[0][1]
         assert variables['id'] == self.question_id
         assert variables['update']['queries'] == new_queries
         assert 'title' not in variables['update']
@@ -198,8 +198,8 @@ class TestQuestionManagement:
         mock_execute_query.assert_called_once()
         call_args = mock_execute_query.call_args
         
-        # Check variables
-        variables = call_args[1]['variables']
+        # Check variables - they are in the second positional argument
+        variables = call_args[0][1]
         assert variables['id'] == self.question_id
         assert variables['update']['title'] == update_data['title']
         assert variables['update']['description'] == update_data['description']
@@ -237,15 +237,15 @@ class TestQuestionManagement:
         mock_execute_query.assert_called_once()
         call_args = mock_execute_query.call_args
         
-        # Check variables
-        variables = call_args[1]['variables']
+        # Check variables - they are in the second positional argument
+        variables = call_args[0][1]
         assert variables['id'] == self.question_id
         assert variables['update']['showTrend'] is True
         assert variables['update']['pollingInterval'] == "ONE_HOUR"
 
         # Check result
         assert result['showTrend'] is True
-        assert result['update']['pollingInterval'] == "ONE_HOUR"
+        assert result['pollingInterval'] == "ONE_HOUR"
 
     @patch('jupiterone.client.JupiterOneClient._execute_query')
     def test_update_question_api_error(self, mock_execute_query):
@@ -305,8 +305,8 @@ class TestQuestionManagement:
         # Check the mutation was called with correct parameters
         assert call_args[0][0] == DELETE_QUESTION
         
-        # Check variables
-        variables = call_args[1]['variables']
+        # Check variables - they are in the second positional argument
+        variables = call_args[0][1]
         assert variables['id'] == self.question_id
 
         # Check result

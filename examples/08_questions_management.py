@@ -254,18 +254,14 @@ def advanced_question_examples(j1):
     except Exception as e:
         print(f"Error creating parameterized question: {e}\n")
 
-def resource_group_question_examples(j1):
-    """Demonstrate questions with resource group associations."""
+def production_environment_examples(j1):
+    """Demonstrate questions for production environment monitoring."""
     
-    print("=== Resource Group Question Examples ===\n")
+    print("=== Production Environment Question Examples ===\n")
     
-    # Note: You'll need to have a resource group ID for this example
-    # This is just a demonstration - replace with your actual resource group ID
-    resource_group_id = "your-resource-group-id"  # Replace with actual ID
-    
-    print("1. Creating a question associated with a resource group:")
+    print("1. Creating a question for production environment security:")
     try:
-        rg_question = j1.create_question(
+        prod_question = j1.create_question(
             title="Production Environment Security Check",
             queries=[
                 {
@@ -279,17 +275,18 @@ def resource_group_question_examples(j1):
                     "resultsAre": "BAD"
                 }
             ],
-            resource_group_id=resource_group_id,  # Associate with resource group
             description="Security checks for production environment resources",
             tags=["production", "security", "critical"],
             pollingInterval="THIRTY_MINUTES"  # More frequent polling for production
         )
         
-        print(f"Created resource group question: {rg_question['title']}")
-        print(f"Resource group ID: {resource_group_id}")
+        print(f"Created production environment question: {prod_question['title']}")
+        print(f"Description: {prod_question['description']}")
+        print(f"Tags: {', '.join(prod_question.get('tags', []))}")
+        print(f"Polling interval: {prod_question.get('pollingInterval', 'Not set')}")
         print()
     except Exception as e:
-        print(f"Note: Resource group example requires valid resource group ID\n")
+        print(f"Error creating production environment question: {e}\n")
 
 def list_questions_example(j1):
     """Demonstrate listing existing questions."""
@@ -810,7 +807,7 @@ def main():
     advanced_question_examples(j1)
     time.sleep(1)
     
-    resource_group_question_examples(j1)
+    production_environment_examples(j1)
     time.sleep(1)
     
     list_questions_example(j1)
