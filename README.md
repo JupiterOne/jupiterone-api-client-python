@@ -41,7 +41,29 @@ the default of "https://api.us.jupiterone.io" is used.
 
 ## Method Examples:
 
-### *See the examples/examples.py for full usage example documentation
+### *See the examples/ directory for comprehensive usage examples:
+
+#### **Core API Examples**
+- `examples/01_client_setup_and_queries.py` - Client setup and basic J1QL queries
+- `examples/02_entity_management.py` - Entity creation, updates, and deletion
+- `examples/03_relationship_management.py` - Relationship management and traversal
+- `examples/examples.py` - General API usage examples and patterns
+
+#### **Integration & Management**
+- `examples/04_integration_management.py` - Integration instance management and sync jobs
+- `examples/05_alert_rules_and_smartclasses.py` - Alert rules and SmartClass operations
+- `examples/06_advanced_operations.py` - Advanced API operations and workflows
+
+#### **Specialized Features**
+- `examples/07_account_parameters_list_example.py` - Account parameter management
+- `examples/08_questions_management.py` - Complete question management workflows
+- `examples/09_custom_file_transfer_example.py` - Custom File Transfer (CFT) integration examples
+- `examples/create_integration_instance_example.py` - Integration instance creation examples
+
+#### **Utility & Data Examples**
+- `examples/J1QLdeferredResponse.py` - Deferred response query handling
+- `examples/customFileTransferUploadData.py` - Custom file transfer data examples
+- `examples/examples2.py` - Additional example patterns
 
 ##### Execute a query:
 
@@ -162,10 +184,17 @@ j1.update_entity(
 # Delete by entity ID
 j1.delete_entity(entity_id='<id-of-entity-to-delete>')
 
-# Delete with timestamp
+# Delete with timestamp and hard delete option
 j1.delete_entity(
     entity_id='<id-of-entity-to-delete>',
-    timestamp=int(time.time()) * 1000
+    timestamp=int(time.time()) * 1000,
+    hard_delete=True  # Set to False for soft delete
+)
+
+# Soft delete (entity marked as deleted but not permanently removed)
+j1.delete_entity(
+    entity_id='<id-of-entity-to-delete>',
+    hard_delete=False
 )
 ```
 
@@ -494,6 +523,63 @@ elif result['job']['status'] == 'FAILED':
     print(f"Sync job failed: {result['job'].get('error', 'Unknown error')}")
 ```
 
+##### Custom File Transfer (CFT) Integration Methods
+
+```python
+# Get a pre-signed URL for file upload
+upload_info = j1.get_cft_upload_url(
+    integration_instance_id='<id-of-integration-instance>',
+    filename='data.csv',
+    dataset_id='<id-of-dataset>'
+)
+print(f"Upload URL: {upload_info['uploadUrl']}")
+print(f"Expires at: {upload_info['expiresAt']}")
+
+# Upload a CSV file to the CFT integration
+upload_result = j1.upload_cft_file(
+    upload_url=upload_info['uploadUrl'],
+    file_path='/path/to/your/data.csv'
+)
+print(f"Upload status: {upload_result['status_code']}")
+print(f"Upload success: {upload_result['success']}")
+
+# Invoke the CFT integration to process the uploaded file
+invoke_result = j1.invoke_cft_integration(
+    integration_instance_id='<id-of-integration-instance>'
+)
+if invoke_result is True:
+    print("CFT integration invoked successfully")
+elif invoke_result == 'ALREADY_RUNNING':
+    print("CFT integration is already running")
+else:
+    print("Failed to invoke CFT integration")
+
+# Complete workflow example
+def upload_and_process_data(j1, instance_id, dataset_id, file_path):
+    """Complete workflow for CFT data upload and processing"""
+    try:
+        # Step 1: Get upload URL
+        upload_info = j1.get_cft_upload_url(instance_id, 'data.csv', dataset_id)
+        
+        # Step 2: Upload file
+        upload_result = j1.upload_cft_file(upload_info['uploadUrl'], file_path)
+        if not upload_result['success']:
+            raise Exception(f"Upload failed: {upload_result['status_code']}")
+        
+        # Step 3: Invoke processing
+        invoke_result = j1.invoke_cft_integration(instance_id)
+        if invoke_result is True:
+            print("Data uploaded and processing started successfully")
+        else:
+            print(f"Processing status: {invoke_result}")
+            
+    except Exception as e:
+        print(f"Error in CFT workflow: {e}")
+
+# Usage
+upload_and_process_data(j1, 'instance-123', 'dataset-456', '/path/to/data.csv')
+```
+
 ##### Fetch Integration Instance Jobs
 
 ```python
@@ -616,6 +702,135 @@ for prompt in complex_prompts:
     print(f"Prompt: {prompt}")
     print(f"Generated J1QL: {result['j1ql']}")
     print("---")
+```
+
+##### Question Management Methods
+
+```python
+# Create a new question
+question = j1.create_question(
+    title="Security Compliance Check",
+    queries=[
+        {
+            "query": "FIND User WITH mfaEnabled=false",
+            "name": "UsersWithoutMFA",
+            "resultsAre": "BAD"
+        },
+        {
+            "query": "FIND Host WITH encrypted=false",
+            "name": "UnencryptedHosts",
+            "resultsAre": "BAD"
+        }
+    ],
+    description="Check for security compliance violations",
+    tags=["security", "compliance"],
+    showTrend=True,
+    pollingInterval="ONE_DAY"
+)
+print(f"Created question: {question['title']} (ID: {question['id']})")
+
+# List existing questions
+questions = j1.list_questions()
+print(f"Found {len(questions)} questions")
+
+# Search for specific questions
+security_questions = j1.list_questions(search_query="security")
+compliance_questions = j1.list_questions(tags=["compliance"])
+
+# Get question details
+question_details = j1.get_question_details(question_id=question['id'])
+print(f"Question: {question_details['title']}")
+print(f"Description: {question_details['description']}")
+print(f"Queries: {len(question_details['queries'])}")
+
+# Update an existing question
+updated_question = j1.update_question(
+    question_id=question['id'],
+    title="Updated Security Compliance Check",
+    description="Enhanced security compliance monitoring",
+    tags=["security", "compliance", "enhanced"]
+)
+print(f"Updated question: {updated_question['title']}")
+
+# Update specific fields only
+j1.update_question(
+    question_id=question['id'],
+    description="Updated description only"
+)
+
+# Update queries with validation
+updated_queries = [
+    {
+        "query": "FIND User WITH mfaEnabled=false AND active=true",
+        "name": "ActiveUsersWithoutMFA",
+        "resultsAre": "BAD"
+    }
+]
+j1.update_question(
+    question_id=question['id'],
+    queries=updated_queries
+)
+
+# Delete a question
+deleted_question = j1.delete_question(question_id=question['id'])
+print(f"Deleted question: {deleted_question['title']}")
+
+# Complete workflow example
+def manage_security_questions(j1):
+    """Complete workflow for managing security questions"""
+    try:
+        # Create a comprehensive security question
+        security_question = j1.create_question(
+            title="Production Security Audit",
+            queries=[
+                {
+                    "query": "FIND Host WITH tag.Environment='production' AND encrypted=false",
+                    "name": "UnencryptedProdHosts",
+                    "resultsAre": "BAD"
+                },
+                {
+                    "query": "FIND User WITH privileged=true AND lastLoginOn < date.now - 90 days",
+                    "name": "InactivePrivilegedUsers",
+                    "resultsAre": "BAD"
+                }
+            ],
+            description="Comprehensive production security audit",
+            tags=["security", "production", "audit"],
+            showTrend=True,
+            pollingInterval="ONE_DAY"
+        )
+        
+        print(f"Created security question: {security_question['title']}")
+        
+        # Update the question with additional queries
+        additional_queries = [
+            {
+                "query": "FIND Database WITH backupEnabled=false",
+                "name": "DatabasesWithoutBackup",
+                "resultsAre": "BAD"
+            }
+        ]
+        
+        updated_question = j1.update_question(
+            question_id=security_question['id'],
+            queries=additional_queries
+        )
+        
+        print(f"Updated question with additional queries")
+        
+        # List all security questions
+        all_security_questions = j1.list_questions(tags=["security"])
+        print(f"Total security questions: {len(all_security_questions)}")
+        
+        # Clean up - delete the test question
+        j1.delete_question(question_id=security_question['id'])
+        print("Test question cleaned up")
+        
+    except Exception as e:
+        print(f"Error in security question workflow: {e}")
+
+# Usage
+manage_security_questions(j1)
 ```
 
 ##### List Alert Rules
