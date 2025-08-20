@@ -568,3 +568,122 @@ print(json.dumps(r, indent=1))
 
 r = j1.create_update_parameter(name="ParameterName", value="stored_value", secret=False)
 print(json.dumps(r, indent=1))
+
+# list_questions
+list_questions_r = j1.list_questions()
+print("list_questions()")
+print(f"Total questions found: {len(list_questions_r)}")
+print(json.dumps(list_questions_r[:2], indent=1))  # Show first 2 questions
+
+# list_questions with search query
+print("\nlist_questions() - With search query:")
+security_questions = j1.list_questions(search_query="security")
+print(f"Security-related questions found: {len(security_questions)}")
+if security_questions:
+    print(f"  First security question: {security_questions[0].get('title', 'No title')}")
+
+# list_questions with tags filter
+print("\nlist_questions() - With tags filter:")
+compliance_questions = j1.list_questions(tags=["compliance"])
+print(f"Compliance-tagged questions found: {len(compliance_questions)}")
+if compliance_questions:
+    print(f"  First compliance question: {compliance_questions[0].get('title', 'No title')}")
+
+# list_questions with combined search and tags
+print("\nlist_questions() - With search and tags:")
+security_compliance = j1.list_questions(search_query="encryption", tags=["security", "compliance"])
+print(f"Security/compliance encryption questions found: {len(security_compliance)}")
+if security_compliance:
+    print(f"  First matching question: {security_compliance[0].get('title', 'No title')}")
+
+# list_questions - analyze question types and compliance
+print("\nlist_questions() - Analysis:")
+if list_questions_r:
+    # Count questions by compliance standard
+    compliance_standards = {}
+    question_types = {}
+    
+    for question in list_questions_r:
+        # Analyze compliance standards
+        if 'compliance' in question and question['compliance']:
+            compliance = question['compliance']
+            if isinstance(compliance, dict) and 'standard' in compliance:
+                standard = compliance['standard']
+                compliance_standards[standard] = compliance_standards.get(standard, 0) + 1
+        
+        # Analyze question types by tags
+        if 'tags' in question and question['tags']:
+            for tag in question['tags']:
+                question_types[tag] = question_types.get(tag, 0) + 1
+    
+    print(f"  Total questions: {len(list_questions_r)}")
+    print(f"  Compliance standards found: {len(compliance_standards)}")
+    if compliance_standards:
+        print("    Standards:")
+        for standard, count in compliance_standards.items():
+            print(f"      {standard}: {count} questions")
+    
+    print(f"  Question categories (by tags): {len(question_types)}")
+    if question_types:
+        print("    Top categories:")
+        sorted_tags = sorted(question_types.items(), key=lambda x: x[1], reverse=True)[:5]
+        for tag, count in sorted_tags:
+            print(f"      {tag}: {count} questions")
+
+# list_questions - find specific types of questions
+print("\nlist_questions() - Finding specific questions:")
+if list_questions_r:
+    # Find security-related questions
+    security_questions = [q for q in list_questions_r if 'tags' in q and q['tags'] and any('security' in tag.lower() for tag in q['tags'])]
+    print(f"  Security-related questions: {len(security_questions)}")
+    
+    # Find compliance-related questions
+    compliance_questions = [q for q in list_questions_r if 'compliance' in q and q['compliance']]
+    print(f"  Compliance-related questions: {len(compliance_questions)}")
+    
+    # Find questions with variables
+    variable_questions = [q for q in list_questions_r if 'variables' in q and q['variables']]
+    print(f"  Questions with variables: {len(variable_questions)}")
+    
+    # Find questions with polling enabled
+    polling_questions = [q for q in list_questions_r if 'pollingInterval' in q and q['pollingInterval'] and q['pollingInterval'] != 'DISABLED']
+    print(f"  Questions with polling enabled: {len(polling_questions)}")
+
+# get_question_details - get specific question details
+print("\nget_question_details() - Get specific question:")
+if list_questions_r:
+    # Get details of the first question
+    first_question_id = list_questions_r[0]['id']
+    try:
+        question_details = j1.get_question_details(question_id=first_question_id)
+        print(f"  Retrieved details for question: {question_details['title']}")
+        print(f"  Question ID: {question_details['id']}")
+        print(f"  Description: {question_details.get('description', 'No description')}")
+        print(f"  Tags: {question_details.get('tags', [])}")
+        print(f"  Number of queries: {len(question_details.get('queries', []))}")
+        print(f"  Show trend: {question_details.get('showTrend', False)}")
+        print(f"  Polling interval: {question_details.get('pollingInterval', 'Not set')}")
+        
+        # Show compliance details if available
+        if question_details.get('compliance'):
+            compliance = question_details['compliance']
+            if isinstance(compliance, dict):
+                print(f"  Compliance standard: {compliance.get('standard', 'Not specified')}")
+                if 'requirements' in compliance:
+                    reqs = compliance['requirements']
+                    if isinstance(reqs, list):
+                        print(f"  Compliance requirements: {', '.join(map(str, reqs))}")
+        
+        # Show variables if available
+        if question_details.get('variables'):
+            variables = question_details['variables']
+            print(f"  Variables: {len(variables)}")
+            for var in variables:
+                print(f"    - {var.get('name', 'Unnamed')}: required={var.get('required', False)}, default={var.get('default', 'None')}")
+                
+    except Exception as e:
+        print(f"  Error getting question details: {e}")
+else:
+    print("  No questions available to get details for")
+
+print()

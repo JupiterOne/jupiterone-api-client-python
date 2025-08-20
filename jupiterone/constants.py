@@ -28,18 +28,14 @@ CREATE_ENTITY = """
   }
 """
 DELETE_ENTITY = """
-  mutation DeleteEntity($entityId: String!, $timestamp: Long) {
-    deleteEntity(entityId: $entityId, timestamp: $timestamp) {
-      entity {
-        _id
-      }
-      vertex {
-        id
-        entity {
-          _id
-        }
-        properties
-      }
+  mutation DeleteEntity($entityId: String!, $timestamp: Long, $hardDelete: Boolean) {
+    deleteEntityV2(
+      entityId: $entityId
+      timestamp: $timestamp
+      hardDelete: $hardDelete
+    ) {
+      entity
+      __typename
     }
   }
 """
@@ -920,6 +916,83 @@ QUESTIONS = """
       __typename
     }
 """
+
+GET_QUESTION = """
+    query question($id: ID!) {
+      question(id: $id) {
+        ...QuestionFields
+        __typename
+      }
+    }
+
+    fragment QuestionFields on Question {
+      id
+      sourceId
+      title
+      description
+      tags
+      lastUpdatedTimestamp
+      queries {
+        name
+        query
+        version
+        resultsAre
+        __typename
+      }
+      compliance {
+        standard
+        requirements
+        controls
+        __typename
+      }
+      variables {
+        name
+        required
+        default
+        __typename
+      }
+      accountId
+      integrationDefinitionId
+      showTrend
+      pollingInterval
+      __typename
+    }
+"""
+CREATE_QUESTION = """
+    mutation CreateQuestion($question: CreateQuestionInput!) {
+        createQuestion(question: $question) {
+            id
+            title
+            description
+            tags
+            queries {
+                name
+                query
+                version
+                resultsAre
+                __typename
+            }
+            compliance {
+                standard
+                requirements
+                controls
+                __typename
+            }
+            variables {
+                name
+                required
+                default
+                __typename
+            }
+            accountId
+            integrationDefinitionId
+            showTrend
+            pollingInterval
+            lastUpdatedTimestamp
+            __typename
+        }
+    }
+"""
 COMPLIANCE_FRAMEWORK_ITEM = """
 query complianceFrameworkItem($input: ComplianceFrameworkItemInput!) {
   complianceFrameworkItem(input: $input) {
@@ -1236,6 +1309,97 @@ UPDATE_ENTITYV2 = """
     mutation UpdateEntityV2($timestamp: Long, $entity: JSON!) {
       updateEntityV2(timestamp: $timestamp, entity: $entity) {
         entity
+        __typename
+      }
+    }
+"""
+
+INVOKE_INTEGRATION_INSTANCE = """
+    mutation InvokeIntegrationInstance(
+        $id: String!
+    ) {
+        invokeIntegrationInstance(
+            id: $id
+        ) {
+            success
+            integrationJobId
+        }
+    }
+"""
+
+UPDATE_QUESTION = """
+    mutation UpdateQuestion($id: ID!, $update: QuestionUpdate!) {
+      updateQuestion(id: $id, update: $update) {
+        ...QuestionFields
+        __typename
+      }
+    }
+
+    fragment QuestionFields on Question {
+      id
+      sourceId
+      title
+      name
+      description
+      tags
+      lastUpdatedTimestamp
+      queries {
+        name
+        query
+        version
+        resultsAre
+        __typename
+      }
+      compliance {
+        standard
+        requirements
+        controls
+        __typename
+      }
+      variables {
+        name
+        required
+        default
+        __typename
+      }
+      tags
+      accountId
+      integrationDefinitionId
+      showTrend
+      pollingInterval
+      __typename
+    }
+"""
+
+DELETE_QUESTION = """
+    mutation DeleteQuestion($id: ID!) {
+      deleteQuestion(id: $id) {
+        id
+        title
+        description
+        queries {
+          query
+          name
+          version
+          __typename
+        }
+        compliance {
+          standard
+          requirements
+          controls
+          __typename
+        }
+        variables {
+          name
+          required
+          default
+          __typename
+        }
+        tags
+        accountId
+        integrationDefinitionId
+        showTrend
+        pollingInterval
         __typename
       }
     }

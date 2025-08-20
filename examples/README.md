@@ -105,6 +105,50 @@ This directory contains comprehensive examples demonstrating how to use the Jupi
 - Performance optimization techniques
 - Data synchronization workflows
 
+### 7. **07_account_parameters_list_example.py**
+**Purpose**: Account parameter management
+- List all account parameters
+- Create/update account parameters
+- Fetch parameter details
+- Secret parameter handling
+
+**Key Methods Demonstrated**:
+- `list_account_parameters()` - List all parameters
+- `create_update_parameter()` - Create or update parameters
+- `get_parameter_details()` - Get parameter details
+
+### 8. **08_questions_management.py**
+**Purpose**: Questions creation and management
+- Create questions with single and multiple queries
+- Configure question properties (tags, compliance, variables)
+- Create questions for security monitoring and compliance
+- List existing questions in the account
+- Advanced question features (parameterization, resource groups)
+
+**Key Methods Demonstrated**:
+- `create_question()` - Create questions with J1QL queries
+- `list_questions()` - List all questions in the account
+- `get_question_details()` - Get detailed information for a specific question by ID
+
+### 9. **examples.py**
+**Purpose**: Comprehensive examples of all major SDK methods
+- Client setup and basic operations
+- Entity and relationship management
+- Integration and sync job operations
+- Alert rules and SmartClass operations
+- Questions management and analysis
+- Account parameter operations
+
+**Key Methods Demonstrated**:
+- All major SDK methods including:
+- `list_questions()` - List and analyze all questions in the account
+- `get_question_details()` - Get detailed information for specific questions
+- `create_question()` - Create questions with various configurations
+- Entity lifecycle management methods
+- Relationship management methods
+- Integration and sync job methods
+- Alert rule and SmartClass methods
+
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -142,6 +186,12 @@ python 05_alert_rules_and_smartclasses.py
 
 # Run advanced operations examples
 python 06_advanced_operations.py
+
+# Run account parameters examples
+python 07_account_parameters_list_example.py
+
+# Run questions management examples
+python 08_questions_management.py
 ```
 
 ## 📋 Example Categories
@@ -153,6 +203,15 @@ python 06_advanced_operations.py
 - Aggregation queries
 - Time-based queries
 - Complex multi-step queries
+
+### 📊 Questions Management
+- Question creation with J1QL queries
+- Question listing and analysis with filtering options
+- Search questions by title/description using `search_query` parameter
+- Filter questions by tags using `tags` parameter
+- Compliance metadata management
+- Question categorization and filtering
+- Question lifecycle management
 
 ### 🏗️ Entity Management
 - Entity creation with various property types
@@ -222,6 +281,47 @@ j1 = JupiterOneClient(
     url=os.getenv('JUPITERONE_URL', 'https://graphql.us.jupiterone.io'),
     sync_url=os.getenv('JUPITERONE_SYNC_URL', 'https://api.us.jupiterone.io')
 )
+```
+
+### Questions Analysis
+Examples show how to analyze questions data with filtering:
+```python
+# List all questions
+questions = j1.list_questions()
+
+# Search questions by content
+security_questions = j1.list_questions(search_query="security")
+encryption_questions = j1.list_questions(search_query="encryption")
+
+# Filter questions by tags
+compliance_questions = j1.list_questions(tags=["compliance"])
+cis_questions = j1.list_questions(tags=["cis", "aws"])
+
+# Combine search and tags
+security_compliance = j1.list_questions(
+    search_query="encryption", 
+    tags=["security", "compliance"]
+)
+
+# Get detailed information for a specific question
+question_details = j1.get_question_details(
+    question_id="f90f9aa1-f9ff-47f7-ab34-ce8fa11c7add"
+)
+print(f"Question title: {question_details['title']}")
+print(f"Compliance standard: {question_details.get('compliance', {}).get('standard')}")
+print(f"Number of queries: {len(question_details.get('queries', []))}")
+
+# Analyze by compliance standards
+compliance_standards = {}
+for question in questions:
+    if 'compliance' in question and question['compliance']:
+        compliance = question['compliance']
+        if isinstance(compliance, dict) and 'standard' in compliance:
+            standard = compliance['standard']
+            compliance_standards[standard] = compliance_standards.get(standard, 0) + 1
+
+# Find questions by tags
+security_questions = [q for q in questions if 'tags' in q and q['tags'] and any('security' in tag.lower() for tag in q['tags'])]
 ```
 
 ## 📝 Notes

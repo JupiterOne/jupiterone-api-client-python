@@ -1,5 +1,6 @@
 """ Python SDK for JupiterOne GraphQL API """
 import json
+import os
 from warnings import warn
 from typing import Dict, List, Union, Optional
 from datetime import datetime
@@ -43,6 +44,8 @@ from jupiterone.constants import (
     UPDATE_RULE_INSTANCE,
     EVALUATE_RULE_INSTANCE,
     QUESTIONS,
+    GET_QUESTION,
+    CREATE_QUESTION,
     COMPLIANCE_FRAMEWORK_ITEM,
     LIST_COLLECTION_RESULTS,
     GET_RAW_DATA_DOWNLOAD_URL,
@@ -54,6 +57,9 @@ from jupiterone.constants import (
     PARAMETER_LIST,
     UPSERT_PARAMETER,
     UPDATE_ENTITYV2,
+    INVOKE_INTEGRATION_INSTANCE,
+    UPDATE_QUESTION,
+    DELETE_QUESTION,
 )
 
 class JupiterOneClient:
@@ -488,15 +494,19 @@ class JupiterOneClient:
         response = self._execute_query(query=CREATE_ENTITY, variables=variables)
         return response["data"]["createEntity"]
 
-    def delete_entity(self, entity_id: str = None) -> Dict:
-        """Deletes an entity from the graph.  Note this is a hard delete.
+    def delete_entity(self, entity_id: str = None, timestamp: int = None, hard_delete: bool = True) -> Dict:
+        """Deletes an entity from the graph.
 
         args:
             entity_id (str): Entity ID for entity to delete
+            timestamp (int, optional): Timestamp for the deletion. Defaults to None.
+            hard_delete (bool): Whether to perform a hard delete. Defaults to True.
         """
-        variables = {"entityId": entity_id}
+        variables = {"entityId": entity_id, "hardDelete": hard_delete}
+        if timestamp:
+            variables["timestamp"] = timestamp
         response = self._execute_query(DELETE_ENTITY, variables=variables)
-        return response["data"]["deleteEntity"]
+        return response["data"]["deleteEntityV2"]
 
     def update_entity(self, entity_id: str = None, properties: Dict = None) -> Dict:
         """
@@ -1245,12 +1255,44 @@ class JupiterOneClient:
 
             return e
 
-    def list_questions(self):
-        """List all defined Questions configured in J1 account Questions Library"""
+    def list_questions(self, search_query: str = None, tags: List[str] = None):
+        """List all defined Questions configured in J1 Account Questions Library
+        
+        Args:
+            search_query (str, optional): Search query to filter questions by title or description
+            tags (List[str], optional): List of tags to filter questions by
+            
+        Returns:
+            List[Dict]: List of question objects
+            
+        Example:
+            # List all questions
+            all_questions = j1_client.list_questions()
+            
+            # Search for security-related questions
+            security_questions = j1_client.list_questions(search_query="security")
+            
+            # Filter by specific tags
+            compliance_questions = j1_client.list_questions(tags=["compliance", "cis"])
+            
+            # Combine search and tags
+            security_compliance = j1_client.list_questions(
+                search_query="encryption", 
+                tags=["security", "compliance"]
+            )
+        """
         results = []
+
+        # Build variables for the GraphQL query
+        variables = {}
+        if search_query:
+            variables["searchQuery"] = search_query
+        if tags:
+            variables["tags"] = tags
 
         data = {
             "query": QUESTIONS,
+            "variables": variables,
             "flags": {
                 "variableResultSize": True
             }
@@ -1266,10 +1308,16 @@ class JupiterOneClient:
             cursor = r["data"]["questions"]["pageInfo"]["endCursor"]
 
             # cursor query until last page fetched
+            # Preserve existing variables and add cursor
+            cursor_variables = variables.copy()
+            cursor_variables["cursor"] = cursor
+            
             data = {
                 "query": QUESTIONS,
-                "variables": {"cursor": cursor},
-                "flags": {"variableResultSize": True},
+                "variables": cursor_variables,
+                "flags": {
+                    "variableResultSize": True
+                },
             }
 
             r = requests.post(
@@ -1278,6 +1326,283 @@ class JupiterOneClient:
             results.extend(r["data"]["questions"]["questions"])
 
         return results
+
+    def get_question_details(self, question_id: str = None):
+        """Get details of a specific question by ID
+        
+        Args:
+            question_id (str): The unique ID of the question to retrieve
+            
+        Returns:
+            Dict: The question object with all its details
+            
+        Example:
+            question_details = j1_client.get_question_details(
+                question_id="f90f9aa1-f9ff-47f7-ab34-ce8fa11c7add"
+            )
+            
+        Raises:
+            ValueError: If question_id is not provided
+            JupiterOneApiError: If the question is not found or other API errors occur
+        """
+        if not question_id:
+            raise ValueError("question_id is required")
+            
+        variables = {"id": question_id}
+        
+        response = self._execute_query(GET_QUESTION, variables=variables)
+        
+        return response["data"]["question"]
+
+    def create_question(
+        self,
+        title: str,
+        queries: List[Dict],
+        **kwargs
+    ):
+        """Creates a new Question in the J1 account.
+        
+        Args:
+            title (str): The title of the question (required)
+            queries (List[Dict]): List of query objects containing:
+                - query (str): The J1QL query string
+                - name (str): Name for the query
+                - version (str): Query version (defaults to 'v1')
+                - resultsAre (str): Query result type (defaults to 'INFORMATIVE')
+            **kwargs: Additional optional parameters:
+                - description (str): Description of the question
+                - tags (List[str]): List of tags to apply to the question
+                - compliance (Dict): Compliance metadata
+                - variables (List[Dict]): Variable definitions for the queries
+                - showTrend (bool): Whether to show trend data
+                - pollingInterval (str): How often to run the queries
+                - integrationDefinitionId (str): Integration definition ID if applicable
+                
+        Returns:
+            Dict: The created question object
+            
+        Example:
+            question = j1_client.create_question(
+                title="Security Compliance Check",
+                queries=[{
+                    "query": "FIND Host WITH open=true",
+                    "name": "OpenHosts",
+                    "version": "v1",
+                    "resultsAre": "INFORMATIVE"
+                }],
+                description="Check for open hosts",
+                tags=["security", "compliance"]
+            )
+        """
+        # Validate required fields
+        if not title:
+            raise ValueError("title is required")
+        if not queries or not isinstance(queries, list) or len(queries) == 0:
+            raise ValueError("queries must be a non-empty list")
+            
+        # Process each query to ensure required fields
+        processed_queries = []
+        for idx, query in enumerate(queries):
+            if not isinstance(query, dict):
+                raise ValueError(f"Query at index {idx} must be a dictionary")
+            if "query" not in query:
+                raise ValueError(f"Query at index {idx} must have a 'query' field")
+                
+            processed_query = {
+                "query": query["query"],
+                "name": query.get("name", f"Query{idx}"),
+                "resultsAre": query.get("resultsAre", "INFORMATIVE")
+            }
+            
+            # Only add version if provided
+            if "version" in query:
+                processed_query["version"] = query["version"]
+                
+            processed_queries.append(processed_query)
+        
+        # Build the question input object
+        question_input = {
+            "title": title,
+            "queries": processed_queries
+        }
+        
+        # Add optional fields if provided
+        optional_fields = [
+            "description", "tags", "compliance", "variables", 
+            "showTrend", "pollingInterval", "integrationDefinitionId"
+        ]
+        
+        for field in optional_fields:
+            if field in kwargs and kwargs[field] is not None:
+                question_input[field] = kwargs[field]
+        
+        # Execute the GraphQL mutation
+        variables = {"question": question_input}
+        response = self._execute_query(CREATE_QUESTION, variables=variables)
+        
+        return response["data"]["createQuestion"]
+
+    def update_question(
+        self,
+        question_id: str,
+        title: str = None,
+        description: str = None,
+        queries: List[Dict] = None,
+        tags: List[str] = None,
+        **kwargs
+    ) -> Dict:
+        """
+        Update an existing question in the J1 account.
+        
+        Args:
+            question_id (str): The unique ID of the question to update (required)
+            title (str, optional): New title for the question
+            description (str, optional): New description for the question
+            queries (List[Dict], optional): Updated list of queries
+            tags (List[str], optional): Updated list of tags
+            **kwargs: Additional optional parameters:
+                - compliance (Dict): Compliance metadata
+                - variables (List[Dict]): Variable definitions for the queries
+                - showTrend (bool): Whether to show trend data
+                - pollingInterval (str): How often to run the queries
+                
+        Returns:
+            Dict: The updated question object
+            
+        Raises:
+            ValueError: If question_id is not provided
+            JupiterOneApiError: If the question update fails or other API errors occur
+            
+        Example:
+            # Update question title and description
+            updated_question = j1_client.update_question(
+                question_id="fcc0507d-0473-43a2-b083-9d5571b92ae7",
+                title="Environment-Specific Resource Audit - UPDATED",
+                description="Audit resources by environment and cost center tags"
+            )
+            
+            # Update queries and tags
+            updated_question = j1_client.update_question(
+                question_id="fcc0507d-0473-43a2-b083-9d5571b92ae7",
+                queries=[{
+                    "name": "EnvironmentResources",
+                    "query": "FIND * WITH tag.Production = true",
+                    "version": None,
+                    "resultsAre": "INFORMATIVE"
+                }],
+                tags=["audit", "tagging", "cost-management"]
+            )
+            
+            # Comprehensive update
+            updated_question = j1_client.update_question(
+                question_id="fcc0507d-0473-43a2-b083-9d5571b92ae7",
+                title="Environment-Specific Resource Audit - UPDATED",
+                description="Audit resources by environment and cost center tags",
+                queries=[{
+                    "name": "EnvironmentResources",
+                    "query": "FIND * WITH tag.Production = true",
+                    "version": None,
+                    "resultsAre": "INFORMATIVE"
+                }],
+                tags=["audit", "tagging", "cost-management"]
+            )
+        """
+        if not question_id:
+            raise ValueError("question_id is required")
+        
+        # Build the update object with only provided fields
+        update_data = {}
+        
+        if title is not None:
+            update_data["title"] = title
+        if description is not None:
+            update_data["description"] = description
+        if queries is not None:
+            # Validate queries input using the same logic as create_question
+            if not isinstance(queries, list) or len(queries) == 0:
+                raise ValueError("queries must be a non-empty list")
+                
+            # Process each query to ensure required fields
+            processed_queries = []
+            for idx, query in enumerate(queries):
+                if not isinstance(query, dict):
+                    raise ValueError(f"Query at index {idx} must be a dictionary")
+                if "query" not in query:
+                    raise ValueError(f"Query at index {idx} must have a 'query' field")
+                    
+                processed_query = {
+                    "query": query["query"],
+                    "name": query.get("name", f"Query{idx}"),
+                    "resultsAre": query.get("resultsAre", "INFORMATIVE")
+                }
+                
+                # Only add version if provided
+                if "version" in query:
+                    processed_query["version"] = query["version"]
+                    
+                processed_queries.append(processed_query)
+            
+            update_data["queries"] = processed_queries
+        if tags is not None:
+            update_data["tags"] = tags
+            
+        # Add any additional fields from kwargs
+        for key, value in kwargs.items():
+            if value is not None:
+                update_data[key] = value
+        
+        # Validate that at least one update field is provided
+        if not update_data:
+            raise ValueError("At least one update field must be provided")
+        
+        # Execute the GraphQL mutation
+        variables = {
+            "id": question_id,
+            "update": update_data
+        }
+        
+        response = self._execute_query(UPDATE_QUESTION, variables)
+        return response["data"]["updateQuestion"]
+
+    def delete_question(self, question_id: str) -> Dict:
+        """
+        Delete an existing question from the J1 account.
+        
+        Args:
+            question_id (str): The unique ID of the question to delete (required)
+            
+        Returns:
+            Dict: The deleted question object with all its details
+            
+        Raises:
+            ValueError: If question_id is not provided
+            JupiterOneApiError: If the question deletion fails or other API errors occur
+            
+        Example:
+            # Delete a question by ID
+            deleted_question = j1_client.delete_question(
+                question_id="fcc0507d-0473-43a2-b083-9d5571b92ae7"
+            )
+            
+            print(f"Question '{deleted_question['title']}' has been deleted")
+            print(f"Deleted question ID: {deleted_question['id']}")
+            print(f"Number of queries in deleted question: {len(deleted_question['queries'])}")
+            
+            # Access other deleted question details
+            if deleted_question.get('compliance'):
+                print(f"Compliance standard: {deleted_question['compliance']['standard']}")
+            
+            if deleted_question.get('tags'):
+                print(f"Tags: {', '.join(deleted_question['tags'])}")
+        """
+        if not question_id:
+            raise ValueError("question_id is required")
+        
+        # Execute the GraphQL mutation
+        variables = {"id": question_id}
+        
+        response = self._execute_query(DELETE_QUESTION, variables)
+        return response["data"]["deleteQuestion"]
 
     def get_compliance_framework_item_details(self, item_id: str = None):
         """Fetch Details of a Compliance Framework Requirement configured in J1 account"""
@@ -1355,3 +1680,181 @@ class JupiterOneClient:
 
         response = self._execute_query(UPDATE_ENTITYV2, variables=variables)
         return response["data"]["updateEntityV2"]
+
+    def get_cft_upload_url(self, integration_instance_id: str, filename: str, dataset_id: str) -> Dict:
+        """
+        Get an upload URL for Custom File Transfer integration.
+        
+        args:
+            integration_instance_id (str): The integration instance ID
+            filename (str): The filename to upload
+            dataset_id (str): The dataset ID for the upload
+            
+        Returns:
+            Dict: Response containing uploadUrl and expiresIn
+            
+        Example:
+            upload_info = j1_client.get_cft_upload_url(
+                integration_instance_id="123e4567-e89b-12d3-a456-426614174000",
+                filename="data.csv",
+                dataset_id="dataset-123"
+            )
+            upload_url = upload_info['uploadUrl']
+        """
+        query = """
+        mutation integrationFileTransferUploadUrl(
+            $integrationInstanceId: String!
+            $filename: String!
+            $datasetId: String!
+        ) {
+            integrationFileTransferUploadUrl(
+                integrationInstanceId: $integrationInstanceId
+                filename: $filename
+                datasetId: $datasetId
+            ) {
+                uploadUrl
+                expiresIn
+            }
+        }
+        """
+        
+        variables = {
+            "integrationInstanceId": integration_instance_id,
+            "filename": filename,
+            "datasetId": dataset_id
+        }
+        
+        response = self._execute_query(query, variables)
+        return response["data"]["integrationFileTransferUploadUrl"]
+
+    def upload_cft_file(self, upload_url: str, file_path: str) -> Dict:
+        """
+        Upload a CSV file to the Custom File Transfer integration using the provided upload URL.
+        
+        args:
+            upload_url (str): The upload URL obtained from get_cft_upload_url()
+            file_path (str): Local path to the CSV file to upload
+            
+        Returns:
+            Dict: Dictionary containing the full response data and status code:
+                - status_code (int): HTTP status code of the upload response
+                - response_data (dict): Full response data from the upload request
+                - success (bool): Whether the upload was successful (status code 200-299)
+                - headers (dict): Response headers from the upload request
+                
+        Raises:
+            FileNotFoundError: If the file doesn't exist
+            ValueError: If the file is not a CSV file
+            
+        Example:
+            # First get the upload URL
+            upload_info = j1_client.get_cft_upload_url(
+                integration_instance_id="123e4567-e89b-12d3-a456-426614174000",
+                filename="data.csv",
+                dataset_id="dataset-123"
+            )
+            
+            # Then upload the CSV file
+            result = j1_client.upload_cft_file(
+                upload_url=upload_info['uploadUrl'],
+                file_path="/path/to/local/data.csv"
+            )
+            
+            if result['success']:
+                print("CSV file uploaded successfully!")
+                print(f"Status code: {result['status_code']}")
+                print(f"Response headers: {result['headers']}")
+            else:
+                print(f"Upload failed with status code: {result['status_code']}")
+                print(f"Response data: {result['response_data']}")
+        """
+        # Verify file exists
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"File not found: {file_path}")
+        
+        # Verify file is a CSV file
+        if not file_path.lower().endswith('.csv'):
+            raise ValueError(f"File must be a CSV file. Got: {file_path}")
+        
+        # Upload the CSV file with fixed content type
+        with open(file_path, 'rb') as f:
+            response = self.session.put(
+                upload_url, 
+                data=f, 
+                headers={'Content-Type': 'text/csv'},
+                timeout=300  # 5 minute timeout for file uploads
+            )
+        
+        # Prepare response data
+        response_data = {}
+        try:
+            # Try to parse JSON response if available
+            if response.headers.get('content-type', '').startswith('application/json'):
+                response_data = response.json()
+            else:
+                response_data = {'text': response.text}
+        except (ValueError, json.JSONDecodeError):
+            # If JSON parsing fails, use text content
+            response_data = {'text': response.text}
+        
+        # Return comprehensive response information
+        return {
+            'status_code': response.status_code,
+            'response_data': response_data,
+            'success': 200 <= response.status_code < 300,
+            'headers': dict(response.headers)
+        }
+
+    def invoke_cft_integration(self, integration_instance_id: str) -> Union[bool, str]:
+        """
+        Invoke a Custom File Transfer integration instance to process uploaded files.
+        
+        args:
+            integration_instance_id (str): The ID of the integration instance to invoke
+            
+        Returns:
+            Union[bool, str]: 
+                - True: Integration was successfully invoked
+                - False: Integration invocation failed
+                - 'ALREADY_RUNNING': Integration is already executing
+                
+        Example:
+            # Invoke the CFT integration to process uploaded files
+            result = j1_client.invoke_cft_integration(
+                integration_instance_id="123e4567-e89b-12d3-a456-426614174000"
+            )
+            
+            if result == True:
+                print("Integration invoked successfully!")
+            elif result == 'ALREADY_RUNNING':
+                print("Integration is already running")
+            else:
+                print("Integration invocation failed")
+        """
+        if not integration_instance_id:
+            raise ValueError("integration_instance_id is required")
+            
+        variables = {"id": integration_instance_id}
+        
+        try:
+            response = self._execute_query(INVOKE_INTEGRATION_INSTANCE, variables)
+            
+            if 'data' in response and response['data'] is not None:
+                if 'invokeIntegrationInstance' in response['data']:
+                    return response['data']['invokeIntegrationInstance']['success']
+                else:
+                    print(f"Unexpected response format: 'invokeIntegrationInstance' not found in data")
+                    return False
+            else:
+                print(f"Unexpected response format: {response}")
+                return False
+                
+        except JupiterOneApiError as e:
+            # Check if it's an "already executing" error
+            if hasattr(e, 'errors') and e.errors:
+                for error in e.errors:
+                    if error.get('extensions', {}).get('code') == 'ALREADY_EXECUTING_ERROR':
+                        return 'ALREADY_RUNNING'
+            
+            # Re-raise the error if it's not an "already executing" error
+            raise
