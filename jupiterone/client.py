@@ -1518,7 +1518,31 @@ class JupiterOneClient:
         if description is not None:
             update_data["description"] = description
         if queries is not None:
-            update_data["queries"] = queries
+            # Validate queries input using the same logic as create_question
+            if not isinstance(queries, list) or len(queries) == 0:
+                raise ValueError("queries must be a non-empty list")
+                
+            # Process each query to ensure required fields
+            processed_queries = []
+            for idx, query in enumerate(queries):
+                if not isinstance(query, dict):
+                    raise ValueError(f"Query at index {idx} must be a dictionary")
+                if "query" not in query:
+                    raise ValueError(f"Query at index {idx} must have a 'query' field")
+                    
+                processed_query = {
+                    "query": query["query"],
+                    "name": query.get("name", f"Query{idx}"),
+                    "resultsAre": query.get("resultsAre", "INFORMATIVE")
+                }
+                
+                # Only add version if provided
+                if "version" in query:
+                    processed_query["version"] = query["version"]
+                    
+                processed_queries.append(processed_query)
+            
+            update_data["queries"] = processed_queries
         if tags is not None:
             update_data["tags"] = tags
             

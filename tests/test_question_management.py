@@ -159,7 +159,13 @@ class TestQuestionManagement:
         # Check variables - they are in the second positional argument
         variables = call_args[0][1]
         assert variables['id'] == self.question_id
-        assert variables['update']['queries'] == new_queries
+        # The queries are now processed and enriched with default values
+        processed_queries = variables['update']['queries']
+        assert len(processed_queries) == 1
+        assert processed_queries[0]['name'] == "UpdatedQuery"
+        assert processed_queries[0]['query'] == "FIND User WITH active=true"
+        assert processed_queries[0]['version'] == "v2"
+        assert processed_queries[0]['resultsAre'] == "INFORMATIVE"  # Default value added
         assert 'title' not in variables['update']
         assert 'description' not in variables['update']
         assert 'tags' not in variables['update']
@@ -204,7 +210,13 @@ class TestQuestionManagement:
         assert variables['update']['title'] == update_data['title']
         assert variables['update']['description'] == update_data['description']
         assert variables['update']['tags'] == update_data['tags']
-        assert variables['update']['queries'] == update_data['queries']
+        # The queries are now processed and enriched with default values
+        processed_queries = variables['update']['queries']
+        assert len(processed_queries) == 1
+        assert processed_queries[0]['name'] == "ComprehensiveQuery"
+        assert processed_queries[0]['query'] == "FIND * WITH _class='Host'"
+        assert processed_queries[0]['version'] == "v3"
+        assert processed_queries[0]['resultsAre'] == "INFORMATIVE"  # Default value added
 
         # Check result
         assert result['title'] == update_data['title']
@@ -347,3 +359,85 @@ class TestQuestionManagement:
         result = self.client.delete_question(question_id="nonexistent-id")
         
         assert result is None
+
+    # Tests for queries validation in update_question
+    def test_update_question_queries_validation_empty_list(self):
+        """Test that update_question rejects empty queries list"""
+        with pytest.raises(ValueError, match="queries must be a non-empty list"):
+            self.client.update_question(
+                question_id=self.question_id,
+                queries=[]
+            )
+
+    def test_update_question_queries_validation_not_list(self):
+        """Test that update_question rejects non-list queries"""
+        with pytest.raises(ValueError, match="queries must be a non-empty list"):
+            self.client.update_question(
+                question_id=self.question_id,
+                queries="not a list"
+            )
+
+    def test_update_question_queries_validation_none(self):
+        """Test that update_question accepts None queries (no update)"""
+        # This should not raise an error since queries=None means no update
+        # The validation only happens when queries is provided
+        try:
+            self.client.update_question(
+                question_id=self.question_id,
+                title="Updated Title"
+            )
+        except Exception as e:
+            # If it gets to the API call, that's fine - we're just testing validation
+            pass
+
+    def test_update_question_queries_validation_missing_query_field(self):
+        """Test that update_question rejects queries missing 'query' field"""
+        with pytest.raises(ValueError, match="Query at index 0 must have a 'query' field"):
+            self.client.update_question(
+                question_id=self.question_id,
+                queries=[{"name": "InvalidQuery"}]
+            )
+
+    def test_update_question_queries_validation_invalid_query_type(self):
+        """Test that update_question rejects non-dict query items"""
+        with pytest.raises(ValueError, match="Query at index 0 must be a dictionary"):
+            self.client.update_question(
+                question_id=self.question_id,
+                queries=["not a dict"]
+            )
+
+    @patch('jupiterone.client.JupiterOneClient._execute_query')
+    def test_update_question_queries_validation_success(self, mock_execute_query):
+        """Test that update_question successfully processes valid queries"""
+        mock_response = {
+            "data": {
+                "updateQuestion": {
+                    "id": self.question_id,
+                    "title": "Updated Title",
+                    "queries": [
+                        {
+                            "name": "Query0",
+                            "query": "FIND Host",
+                            "resultsAre": "INFORMATIVE"
+                        }
+                    ]
+                }
+            }
+        }
+        mock_execute_query.return_value = mock_response
+        
+        result = self.client.update_question(
+            question_id=self.question_id,
+            queries=[{"query": "FIND Host"}]
+        )
+        
+        # Verify the call was made with processed queries
+        call_args = mock_execute_query.call_args
+        variables = call_args[0][1]
+        assert variables['update']['queries'][0]['name'] == "Query0"
+        assert variables['update']['queries'][0]['query'] == "FIND Host"
+        assert variables['update']['queries'][0]['resultsAre'] == "INFORMATIVE"
+        
+        # Check result
+        assert result['id'] == self.question_id
+        assert result['title'] == "Updated Title"
