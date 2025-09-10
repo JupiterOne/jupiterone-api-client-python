@@ -1030,7 +1030,7 @@ class JupiterOneClient:
         polling_interval: str = None,
         severity: str = None,
         j1ql: str = None,
-        action_configs: Dict = None,
+        action_configs: Union[Dict, List[Dict]] = None,
         resource_group_id: str = None,
     ):
         """Create Alert Rule Configuration in J1 account"""
@@ -1079,7 +1079,10 @@ class JupiterOneClient:
         }
 
         if action_configs:
-            variables["instance"]["operations"][0]["actions"].append(action_configs)
+            if isinstance(action_configs, list):
+                variables["instance"]["operations"][0]["actions"].extend(action_configs)
+            else:
+                variables["instance"]["operations"][0]["actions"].append(action_configs)
 
         response = self._execute_query(CREATE_RULE_INSTANCE, variables=variables)
 
@@ -1106,7 +1109,7 @@ class JupiterOneClient:
         tags: List[str] = None,
         tag_op: str = None,
         labels: List[dict] = None,
-        action_configs: List[dict] = None,
+        action_configs: Union[Dict, List[Dict]] = None,
         action_configs_op: str = None,
         resource_group_id: str = None,
     ):
@@ -1178,15 +1181,23 @@ class JupiterOneClient:
                 alert_action_configs = []
                 base_action = alert_rule_config["operations"][0]["actions"][0]
                 alert_action_configs.append(base_action)
-                alert_action_configs.extend(action_configs)
+                
+                # Handle both single dict and list of dicts
+                if isinstance(action_configs, list):
+                    alert_action_configs.extend(action_configs)
+                else:
+                    alert_action_configs.append(action_configs)
 
                 # update actions field inside operations payload
                 operations[0]["actions"] = alert_action_configs
 
             elif action_configs_op == "APPEND":
 
-                # update actions field inside operations payload
-                operations[0]["actions"].extend(action_configs)
+                # Handle both single dict and list of dicts
+                if isinstance(action_configs, list):
+                    operations[0]["actions"].extend(action_configs)
+                else:
+                    operations[0]["actions"].append(action_configs)
 
         # update alert severity if provided
         if severity is not None:

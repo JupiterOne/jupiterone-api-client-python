@@ -36,7 +36,7 @@ def alert_rule_examples(j1):
         severity="HIGH",
         j1ql="FIND Database WITH encrypted = false"
     )
-    print(f"Created basic alert rule: {basic_rule['rule']['_id']}\n")
+    print(f"Created basic alert rule: {basic_rule['id']}\n")
     
     # 2. Complex alert rule with multiple conditions
     print("2. Creating a complex alert rule:")
@@ -55,7 +55,7 @@ def alert_rule_examples(j1):
         AND u.tag.Role != 'admin'
         """
     )
-    print(f"Created complex alert rule: {complex_rule['rule']['_id']}\n")
+    print(f"Created complex alert rule: {complex_rule['id']}\n")
     
     return basic_rule, complex_rule
 
@@ -135,7 +135,7 @@ def alert_rule_with_actions_examples(j1):
         j1ql="FIND Finding WITH severity = 'HIGH'",
         action_configs=webhook_action_config
     )
-    print(f"Created webhook alert rule: {webhook_rule['rule']['_id']}\n")
+    print(f"Created webhook alert rule: {webhook_rule['id']}\n")
     
     # Create alert rule with multiple actions
     print("2. Creating alert rule with multiple actions:")
@@ -149,7 +149,7 @@ def alert_rule_with_actions_examples(j1):
         j1ql="FIND Finding WITH severity = ('HIGH' OR 'CRITICAL')",
         action_configs=multiple_actions
     )
-    print(f"Created multi-action alert rule: {multi_action_rule['rule']['_id']}\n")
+    print(f"Created multi-action alert rule: {multi_action_rule['id']}\n")
     
     return webhook_rule, multi_action_rule
 
@@ -162,16 +162,16 @@ def alert_rule_management_examples(j1, rule_id):
     print("1. Getting alert rule details:")
     try:
         rule_details = j1.get_alert_rule_details(rule_id=rule_id)
-        print(f"Rule: {rule_details['rule']['name']}")
-        print(f"Description: {rule_details['rule']['description']}")
-        print(f"J1QL: {rule_details['rule']['j1ql']}")
-        print(f"Severity: {rule_details['rule']['severity']}")
-        print(f"Polling Interval: {rule_details['rule']['pollingInterval']}")
+        print(f"Rule: {rule_details['name']}")
+        print(f"Description: {rule_details['description']}")
+        print(f"J1QL: {rule_details.get('j1ql', 'N/A')}")
+        print(f"Severity: {rule_details.get('severity', 'N/A')}")
+        print(f"Polling Interval: {rule_details.get('pollingInterval', 'N/A')}")
         
         # Check action configurations
-        if 'actionConfigs' in rule_details['rule']:
+        if 'actionConfigs' in rule_details:
             print("Action Configurations:")
-            for action in rule_details['rule']['actionConfigs']:
+            for action in rule_details['actionConfigs']:
                 print(f"  Type: {action['type']}")
                 if action['type'] == 'WEBHOOK':
                     print(f"  Endpoint: {action['endpoint']}")
@@ -208,7 +208,7 @@ def alert_rule_management_examples(j1, rule_id):
             tag_op="OVERWRITE",
             severity="INFO"
         )
-        print(f"Updated alert rule: {updated_rule['rule']['_id']}")
+        print(f"Updated alert rule: {updated_rule['id']}")
     except Exception as e:
         print(f"Error updating alert rule: {e}")
     print()
@@ -240,7 +240,7 @@ def smartclass_examples(j1):
         smartclass_name='ProductionServers',
         smartclass_description='All production servers across cloud providers'
     )
-    smartclass_id = smartclass['smartclass']['_id']
+    smartclass_id = smartclass['id']
     print(f"Created SmartClass: {smartclass_id}\n")
     
     # 2. Add queries to SmartClass
@@ -267,8 +267,8 @@ def smartclass_examples(j1):
     print("3. Getting SmartClass details:")
     try:
         smartclass_details = j1.get_smartclass_details(smartclass_id=smartclass_id)
-        print(f"SmartClass: {smartclass_details['smartclass']['name']}")
-        print(f"Description: {smartclass_details['smartclass']['description']}")
+        print(f"SmartClass: {smartclass_details['tagName']}")
+        print(f"Description: {smartclass_details['description']}")
         print(f"Queries: {len(smartclass_details.get('queries', []))}")
         
         # List all queries in the SmartClass
@@ -410,7 +410,7 @@ def main():
         webhook_rule, multi_action_rule = alert_rule_with_actions_examples(j1)
         
         # Alert rule management (using the basic rule)
-        alert_rule_management_examples(j1, basic_rule['rule']['_id'])
+        alert_rule_management_examples(j1, basic_rule['id'])
         
         # SmartClass examples
         smartclass_id = smartclass_examples(j1)
@@ -419,7 +419,7 @@ def main():
         natural_language_to_j1ql_examples(j1)
         
         # Alert rule evaluation examples
-        alert_rule_evaluation_examples(j1, basic_rule['rule']['_id'])
+        alert_rule_evaluation_examples(j1, basic_rule['id'])
         
         # Compliance framework examples
         compliance_framework_examples(j1)
