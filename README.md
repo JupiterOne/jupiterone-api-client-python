@@ -905,6 +905,24 @@ complex_rule = j1.create_alert_rule(
     AND u.tag.Role != 'admin'
     """
 )
+
+# Create alert rule with advanced configuration options
+advanced_rule = j1.create_alert_rule(
+    name="Advanced Security Monitoring",
+    description="Comprehensive security monitoring with custom settings",
+    tags=['security', 'monitoring'],
+    polling_interval="ONE_HOUR",
+    severity="HIGH",
+    j1ql="FIND Finding WITH severity = 'HIGH'",
+    query_name="security_findings",  # Custom query name
+    trigger_actions_on_new_entities_only=False,  # Trigger on all entities
+    ignore_previous_results=True,  # Ignore previous evaluation results
+    notify_on_failure=True,  # Notify on evaluation failures
+    templates={  # Custom templates for alert content
+        "AlertSummary": "Security Finding: {{item.displayName}} - Severity: {{item.severity}}",
+        "DetailedReport": "Finding ID: {{item._id}}\nDescription: {{item.description}}\nSeverity: {{item.severity}}"
+    }
+)
 ```
 
 ##### Create Alert Rule with Action Config
@@ -1127,7 +1145,14 @@ updated_rule = j1.update_alert_rule(
     tag_op="OVERWRITE",
     severity="INFO",
     action_configs=alert_rule_config_tag,
-    action_configs_op="OVERWRITE"
+    action_configs_op="OVERWRITE",
+    query_name="updated_findings",  # Update query name
+    trigger_actions_on_new_entities_only=False,  # Update trigger behavior
+    ignore_previous_results=True,  # Update result handling
+    notify_on_failure=False,  # Update notification settings
+    templates={  # Update templates
+        "NewTemplate": "Updated: {{item.displayName}} - {{item.severity}}"
+    }
 )
 
 # Update only tags (overwrite existing)
@@ -1155,6 +1180,24 @@ j1.update_alert_rule(
     rule_id='<id-of-alert-rule>',
     polling_interval="THIRTY_MINUTES",
     severity="HIGH"
+)
+
+# Update advanced configuration parameters
+j1.update_alert_rule(
+    rule_id='<id-of-alert-rule>',
+    query_name="custom_query_name",  # Update query name
+    trigger_actions_on_new_entities_only=True,  # Only trigger on new entities
+    ignore_previous_results=False,  # Consider previous results
+    notify_on_failure=True  # Notify on evaluation failures
+)
+
+# Update templates for alert content
+j1.update_alert_rule(
+    rule_id='<id-of-alert-rule>',
+    templates={
+        "SecurityAlert": "Security Issue: {{item.displayName}}",
+        "ComplianceReport": "Compliance Violation: {{item.description}}"
+    }
 )
 ```
 
