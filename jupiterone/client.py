@@ -1032,6 +1032,11 @@ class JupiterOneClient:
         j1ql: str = None,
         action_configs: Union[Dict, List[Dict]] = None,
         resource_group_id: str = None,
+        query_name: str = "query0",
+        trigger_actions_on_new_entities_only: bool = True,
+        ignore_previous_results: bool = False,
+        notify_on_failure: bool = True,
+        templates: Dict[str, str] = None,
     ):
         """Create Alert Rule Configuration in J1 account"""
 
@@ -1039,14 +1044,14 @@ class JupiterOneClient:
             "instance": {
                 "name": name,
                 "description": description,
-                "notifyOnFailure": True,
-                "triggerActionsOnNewEntitiesOnly": True,
-                "ignorePreviousResults": False,
+                "notifyOnFailure": notify_on_failure,
+                "triggerActionsOnNewEntitiesOnly": trigger_actions_on_new_entities_only,
+                "ignorePreviousResults": ignore_previous_results,
                 "operations": [
                     {
                         "when": {
                             "type": "FILTER",
-                            "condition": ["AND", ["queries.query0.total", ">", 0]],
+                            "condition": ["AND", [f"queries.{query_name}.total", ">", 0]],
                         },
                         "actions": [
                             {
@@ -1064,7 +1069,7 @@ class JupiterOneClient:
                     "queries": [
                         {
                             "query": j1ql,
-                            "name": "query0",
+                            "name": query_name,
                             "version": "v1",
                             "includeDeleted": False,
                         }
@@ -1073,7 +1078,7 @@ class JupiterOneClient:
                 "specVersion": 1,
                 "tags": tags,
                 "labels": labels,
-                "templates": {},
+                "templates": templates if templates is not None else {},
                 "resourceGroupId": resource_group_id,
             }
         }
@@ -1112,6 +1117,11 @@ class JupiterOneClient:
         action_configs: Union[Dict, List[Dict]] = None,
         action_configs_op: str = None,
         resource_group_id: str = None,
+        query_name: str = None,
+        trigger_actions_on_new_entities_only: bool = None,
+        ignore_previous_results: bool = None,
+        notify_on_failure: bool = None,
+        templates: Dict[str, str] = None,
     ):
         """Update Alert Rule Configuration in J1 account"""
         # fetch existing alert rule
@@ -1151,6 +1161,13 @@ class JupiterOneClient:
             del question_config["__typename"]
             del question_config["queries"][0]["__typename"]
 
+        # update query name if provided
+        if query_name is not None:
+            # update query name in question config
+            question_config["queries"][0]["name"] = query_name
+            # update condition reference to use new query name
+            operations[0]["when"]["condition"] = ["AND", [f"queries.{query_name}.total", ">", 0]]
+
         # update polling_interval if provided
         if polling_interval is not None:
             interval_config = polling_interval
@@ -1171,6 +1188,8 @@ class JupiterOneClient:
         # update labels list if provided
         if labels is not None:
             label_config = labels
+        else:
+            label_config = alert_rule_config.get("labels", [])
 
         # update action_configs list if provided
         if action_configs is not None:
@@ -1203,6 +1222,30 @@ class JupiterOneClient:
         if severity is not None:
             operations[0]["actions"][0]["targetValue"] = severity
 
+        # update trigger_actions_on_new_entities_only if provided
+        if trigger_actions_on_new_entities_only is not None:
+            trigger_config = trigger_actions_on_new_entities_only
+        else:
+            trigger_config = alert_rule_config["triggerActionsOnNewEntitiesOnly"]
+
+        # update ignore_previous_results if provided
+        if ignore_previous_results is not None:
+            ignore_config = ignore_previous_results
+        else:
+            ignore_config = alert_rule_config["ignorePreviousResults"]
+
+        # update notify_on_failure if provided
+        if notify_on_failure is not None:
+            notify_config = notify_on_failure
+        else:
+            notify_config = alert_rule_config["notifyOnFailure"]
+
+        # update templates if provided
+        if templates is not None:
+            templates_config = templates
+        else:
+            templates_config = alert_rule_config["templates"]
+
         variables = {
             "instance": {
                 "id": rule_id,
@@ -1210,11 +1253,15 @@ class JupiterOneClient:
                 "specVersion": alert_rule_config["specVersion"],
                 "name": alert_name,
                 "description": alert_description,
+                "notifyOnFailure": notify_config,
+                "triggerActionsOnNewEntitiesOnly": trigger_config,
+                "ignorePreviousResults": ignore_config,
                 "question": question_config,
                 "operations": operations,
                 "pollingInterval": interval_config,
                 "tags": tags_config,
                 "labels": label_config,
+                "templates": templates_config,
                 "resourceGroupId": resource_group_id,
             }
         }

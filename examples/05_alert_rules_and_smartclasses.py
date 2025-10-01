@@ -38,6 +38,26 @@ def alert_rule_examples(j1):
     )
     print(f"Created basic alert rule: {basic_rule['id']}\n")
     
+    # 1.5. Advanced alert rule with new parameters
+    print("1.5. Creating an advanced alert rule with new parameters:")
+    advanced_rule = j1.create_alert_rule(
+        name="Advanced Security Monitoring",
+        description="Comprehensive security monitoring with custom settings",
+        tags=['security', 'monitoring'],
+        polling_interval="ONE_HOUR",
+        severity="HIGH",
+        j1ql="FIND Finding WITH severity = 'HIGH'",
+        query_name="security_findings",  # Custom query name
+        trigger_actions_on_new_entities_only=False,  # Trigger on all entities
+        ignore_previous_results=True,  # Ignore previous evaluation results
+        notify_on_failure=True,  # Notify on evaluation failures
+        templates={  # Custom templates for alert content
+            "AlertSummary": "Security Finding: {{item.displayName}} - Severity: {{item.severity}}",
+            "DetailedReport": "Finding ID: {{item._id}}\nDescription: {{item.description}}\nSeverity: {{item.severity}}"
+        }
+    )
+    print(f"Created advanced alert rule: {advanced_rule['id']}\n")
+    
     # 2. Complex alert rule with multiple conditions
     print("2. Creating a complex alert rule:")
     complex_rule = j1.create_alert_rule(
@@ -57,7 +77,7 @@ def alert_rule_examples(j1):
     )
     print(f"Created complex alert rule: {complex_rule['id']}\n")
     
-    return basic_rule, complex_rule
+    return basic_rule, advanced_rule, complex_rule
 
 def alert_rule_with_actions_examples(j1):
     """Demonstrate alert rules with action configurations."""
@@ -206,11 +226,48 @@ def alert_rule_management_examples(j1, rule_id):
             polling_interval="ONE_WEEK",
             tags=['security', 'compliance', 'updated'],
             tag_op="OVERWRITE",
-            severity="INFO"
+            severity="INFO",
+            query_name="updated_findings",  # Update query name
+            trigger_actions_on_new_entities_only=False,  # Update trigger behavior
+            ignore_previous_results=True,  # Update result handling
+            notify_on_failure=False,  # Update notification settings
+            templates={  # Update templates
+                "NewTemplate": "Updated: {{item.displayName}} - {{item.severity}}"
+            }
         )
         print(f"Updated alert rule: {updated_rule['id']}")
     except Exception as e:
         print(f"Error updating alert rule: {e}")
+    print()
+    
+    # 3.5. Update specific advanced parameters
+    print("3.5. Updating specific advanced parameters:")
+    try:
+        # Update only query name
+        j1.update_alert_rule(
+            rule_id=rule_id,
+            query_name="custom_query_name"
+        )
+        print("Updated query name")
+        
+        # Update trigger behavior
+        j1.update_alert_rule(
+            rule_id=rule_id,
+            trigger_actions_on_new_entities_only=True
+        )
+        print("Updated trigger behavior")
+        
+        # Update templates
+        j1.update_alert_rule(
+            rule_id=rule_id,
+            templates={
+                "SecurityAlert": "Security Issue: {{item.displayName}}",
+                "ComplianceReport": "Compliance Violation: {{item.description}}"
+            }
+        )
+        print("Updated templates")
+    except Exception as e:
+        print(f"Error updating advanced parameters: {e}")
     print()
     
     # 4. Evaluate alert rule
@@ -406,7 +463,7 @@ def main():
         print("✓ Client setup successful\n")
         
         # Run examples
-        basic_rule, complex_rule = alert_rule_examples(j1)
+        basic_rule, advanced_rule, complex_rule = alert_rule_examples(j1)
         webhook_rule, multi_action_rule = alert_rule_with_actions_examples(j1)
         
         # Alert rule management (using the basic rule)
