@@ -149,7 +149,7 @@ def sync_job_examples(j1, instance_id):
     try:
         sync_job = j1.start_sync_job(
             instance_id=instance_id,
-            sync_mode="CREATE_OR_UPDATE",
+            sync_mode="PATCH",
             source="api"
         )
         job_id = sync_job['job']['_id']
