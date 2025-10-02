@@ -31,7 +31,7 @@ def main():
         sys.exit(1)
     
     # Create JupiterOne client
-    j1 = JupiterOneClient(api_token=api_token, account_id=account_id)
+    j1 = JupiterOneClient(token=api_token, account=account_id)
     
     print("=== JupiterOne Sync Job Workflow Example ===\n")
     
