@@ -662,7 +662,7 @@ class JupiterOneClient:
 
         args:
             instance_id (str): The "integrationInstanceId" request param for synchronization job
-            sync_mode (str): The "syncMode" request body property for synchronization job. "DIFF", "CREATE_OR_UPDATE", or "PATCH"
+            sync_mode (str): The "syncMode" request body property for synchronization job. "DIFF" or "PATCH"
             source (str): The "source" request body property for synchronization job. "api" or "integration-external"
         """
         endpoint = "/persister/synchronization/jobs"

@@ -124,9 +124,9 @@ print(create_custom_integration_instance_r)
 integration_instance_id = "<GUID>"
 
 # start_sync_job
-# sync_mode can be "DIFF", "CREATE_OR_UPDATE", or "PATCH"
+# sync_mode can be "DIFF" or "PATCH"
 start_sync_job_r = j1.start_sync_job(instance_id=integration_instance_id,
-                                     sync_mode='CREATE_OR_UPDATE',
+                                     sync_mode='PATCH',
                                      source='integration-external')
 print("start_sync_job()")
 print(start_sync_job_r)

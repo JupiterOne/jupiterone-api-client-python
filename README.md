@@ -357,11 +357,17 @@ instance = j1.create_integration_instance(
 
 ```python
 # Start sync job for an integration instance
-sync_job = j1.start_sync_job(instance_id='<id-of-integration-instance>')
-print(f"Started sync job: {sync_job['job']['_id']}")
+sync_job = j1.start_sync_job(
+    instance_id=instance_id,
+    sync_mode="PATCH",
+    source="integration-external"
+)
+
+sync_job_id = sync_job['job'].get('id')
+print(f"Started sync job: {sync_job_id}")
 
 # The returned job ID is used for subsequent operations
-job_id = sync_job['job']['_id']
+job_id = sync_job_id
 ```
 
 ##### Upload Batch of Entities
@@ -514,7 +520,7 @@ print(f"Uploaded {len(combined_payload['entities'])} entities and {len(combined_
 ```python
 # Finalize the sync job
 result = j1.finalize_sync_job(instance_job_id='<id-of-integration-sync-job>')
-print(f"Finalized sync job: {result['job']['_id']}")
+print(f"Finalized sync job: {result['job'].get('id')}")
 
 # Check job status
 if result['job']['status'] == 'COMPLETED':
