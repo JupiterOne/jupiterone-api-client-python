@@ -664,6 +664,13 @@ class JupiterOneClient:
             instance_id (str): The "integrationInstanceId" request param for synchronization job
             sync_mode (str): The "syncMode" request body property for synchronization job. "DIFF" or "PATCH"
             source (str): The "source" request body property for synchronization job. "api" or "integration-external"
+
+        Note:
+            IMPORTANT: PATCH sync jobs cannot target relationships. If your sync job involves creating
+            or updating relationships, you must use "DIFF" sync_mode instead of "PATCH". This is due
+            to the JupiterOne data pipeline upgrade.
+            
+            For more information, see: https://docs.jupiterone.io/reference/pipeline-upgrade#patch-sync-jobs-cannot-target-relationships
         """
         endpoint = "/persister/synchronization/jobs"
 

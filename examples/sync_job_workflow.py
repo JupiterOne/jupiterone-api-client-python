@@ -9,6 +9,10 @@ This example demonstrates the core synchronization job workflow:
 
 This is a standalone script that can be run independently to test
 the sync job functionality.
+
+Note: This example uses PATCH sync mode, which is suitable for entity-only
+uploads. If you need to upload relationships, use DIFF sync mode instead.
+See: https://docs.jupiterone.io/reference/pipeline-upgrade#patch-sync-jobs-cannot-target-relationships
 """
 
 import os
@@ -46,6 +50,7 @@ def main():
     try:
         # Step 1: Start sync job
         print("1. Starting synchronization job...")
+        print("   Note: Using PATCH mode (entities only). Use DIFF mode if uploading relationships.")
         sync_job = j1.start_sync_job(
             instance_id=instance_id,
             sync_mode="PATCH",
