@@ -246,6 +246,8 @@ j1.create_relationship(
 # Basic relationship update
 j1.update_relationship(
     relationship_id='<id-of-relationship-to-update>',
+    from_entity_id='<id-of-source-entity>',
+    to_entity_id='<id-of-destination-entity>',
     properties={
         "<relationship-property-name>": "<relationship-property-updated-value>",
     },
@@ -254,6 +256,8 @@ j1.update_relationship(
 # Update relationship with complex properties
 j1.update_relationship(
     relationship_id='<id-of-relationship-to-update>',
+    from_entity_id='<id-of-source-entity>',
+    to_entity_id='<id-of-destination-entity>',
     properties={
         'accessLevel': 'write',
         'lastModified': int(time.time()) * 1000,
@@ -265,11 +269,24 @@ j1.update_relationship(
 # Update relationship with tags
 j1.update_relationship(
     relationship_id='<id-of-relationship-to-update>',
+    from_entity_id='<id-of-source-entity>',
+    to_entity_id='<id-of-destination-entity>',
     properties={
         'tag.Status': 'active',
         'tag.Priority': 'high',
         'tag.ReviewRequired': 'true'
     }
+)
+
+# Update relationship with custom timestamp
+j1.update_relationship(
+    relationship_id='<id-of-relationship-to-update>',
+    from_entity_id='<id-of-source-entity>',
+    to_entity_id='<id-of-destination-entity>',
+    properties={
+        'lastUpdated': int(time.time()) * 1000
+    },
+    timestamp=int(time.time()) * 1000  # Custom timestamp
 )
 ```
 

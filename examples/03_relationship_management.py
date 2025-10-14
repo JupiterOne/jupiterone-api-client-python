@@ -113,7 +113,7 @@ def create_relationship_examples(j1, from_entity_id, to_entity_id):
     
     return basic_relationship, relationship_with_props, complex_relationship
 
-def update_relationship_examples(j1, relationship_id):
+def update_relationship_examples(j1, relationship_id, from_entity_id, to_entity_id):
     """Demonstrate relationship update operations."""
     
     print("=== Relationship Update Examples ===\n")
@@ -122,6 +122,8 @@ def update_relationship_examples(j1, relationship_id):
     print("1. Updating basic relationship properties:")
     basic_update = j1.update_relationship(
         relationship_id=relationship_id,
+        from_entity_id=from_entity_id,
+        to_entity_id=to_entity_id,
         properties={
             'accessLevel': 'write',
             'lastModified': int(time.time()) * 1000
@@ -133,6 +135,8 @@ def update_relationship_examples(j1, relationship_id):
     print("2. Updating with complex properties:")
     j1.update_relationship(
         relationship_id=relationship_id,
+        from_entity_id=from_entity_id,
+        to_entity_id=to_entity_id,
         properties={
             'accessLevel': 'admin',
             'lastModified': int(time.time()) * 1000,
@@ -151,6 +155,8 @@ def update_relationship_examples(j1, relationship_id):
     print("3. Updating relationship tags:")
     j1.update_relationship(
         relationship_id=relationship_id,
+        from_entity_id=from_entity_id,
+        to_entity_id=to_entity_id,
         properties={
             'tag.Status': 'active',
             'tag.Priority': 'high',
@@ -159,6 +165,19 @@ def update_relationship_examples(j1, relationship_id):
         }
     )
     print(f"Updated relationship tags\n")
+    
+    # 4. Update with custom timestamp
+    print("4. Updating with custom timestamp:")
+    j1.update_relationship(
+        relationship_id=relationship_id,
+        from_entity_id=from_entity_id,
+        to_entity_id=to_entity_id,
+        properties={
+            'lastUpdated': int(time.time()) * 1000
+        },
+        timestamp=int(time.time()) * 1000  # Custom timestamp
+    )
+    print(f"Updated with custom timestamp\n")
 
 def delete_relationship_examples(j1, relationship_id):
     """Demonstrate relationship deletion."""
@@ -366,7 +385,7 @@ def main():
         basic_rel, props_rel, complex_rel = create_relationship_examples(j1, from_entity_id, to_entity_id)
         
         # Update examples (using the relationship with properties)
-        update_relationship_examples(j1, props_rel['relationship']['_id'])
+        update_relationship_examples(j1, props_rel['relationship']['_id'], from_entity_id, to_entity_id)
         
         # Complete lifecycle example
         relationship_lifecycle_example(j1, from_entity_id, to_entity_id)

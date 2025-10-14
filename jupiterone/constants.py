@@ -83,16 +83,36 @@ CREATE_RELATIONSHIP = """
     }
   }
 """
-UPDATE_RELATIONSHIPV2 = """
-mutation UpdateRelationshipV2 (
-  $relationship: JSON!
+UPDATE_RELATIONSHIP = """
+mutation UpdateRelationship(
+  $relationshipId: String!
+  $fromEntityId: String!
+  $toEntityId: String!
   $timestamp: Long
+  $properties: JSON
 ) {
-  updateRelationshipV2 (
-    relationship: $relationship,
+  updateRelationship(
+    relationshipId: $relationshipId,
+    fromEntityId: $fromEntityId,
+    toEntityId: $toEntityId,
     timestamp: $timestamp,
+    properties: $properties
   ) {
-    relationship
+    relationship {
+      _id
+      _key
+      _type
+      _class
+      _fromEntityId
+      _toEntityId
+      displayName
+    }
+    edge {
+      id
+      fromVertexId
+      toVertexId
+      properties
+    }
   }
 }
 """

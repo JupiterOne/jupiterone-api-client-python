@@ -24,7 +24,7 @@ from jupiterone.constants import (
     DELETE_ENTITY,
     UPDATE_ENTITY,
     CREATE_RELATIONSHIP,
-    UPDATE_RELATIONSHIPV2,
+    UPDATE_RELATIONSHIP,
     DELETE_RELATIONSHIP,
     CURSOR_QUERY_V1,
     DEFERRED_RESPONSE_QUERY,
@@ -552,21 +552,21 @@ class JupiterOneClient:
 
         args:
             relationship_id (str): Unique _id of the relationship
+            from_entity_id (str): Unique _id of the source entity
+            to_entity_id (str): Unique _id of the target entity
             properties (dict): Dictionary of key/value relationship properties
+            timestamp (int, optional): Timestamp for the update (defaults to current time)
         """
-        now_dt = datetime.now()
-
         variables = {
-            "relationship": {"_id": kwargs.pop("relationship_id")},
-            "timestamp": int(datetime.now().timestamp() * 1000),
+            "relationshipId": kwargs.pop("relationship_id"),
+            "fromEntityId": kwargs.pop("from_entity_id"),
+            "toEntityId": kwargs.pop("to_entity_id"),
+            "timestamp": kwargs.pop("timestamp", int(datetime.now().timestamp() * 1000)),
+            "properties": kwargs.pop("properties", None)
         }
 
-        properties = kwargs.pop("properties", None)
-        if properties:
-            variables["relationship"].update(properties)
-
-        response = self._execute_query(query=UPDATE_RELATIONSHIPV2, variables=variables)
-        return response["data"]["updateRelationshipV2"]
+        response = self._execute_query(query=UPDATE_RELATIONSHIP, variables=variables)
+        return response["data"]["updateRelationship"]
 
     def delete_relationship(self, relationship_id: str = None):
         """Deletes a relationship between two entities.
