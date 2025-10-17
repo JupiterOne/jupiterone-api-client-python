@@ -216,6 +216,10 @@ class TestAlertRuleMethods:
             "pollingInterval": "ONE_DAY",
             "tags": ["old-tag"],
             "labels": [],
+            "triggerActionsOnNewEntitiesOnly": True,
+            "ignorePreviousResults": False,
+            "notifyOnFailure": True,
+            "templates": {},
             "operations": [{
                 "__typename": "Operation",
                 "when": {"type": "FILTER", "condition": ["AND", ["queries.query0.total", ">", 0]]},
@@ -300,24 +304,25 @@ class TestAlertRuleMethods:
         assert result == mock_response
         mock_execute_query.assert_called_once()
 
-    @patch('jupiterone.client.requests.get')
-    def test_fetch_downloaded_evaluation_results_success(self, mock_get):
+    def test_fetch_downloaded_evaluation_results_success(self):
         """Test fetch_downloaded_evaluation_results method - success"""
         mock_response = Mock()
         mock_response.json.return_value = {"data": [{"id": "result-1"}]}
-        mock_get.return_value = mock_response
+        
+        with patch.object(self.client, 'session') as mock_session:
+            mock_session.get.return_value = mock_response
 
-        result = self.client.fetch_downloaded_evaluation_results(download_url="https://example.com/download")
+            result = self.client.fetch_downloaded_evaluation_results(download_url="https://example.com/download")
 
-        assert result == {"data": [{"id": "result-1"}]}
-        mock_get.assert_called_once()
+            assert result == {"data": [{"id": "result-1"}]}
+            mock_session.get.assert_called_once_with("https://example.com/download", timeout=60)
 
-    @patch('jupiterone.client.requests.get')
-    def test_fetch_downloaded_evaluation_results_exception(self, mock_get):
+    def test_fetch_downloaded_evaluation_results_exception(self):
         """Test fetch_downloaded_evaluation_results method - exception"""
-        mock_get.side_effect = Exception("Network error")
+        with patch.object(self.client, 'session') as mock_session:
+            mock_session.get.side_effect = Exception("Network error")
 
-        result = self.client.fetch_downloaded_evaluation_results(download_url="https://example.com/download")
+            result = self.client.fetch_downloaded_evaluation_results(download_url="https://example.com/download")
 
-        assert isinstance(result, Exception)
-        assert str(result) == "Network error" 
+            assert isinstance(result, Exception)
+            assert str(result) == "Network error" 

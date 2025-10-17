@@ -76,13 +76,10 @@ def create_entity_examples(j1):
             'backupRetentionPeriod': 7,
             'tag.Environment': 'production',
             'tag.Team': 'data',
-            'metadata': {
-                'createdBy': 'terraform',
-                'lastBackup': '2024-01-01T00:00:00Z',
-                'maintenanceWindow': 'sun:03:00-sun:04:00'
-            }
-        },
-        timestamp=int(time.time()) * 1000
+            'createdBy': 'terraform',
+            'lastBackup': '2024-01-01T00:00:00Z',
+            'maintenanceWindow': 'sun:03:00-sun:04:00'
+        }
     )
     print(f"Created complex entity: {complex_entity['entity']['_id']}\n")
     
@@ -122,16 +119,12 @@ def update_entity_examples(j1, entity_id):
         entity_id=entity_id,
         properties={
             'isActive': False,
-            'maintenanceWindow': {
-                'start': '2024-01-01T00:00:00Z',
-                'end': '2024-01-01T04:00:00Z',
-                'reason': 'scheduled_maintenance'
-            },
-            'metadata': {
-                'maintenancePerformedBy': 'admin@company.com',
-                'maintenanceType': 'security_patches',
-                'estimatedDuration': '4 hours'
-            }
+            'maintenanceWindowStart': '2024-01-01T00:00:00Z',
+            'maintenanceWindowEnd': '2024-01-01T04:00:00Z',
+            'maintenanceReason': 'scheduled_maintenance',
+            'maintenancePerformedBy': 'admin@company.com',
+            'maintenanceType': 'security_patches',
+            'estimatedDuration': '4 hours'
         }
     )
     print(f"Updated with complex properties\n")

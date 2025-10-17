@@ -32,7 +32,7 @@ def test_delete_entity_basic():
         content_type='application/json',
     )
 
-    j1 = JupiterOneClient(account='testAccount', token='testToken')
+    j1 = JupiterOneClient(account='testAccount', token='testToken1234567890')
     response = j1.delete_entity('1')
 
     assert type(response) == dict
@@ -68,7 +68,7 @@ def test_delete_entity_with_timestamp():
         content_type='application/json',
     )
 
-    j1 = JupiterOneClient(account='testAccount', token='testToken')
+    j1 = JupiterOneClient(account='testAccount', token='testToken1234567890')
     response = j1.delete_entity('2', timestamp=1640995200000)
 
     assert type(response) == dict
@@ -103,7 +103,7 @@ def test_delete_entity_with_hard_delete():
         content_type='application/json',
     )
 
-    j1 = JupiterOneClient(account='testAccount', token='testToken')
+    j1 = JupiterOneClient(account='testAccount', token='testToken1234567890')
     response = j1.delete_entity('3', hard_delete=False)
 
     assert type(response) == dict
@@ -138,7 +138,7 @@ def test_delete_entity_with_all_parameters():
         content_type='application/json',
     )
 
-    j1 = JupiterOneClient(account='testAccount', token='testToken')
+    j1 = JupiterOneClient(account='testAccount', token='testToken1234567890')
     response = j1.delete_entity('4', timestamp=1640995200000, hard_delete=True)
 
     assert type(response) == dict

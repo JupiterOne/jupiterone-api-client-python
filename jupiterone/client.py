@@ -2,11 +2,12 @@
 import json
 import os
 from warnings import warn
-from typing import Dict, List, Union, Optional
+from typing import Dict, List, Union, Optional, Any
 from datetime import datetime
 import time
 import re
 import requests
+import urllib.parse
 from requests.adapters import HTTPAdapter, Retry
 import concurrent.futures
 
@@ -67,28 +68,30 @@ class JupiterOneClient:
 
     # pylint: disable=too-many-instance-attributes
 
-    DEFAULT_URL = "https://graphql.us.jupiterone.io"
-    SYNC_API_URL = "https://api.us.jupiterone.io"
+    DEFAULT_URL: str = "https://graphql.us.jupiterone.io"
+    SYNC_API_URL: str = "https://api.us.jupiterone.io"
 
     def __init__(
         self,
-        account: str = None,
-        token: str = None,
+        account: Optional[str] = None,
+        token: Optional[str] = None,
         url: str = DEFAULT_URL,
         sync_url: str = SYNC_API_URL,
-    ):
-        self.account = account
-        self.token = token
-        self.graphql_url = url
-        self.sync_url = sync_url
-        self.headers = {
-            "Authorization": "Bearer {}".format(self.token),
-            "JupiterOne-Account": self.account,
+    ) -> None:
+        # Validate inputs
+        self._validate_constructor_inputs(account, token, url, sync_url)
+        self.account: Optional[str] = account
+        self.token: Optional[str] = token
+        self.graphql_url: str = url
+        self.sync_url: str = sync_url
+        self.headers: Dict[str, str] = {
+            "Authorization": "Bearer {}".format(self.token or ""),
+            "JupiterOne-Account": self.account or "",
             "Content-Type": "application/json",
         }
 
         # Initialize session with retry logic
-        self.session = requests.Session()
+        self.session: requests.Session = requests.Session()
         retries = Retry(
             total=5,
             backoff_factor=1,
@@ -97,40 +100,134 @@ class JupiterOneClient:
         )
         self.session.mount("https://", HTTPAdapter(max_retries=retries))
 
+    def _validate_constructor_inputs(
+        self, 
+        account: Optional[str], 
+        token: Optional[str], 
+        url: str, 
+        sync_url: str
+    ) -> None:
+        """Validate constructor inputs"""
+        # Validate account
+        if account is not None:
+            if not isinstance(account, str):
+                raise JupiterOneClientError("Account must be a string")
+            if not account.strip():
+                raise JupiterOneClientError("Account cannot be empty")
+            if len(account) < 3:
+                raise JupiterOneClientError("Account ID appears to be too short")
+        
+        # Validate token
+        if token is not None:
+            if not isinstance(token, str):
+                raise JupiterOneClientError("Token must be a string")
+            if not token.strip():
+                raise JupiterOneClientError("Token cannot be empty")
+            if len(token) < 10:
+                raise JupiterOneClientError("Token appears to be too short")
+        
+        # Validate URLs
+        self._validate_url(url, "GraphQL URL")
+        self._validate_url(sync_url, "Sync API URL")
+
+    def _validate_url(self, url: str, url_name: str) -> None:
+        """Validate URL format"""
+        if not isinstance(url, str):
+            raise JupiterOneClientError(f"{url_name} must be a string")
+        
+        if not url.strip():
+            raise JupiterOneClientError(f"{url_name} cannot be empty")
+        
+        try:
+            parsed = urllib.parse.urlparse(url)
+            if not parsed.scheme or not parsed.netloc:
+                raise ValueError("Invalid URL format")
+            if parsed.scheme not in ['http', 'https']:
+                raise ValueError("URL must use http or https protocol")
+        except Exception as e:
+            raise JupiterOneClientError(f"Invalid {url_name}: {str(e)}")
+
+    def _validate_entity_id(self, entity_id: str, param_name: str = "entity_id") -> None:
+        """Validate entity ID format"""
+        if not isinstance(entity_id, str):
+            raise JupiterOneClientError(f"{param_name} must be a string")
+        
+        if not entity_id.strip():
+            raise JupiterOneClientError(f"{param_name} cannot be empty")
+        
+        if len(entity_id) < 10:
+            raise JupiterOneClientError(f"{param_name} appears to be too short")
+
+    def _validate_query_string(self, query: str, param_name: str = "query") -> None:
+        """Validate J1QL query string"""
+        if not isinstance(query, str):
+            raise JupiterOneClientError(f"{param_name} must be a string")
+        
+        if not query.strip():
+            raise JupiterOneClientError(f"{param_name} cannot be empty")
+        
+        # Basic J1QL validation
+        query_upper = query.upper().strip()
+        if not query_upper.startswith('FIND'):
+            raise JupiterOneClientError(f"{param_name} must be a valid J1QL query starting with FIND (case-insensitive)")
+
+    def _validate_properties(self, properties: Dict[str, Any], param_name: str = "properties") -> None:
+        """Validate entity/relationship properties"""
+        if not isinstance(properties, dict):
+            raise JupiterOneClientError(f"{param_name} must be a dictionary")
+        
+        # Check for nested objects (not supported by JupiterOne API)
+        for key, value in properties.items():
+            if isinstance(value, dict):
+                raise JupiterOneClientError(
+                    f"Nested objects in {param_name} are not supported by JupiterOne API. "
+                    f"Key '{key}' contains a nested dictionary. Please flatten the structure."
+                )
+            if isinstance(value, list) and any(isinstance(item, dict) for item in value):
+                raise JupiterOneClientError(
+                    f"Lists containing dictionaries in {param_name} are not supported by JupiterOne API. "
+                    f"Key '{key}' contains a list with dictionaries. Please flatten the structure."
+                )
+
     @property
-    def account(self):
+    def account(self) -> Optional[str]:
         """Your JupiterOne account ID"""
         return self._account
 
     @account.setter
-    def account(self, value: str):
+    def account(self, value: Optional[str]) -> None:
         """Your JupiterOne account ID"""
         if not value:
             raise JupiterOneClientError("account is required")
         self._account = value
 
     @property
-    def token(self):
+    def token(self) -> Optional[str]:
         """Your JupiterOne access token"""
         return self._token
 
     @token.setter
-    def token(self, value: str):
+    def token(self, value: Optional[str]) -> None:
         """Your JupiterOne access token"""
         if not value:
             raise JupiterOneClientError("token is required")
         self._token = value
 
     # pylint: disable=R1710
-    def _execute_query(self, query: str, variables: Dict = None) -> Dict:
+    def _execute_query(self, query: str, variables: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Executes query against graphql endpoint"""
+        # Validate credentials before making API calls
+        if not self.account:
+            raise JupiterOneClientError("Account is required. Please set the account property.")
+        if not self.token:
+            raise JupiterOneClientError("Token is required. Please set the token property.")
 
-        data = {"query": query}
+        data: Dict[str, Any] = {"query": query}
         if variables:
-            data.update(variables=variables)
+            data["variables"] = variables
 
         # Always ask for variableResultSize
-        data.update(flags={"variableResultSize": True})
+        data["flags"] = {"variableResultSize": True}
 
         response = self.session.post(
             self.graphql_url,
@@ -179,10 +276,10 @@ class JupiterOneClient:
     def _cursor_query(
         self,
         query: str,
-        cursor: str = None,
+        cursor: Optional[str] = None,
         include_deleted: bool = False,
         max_workers: Optional[int] = None
-    ) -> Dict:
+    ) -> Dict[str, Any]:
         """Performs a V1 graph query using cursor pagination with optional parallel processing
 
         args:
@@ -201,9 +298,9 @@ class JupiterOneClient:
         else:
             result_limit = False
 
-        results: List = []
+        results: List[Dict[str, Any]] = []
 
-        def fetch_page(cursor: Optional[str] = None) -> Dict:
+        def fetch_page(cursor: Optional[str] = None) -> Dict[str, Any]:
             variables = {"query": query, "includeDeleted": include_deleted}
             if cursor is not None:
                 variables["cursor"] = cursor
@@ -287,8 +384,8 @@ class JupiterOneClient:
         skip: int = J1QL_SKIP_COUNT,
         limit: int = J1QL_LIMIT_COUNT,
         include_deleted: bool = False,
-    ) -> Dict:
-        results: List = []
+    ) -> Dict[str, Any]:
+        results: List[Dict[str, Any]] = []
         page: int = 0
 
         while True:
@@ -304,7 +401,7 @@ class JupiterOneClient:
             if "vertices" in data and "edges" in data:
                 return data
 
-            if len(data) < J1QL_SKIP_COUNT:
+            if len(data) < skip:
                 results.extend(data)
                 break
 
@@ -313,7 +410,7 @@ class JupiterOneClient:
 
         return {"data": results}
 
-    def query_with_deferred_response(self, query, cursor=None):
+    def query_with_deferred_response(self, query: str, cursor: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Execute a J1QL query that returns a deferred response for handling large result sets.
 
@@ -389,8 +486,13 @@ class JupiterOneClient:
 
         return all_query_results
 
-    def _execute_syncapi_request(self, endpoint: str, payload: Dict = None) -> Dict:
+    def _execute_syncapi_request(self, endpoint: str, payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Executes POST request to SyncAPI endpoints"""
+        # Validate credentials before making API calls
+        if not self.account:
+            raise JupiterOneClientError("Account is required. Please set the account property.")
+        if not self.token:
+            raise JupiterOneClientError("Token is required. Please set the token property.")
 
         # initiate requests session and implement retry logic of 5 request retries with 1 second between retries
         response = self.session.post(
@@ -412,6 +514,7 @@ class JupiterOneClient:
                             )
                     raise JupiterOneApiError(content.get("errors"))
                 return response.json()
+            return {}
 
         elif response.status_code == 401:
             raise JupiterOneApiError(
@@ -436,7 +539,7 @@ class JupiterOneClient:
                 content = data.get("error", data.get("errors", content))
             raise JupiterOneApiError("{}:{}".format(response.status_code, content))
 
-    def query_v1(self, query: str, **kwargs) -> Dict:
+    def query_v1(self, query: str, **kwargs: Any) -> Dict[str, Any]:
         """Performs a V1 graph query
         args:
             query (str): Query text
@@ -445,6 +548,25 @@ class JupiterOneClient:
             cursor (str): A pagination cursor for the initial query
             include_deleted (bool): Include recently deleted entities in query/search
         """
+        # Validate inputs
+        self._validate_query_string(query)
+        
+        # Validate kwargs
+        if 'skip' in kwargs and kwargs['skip'] is not None:
+            if not isinstance(kwargs['skip'], int) or kwargs['skip'] < 0:
+                raise JupiterOneClientError("skip must be a non-negative integer")
+        
+        if 'limit' in kwargs and kwargs['limit'] is not None:
+            if not isinstance(kwargs['limit'], int) or kwargs['limit'] <= 0:
+                raise JupiterOneClientError("limit must be a positive integer")
+        
+        if 'cursor' in kwargs and kwargs['cursor'] is not None:
+            if not isinstance(kwargs['cursor'], str) or not kwargs['cursor'].strip():
+                raise JupiterOneClientError("cursor must be a non-empty string")
+        
+        if 'include_deleted' in kwargs and kwargs['include_deleted'] is not None:
+            if not isinstance(kwargs['include_deleted'], bool):
+                raise JupiterOneClientError("include_deleted must be a boolean")
         uses_limit_and_skip: bool = "skip" in kwargs.keys() or "limit" in kwargs.keys()
         skip: int = kwargs.pop("skip", J1QL_SKIP_COUNT)
         limit: int = kwargs.pop("limit", J1QL_LIMIT_COUNT)
@@ -467,34 +589,54 @@ class JupiterOneClient:
                 query=query, cursor=cursor, include_deleted=include_deleted
             )
 
-    def create_entity(self, **kwargs) -> Dict:
+    def create_entity(self, **kwargs: Any) -> Dict[str, Any]:
         """Creates an entity in graph.  It will also update an existing entity.
 
         args:
             entity_key (str): Unique key for the entity
             entity_type (str): Value for _type of entity
             entity_class (str): Value for _class of entity
-            timestamp (int): Specify createdOn timestamp
             properties (dict): Dictionary of key/value entity properties
         """
+        # Validate required parameters
+        entity_key = kwargs.get("entity_key")
+        entity_type = kwargs.get("entity_type")
+        entity_class = kwargs.get("entity_class")
+        
+        if not entity_key:
+            raise JupiterOneClientError("entity_key is required")
+        if not isinstance(entity_key, str) or not entity_key.strip():
+            raise JupiterOneClientError("entity_key must be a non-empty string")
+        
+        if not entity_type:
+            raise JupiterOneClientError("entity_type is required")
+        if not isinstance(entity_type, str) or not entity_type.strip():
+            raise JupiterOneClientError("entity_type must be a non-empty string")
+        
+        if not entity_class:
+            raise JupiterOneClientError("entity_class is required")
+        if not isinstance(entity_class, str) or not entity_class.strip():
+            raise JupiterOneClientError("entity_class must be a non-empty string")
+        
+        # Validate properties if provided
+        if "properties" in kwargs and kwargs["properties"] is not None:
+            self._validate_properties(kwargs["properties"])
+        
         variables = {
             "entityKey": kwargs.pop("entity_key"),
             "entityType": kwargs.pop("entity_type"),
             "entityClass": kwargs.pop("entity_class"),
         }
 
-        timestamp: int = kwargs.pop("timestamp", None)
         properties: Dict = kwargs.pop("properties", None)
 
-        if timestamp:
-            variables.update(timestamp=timestamp)
         if properties:
             variables.update(properties=properties)
 
         response = self._execute_query(query=CREATE_ENTITY, variables=variables)
         return response["data"]["createEntity"]
 
-    def delete_entity(self, entity_id: str = None, timestamp: int = None, hard_delete: bool = True) -> Dict:
+    def delete_entity(self, entity_id: Optional[str] = None, timestamp: Optional[int] = None, hard_delete: bool = True) -> Dict[str, Any]:
         """Deletes an entity from the graph.
 
         args:
@@ -502,13 +644,26 @@ class JupiterOneClient:
             timestamp (int, optional): Timestamp for the deletion. Defaults to None.
             hard_delete (bool): Whether to perform a hard delete. Defaults to True.
         """
-        variables = {"entityId": entity_id, "hardDelete": hard_delete}
+        # Validate required parameters
+        if not entity_id:
+            raise JupiterOneClientError("entity_id is required")
+        self._validate_entity_id(entity_id)
+        
+        # Validate timestamp if provided
+        if timestamp is not None:
+            if not isinstance(timestamp, int) or timestamp <= 0:
+                raise JupiterOneClientError("timestamp must be a positive integer")
+        
+        # Validate hard_delete
+        if not isinstance(hard_delete, bool):
+            raise JupiterOneClientError("hard_delete must be a boolean")
+        variables: Dict[str, Any] = {"entityId": entity_id, "hardDelete": hard_delete}
         if timestamp:
             variables["timestamp"] = timestamp
         response = self._execute_query(DELETE_ENTITY, variables=variables)
         return response["data"]["deleteEntityV2"]
 
-    def update_entity(self, entity_id: str = None, properties: Dict = None) -> Dict:
+    def update_entity(self, entity_id: Optional[str] = None, properties: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Update an existing entity.
 
@@ -516,11 +671,19 @@ class JupiterOneClient:
             entity_id (str): The _id of the entity to update
             properties (dict): Dictionary of key/value entity properties
         """
+        # Validate required parameters
+        if not entity_id:
+            raise JupiterOneClientError("entity_id is required")
+        self._validate_entity_id(entity_id)
+        
+        if not properties:
+            raise JupiterOneClientError("properties is required")
+        self._validate_properties(properties)
         variables = {"entityId": entity_id, "properties": properties}
         response = self._execute_query(UPDATE_ENTITY, variables=variables)
         return response["data"]["updateEntity"]
 
-    def create_relationship(self, **kwargs) -> Dict:
+    def create_relationship(self, **kwargs: Any) -> Dict[str, Any]:
         """
         Create a relationship (edge) between two entities (vertices).
 
@@ -531,6 +694,39 @@ class JupiterOneClient:
             from_entity_id (str): Entity ID of the source vertex
             to_entity_id (str): Entity ID of the destination vertex
         """
+        # Validate required parameters
+        relationship_key = kwargs.get("relationship_key")
+        relationship_type = kwargs.get("relationship_type")
+        relationship_class = kwargs.get("relationship_class")
+        from_entity_id = kwargs.get("from_entity_id")
+        to_entity_id = kwargs.get("to_entity_id")
+        
+        if not relationship_key:
+            raise JupiterOneClientError("relationship_key is required")
+        if not isinstance(relationship_key, str) or not relationship_key.strip():
+            raise JupiterOneClientError("relationship_key must be a non-empty string")
+        
+        if not relationship_type:
+            raise JupiterOneClientError("relationship_type is required")
+        if not isinstance(relationship_type, str) or not relationship_type.strip():
+            raise JupiterOneClientError("relationship_type must be a non-empty string")
+        
+        if not relationship_class:
+            raise JupiterOneClientError("relationship_class is required")
+        if not isinstance(relationship_class, str) or not relationship_class.strip():
+            raise JupiterOneClientError("relationship_class must be a non-empty string")
+        
+        if not from_entity_id:
+            raise JupiterOneClientError("from_entity_id is required")
+        self._validate_entity_id(from_entity_id, "from_entity_id")
+        
+        if not to_entity_id:
+            raise JupiterOneClientError("to_entity_id is required")
+        self._validate_entity_id(to_entity_id, "to_entity_id")
+        
+        # Validate properties if provided
+        if "properties" in kwargs and kwargs["properties"] is not None:
+            self._validate_properties(kwargs["properties"])
         variables = {
             "relationshipKey": kwargs.pop("relationship_key"),
             "relationshipType": kwargs.pop("relationship_type"),
@@ -546,7 +742,7 @@ class JupiterOneClient:
         response = self._execute_query(query=CREATE_RELATIONSHIP, variables=variables)
         return response["data"]["createRelationship"]
 
-    def update_relationship(self, **kwargs) -> Dict:
+    def update_relationship(self, **kwargs: Any) -> Dict[str, Any]:
         """
         Update a relationship (edge) between two entities (vertices).
 
@@ -568,7 +764,7 @@ class JupiterOneClient:
         response = self._execute_query(query=UPDATE_RELATIONSHIP, variables=variables)
         return response["data"]["updateRelationship"]
 
-    def delete_relationship(self, relationship_id: str = None):
+    def delete_relationship(self, relationship_id: Optional[str] = None) -> Dict[str, Any]:
         """Deletes a relationship between two entities.
 
         args:
@@ -581,11 +777,11 @@ class JupiterOneClient:
 
     def create_integration_instance(
         self,
-        instance_name: str = None,
-        instance_description: str = None,
+        instance_name: Optional[str] = None,
+        instance_description: Optional[str] = None,
         integration_definition_id: str = "8013680b-311a-4c2e-b53b-c8735fd97a5c",
-        resource_group_id: str = None,
-    ):
+        resource_group_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """Creates a new Custom Integration Instance.
 
         args:
@@ -614,7 +810,7 @@ class JupiterOneClient:
         response = self._execute_query(CREATE_INSTANCE, variables=variables)
         return response["data"]["createIntegrationInstance"]
 
-    def fetch_all_entity_properties(self):
+    def fetch_all_entity_properties(self) -> List[Dict[str, Any]]:
         """Fetch list of aggregated property keys from all entities in the graph."""
 
         response = self._execute_query(query=ALL_PROPERTIES)
@@ -629,7 +825,7 @@ class JupiterOneClient:
 
         return return_list
 
-    def fetch_all_entity_tags(self):
+    def fetch_all_entity_tags(self) -> List[Dict[str, Any]]:
         """Fetch list of aggregated property keys from all entities in the graph."""
 
         response = self._execute_query(query=ALL_PROPERTIES)
@@ -644,7 +840,7 @@ class JupiterOneClient:
 
         return return_list
 
-    def fetch_entity_raw_data(self, entity_id: str = None):
+    def fetch_entity_raw_data(self, entity_id: Optional[str] = None) -> Dict[str, Any]:
         """Fetch the contents of raw data for a given entity in a J1 Account."""
         variables = {"entityId": entity_id, "source": "integration-managed"}
 
@@ -654,10 +850,10 @@ class JupiterOneClient:
 
     def start_sync_job(
         self,
-        instance_id: str = None,
-        sync_mode: str = None,
-        source: str = None,
-    ):
+        instance_id: Optional[str] = None,
+        sync_mode: Optional[str] = None,
+        source: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """Start a synchronization job.
 
         args:
@@ -754,7 +950,7 @@ class JupiterOneClient:
 
         return response
 
-    def finalize_sync_job(self, instance_job_id: str = None):
+    def finalize_sync_job(self, instance_job_id: Optional[str] = None) -> Dict[str, Any]:
         """Start a synchronization job.
 
         args:
@@ -768,7 +964,7 @@ class JupiterOneClient:
 
         return response
 
-    def fetch_integration_jobs(self, instance_id: str = None):
+    def fetch_integration_jobs(self, instance_id: Optional[str] = None) -> List[Dict[str, Any]]:
         """Fetch Integration Job details from defined integration instance.
 
         args:
@@ -801,21 +997,21 @@ class JupiterOneClient:
 
         return response["data"]["integrationEvents"]
 
-    def get_integration_definition_details(self, integration_type: str = None):
+    def get_integration_definition_details(self, integration_type: Optional[str] = None) -> Dict[str, Any]:
         """Fetch the Integration Definition Details for a given integration type."""
         variables = {"integrationType": integration_type, "includeConfig": True}
 
         response = self._execute_query(FIND_INTEGRATION_DEFINITION, variables=variables)
         return response
 
-    def fetch_integration_instances(self, definition_id: str = None):
+    def fetch_integration_instances(self, definition_id: Optional[str] = None) -> List[Dict[str, Any]]:
         """Fetch all configured Instances for a given integration type."""
         variables = {"definitionId": definition_id, "limit": 100}
 
         response = self._execute_query(INTEGRATION_INSTANCES, variables=variables)
         return response
 
-    def get_integration_instance_details(self, instance_id: str = None):
+    def get_integration_instance_details(self, instance_id: Optional[str] = None) -> Dict[str, Any]:
         """Fetch configuration details for a single configured Integration Instance."""
         variables = {"integrationInstanceId": instance_id}
 
@@ -964,7 +1160,7 @@ class JupiterOneClient:
 
         return response["data"]["j1qlFromNaturalLanguage"]
 
-    def list_alert_rules(self):
+    def list_alert_rules(self) -> List[Dict[str, Any]]:
         """List all defined Alert Rules configured in J1 account"""
         results = []
 
@@ -993,7 +1189,7 @@ class JupiterOneClient:
 
         return results
 
-    def get_alert_rule_details(self, rule_id: str = None):
+    def get_alert_rule_details(self, rule_id: Optional[str] = None) -> Dict[str, Any]:
         """Get details of a single defined Alert Rule configured in J1 account"""
         results = []
 
@@ -1100,7 +1296,7 @@ class JupiterOneClient:
 
         return response["data"]["createInlineQuestionRuleInstance"]
 
-    def delete_alert_rule(self, rule_id: str = None):
+    def delete_alert_rule(self, rule_id: Optional[str] = None) -> Dict[str, Any]:
         """Delete a single Alert Rule configured in J1 account"""
         variables = {
             "id": rule_id
@@ -1320,7 +1516,7 @@ class JupiterOneClient:
 
             return e
 
-    def list_questions(self, search_query: str = None, tags: List[str] = None):
+    def list_questions(self, search_query: Optional[str] = None, tags: Optional[List[str]] = None) -> Dict[str, Any]:
         """List all defined Questions configured in J1 Account Questions Library
         
         Args:
@@ -1392,7 +1588,7 @@ class JupiterOneClient:
 
         return results
 
-    def get_question_details(self, question_id: str = None):
+    def get_question_details(self, question_id: Optional[str] = None) -> Dict[str, Any]:
         """Get details of a specific question by ID
         
         Args:
@@ -1422,9 +1618,9 @@ class JupiterOneClient:
     def create_question(
         self,
         title: str,
-        queries: List[Dict],
-        **kwargs
-    ):
+        queries: List[Dict[str, Any]],
+        **kwargs: Any
+    ) -> Dict[str, Any]:
         """Creates a new Question in the J1 account.
         
         Args:
@@ -1510,12 +1706,12 @@ class JupiterOneClient:
     def update_question(
         self,
         question_id: str,
-        title: str = None,
-        description: str = None,
-        queries: List[Dict] = None,
-        tags: List[str] = None,
-        **kwargs
-    ) -> Dict:
+        title: Optional[str] = None,
+        description: Optional[str] = None,
+        queries: Optional[List[Dict[str, Any]]] = None,
+        tags: Optional[List[str]] = None,
+        **kwargs: Any
+    ) -> Dict[str, Any]:
         """
         Update an existing question in the J1 account.
         
@@ -1629,7 +1825,7 @@ class JupiterOneClient:
         response = self._execute_query(UPDATE_QUESTION, variables)
         return response["data"]["updateQuestion"]
 
-    def delete_question(self, question_id: str) -> Dict:
+    def delete_question(self, question_id: str) -> Dict[str, Any]:
         """
         Delete an existing question from the J1 account.
         
@@ -1729,7 +1925,7 @@ class JupiterOneClient:
         response = self._execute_query(UPSERT_PARAMETER, variables=variables)
         return response
 
-    def update_entity_v2(self, entity_id: str = None, properties: Dict = None) -> Dict:
+    def update_entity_v2(self, entity_id: Optional[str] = None, properties: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Update an existing entity by adding new or updating existing properties.
 
@@ -1746,7 +1942,7 @@ class JupiterOneClient:
         response = self._execute_query(UPDATE_ENTITYV2, variables=variables)
         return response["data"]["updateEntityV2"]
 
-    def get_cft_upload_url(self, integration_instance_id: str, filename: str, dataset_id: str) -> Dict:
+    def get_cft_upload_url(self, integration_instance_id: str, filename: str, dataset_id: str) -> Dict[str, Any]:
         """
         Get an upload URL for Custom File Transfer integration.
         
@@ -1792,7 +1988,7 @@ class JupiterOneClient:
         response = self._execute_query(query, variables)
         return response["data"]["integrationFileTransferUploadUrl"]
 
-    def upload_cft_file(self, upload_url: str, file_path: str) -> Dict:
+    def upload_cft_file(self, upload_url: str, file_path: str) -> Dict[str, Any]:
         """
         Upload a CSV file to the Custom File Transfer integration using the provided upload URL.
         

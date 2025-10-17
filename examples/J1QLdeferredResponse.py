@@ -13,8 +13,8 @@ j1_graphql_url = "https://graphql.us.jupiterone.io"
 # JupiterOne GraphQL API headers
 j1_graphql_headers = {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + token,
-        'Jupiterone-Account': acct
+        'Authorization': 'Bearer ' + (token or ''),
+        'Jupiterone-Account': acct or ''
 }
 
 gql_query = """

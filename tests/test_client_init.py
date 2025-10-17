@@ -45,12 +45,12 @@ class TestClientInit:
 
     def test_client_init_empty_account(self):
         """Test client initialization with empty account"""
-        with pytest.raises(JupiterOneClientError, match="account is required"):
+        with pytest.raises(JupiterOneClientError, match="Account cannot be empty"):
             JupiterOneClient(account="", token="test-token")
 
     def test_client_init_empty_token(self):
         """Test client initialization with empty token"""
-        with pytest.raises(JupiterOneClientError, match="token is required"):
+        with pytest.raises(JupiterOneClientError, match="Token cannot be empty"):
             JupiterOneClient(account="test-account", token="")
 
     def test_client_init_none_account(self):
@@ -127,127 +127,137 @@ class TestErrorHandling:
         """Set up test fixtures"""
         self.client = JupiterOneClient(account="test-account", token="test-token")
 
-    @patch.object(JupiterOneClient, 'session')
-    def test_execute_query_401_error(self, mock_session):
+    def test_execute_query_401_error(self):
         """Test _execute_query method with 401 error"""
         mock_response = Mock()
         mock_response.status_code = 401
-        mock_session.post.return_value = mock_response
+        
+        with patch.object(self.client, 'session') as mock_session:
+            mock_session.post.return_value = mock_response
 
-        with pytest.raises(JupiterOneApiError, match="401: Unauthorized"):
-            self.client._execute_query("test query")
+            with pytest.raises(JupiterOneApiError, match="401: Unauthorized"):
+                self.client._execute_query("test query")
 
-    @patch.object(JupiterOneClient, 'session')
-    def test_execute_query_429_error(self, mock_session):
+    def test_execute_query_429_error(self):
         """Test _execute_query method with 429 error"""
         mock_response = Mock()
         mock_response.status_code = 429
-        mock_session.post.return_value = mock_response
+        
+        with patch.object(self.client, 'session') as mock_session:
+            mock_session.post.return_value = mock_response
 
-        with pytest.raises(JupiterOneApiRetryError, match="rate limit exceeded"):
-            self.client._execute_query("test query")
+            with pytest.raises(JupiterOneApiRetryError, match="rate limit exceeded"):
+                self.client._execute_query("test query")
 
-    @patch.object(JupiterOneClient, 'session')
-    def test_execute_query_503_error(self, mock_session):
+    def test_execute_query_503_error(self):
         """Test _execute_query method with 503 error"""
         mock_response = Mock()
         mock_response.status_code = 503
-        mock_session.post.return_value = mock_response
+        
+        with patch.object(self.client, 'session') as mock_session:
+            mock_session.post.return_value = mock_response
 
-        with pytest.raises(JupiterOneApiRetryError, match="rate limit exceeded"):
-            self.client._execute_query("test query")
+            with pytest.raises(JupiterOneApiRetryError, match="rate limit exceeded"):
+                self.client._execute_query("test query")
 
-    @patch.object(JupiterOneClient, 'session')
-    def test_execute_query_504_error(self, mock_session):
+    def test_execute_query_504_error(self):
         """Test _execute_query method with 504 error"""
         mock_response = Mock()
         mock_response.status_code = 504
-        mock_session.post.return_value = mock_response
+        
+        with patch.object(self.client, 'session') as mock_session:
+            mock_session.post.return_value = mock_response
 
-        with pytest.raises(JupiterOneApiRetryError, match="Gateway Timeout"):
-            self.client._execute_query("test query")
+            with pytest.raises(JupiterOneApiRetryError, match="Gateway Timeout"):
+                self.client._execute_query("test query")
 
-    @patch.object(JupiterOneClient, 'session')
-    def test_execute_query_500_error(self, mock_session):
+    def test_execute_query_500_error(self):
         """Test _execute_query method with 500 error"""
         mock_response = Mock()
         mock_response.status_code = 500
-        mock_session.post.return_value = mock_response
+        
+        with patch.object(self.client, 'session') as mock_session:
+            mock_session.post.return_value = mock_response
 
-        with pytest.raises(JupiterOneApiError, match="internal server error"):
-            self.client._execute_query("test query")
+            with pytest.raises(JupiterOneApiError, match="internal server error"):
+                self.client._execute_query("test query")
 
-    @patch.object(JupiterOneClient, 'session')
-    def test_execute_query_200_with_errors(self, mock_session):
+    def test_execute_query_200_with_errors(self):
         """Test _execute_query method with 200 status but GraphQL errors"""
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
             "errors": [{"message": "GraphQL error"}]
         }
-        mock_session.post.return_value = mock_response
+        
+        with patch.object(self.client, 'session') as mock_session:
+            mock_session.post.return_value = mock_response
 
-        with pytest.raises(JupiterOneApiError):
-            self.client._execute_query("test query")
+            with pytest.raises(JupiterOneApiError):
+                self.client._execute_query("test query")
 
-    @patch.object(JupiterOneClient, 'session')
-    def test_execute_query_200_with_429_in_errors(self, mock_session):
+    def test_execute_query_200_with_429_in_errors(self):
         """Test _execute_query method with 200 status but 429 in GraphQL errors"""
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
             "errors": [{"message": "429 rate limit exceeded"}]
         }
-        mock_session.post.return_value = mock_response
+        
+        with patch.object(self.client, 'session') as mock_session:
+            mock_session.post.return_value = mock_response
 
-        with pytest.raises(JupiterOneApiRetryError, match="rate limit exceeded"):
-            self.client._execute_query("test query")
+            with pytest.raises(JupiterOneApiRetryError, match="rate limit exceeded"):
+                self.client._execute_query("test query")
 
-    @patch.object(JupiterOneClient, 'session')
-    def test_execute_query_200_success(self, mock_session):
+    def test_execute_query_200_success(self):
         """Test _execute_query method with successful 200 response"""
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
             "data": {"result": "success"}
         }
-        mock_session.post.return_value = mock_response
-
-        result = self.client._execute_query("test query")
         
-        assert result == {"data": {"result": "success"}}
+        with patch.object(self.client, 'session') as mock_session:
+            mock_session.post.return_value = mock_response
 
-    @patch.object(JupiterOneClient, 'session')
-    def test_execute_query_with_variables(self, mock_session):
+            result = self.client._execute_query("test query")
+            
+            assert result == {"data": {"result": "success"}}
+
+    def test_execute_query_with_variables(self):
         """Test _execute_query method with variables"""
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
             "data": {"result": "success"}
         }
-        mock_session.post.return_value = mock_response
-
-        variables = {"key": "value"}
-        self.client._execute_query("test query", variables=variables)
         
-        # Verify that variables were included in the request
-        call_args = mock_session.post.call_args
-        assert "variables" in call_args[1]["json"]
-        assert call_args[1]["json"]["variables"] == variables
+        with patch.object(self.client, 'session') as mock_session:
+            mock_session.post.return_value = mock_response
 
-    @patch.object(JupiterOneClient, 'session')
-    def test_execute_query_with_flags(self, mock_session):
+            variables = {"key": "value"}
+            self.client._execute_query("test query", variables=variables)
+            
+            # Verify that variables were included in the request
+            call_args = mock_session.post.call_args
+            assert "variables" in call_args[1]["json"]
+            assert call_args[1]["json"]["variables"] == variables
+
+    def test_execute_query_with_flags(self):
         """Test _execute_query method includes flags"""
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
             "data": {"result": "success"}
         }
-        mock_session.post.return_value = mock_response
-
-        self.client._execute_query("test query")
         
-        # Verify that flags were included in the request
-        call_args = mock_session.post.call_args
-        assert "flags" in call_args[1]["json"]
-        assert call_args[1]["json"]["flags"] == {"variableResultSize": True} 
+        with patch.object(self.client, 'session') as mock_session:
+            mock_session.post.return_value = mock_response
+
+            self.client._execute_query("test query")
+            
+            # Verify that flags were included in the request
+            call_args = mock_session.post.call_args
+            assert "flags" in call_args[1]["json"]
+            assert call_args[1]["json"]["flags"] == {"variableResultSize": True} 

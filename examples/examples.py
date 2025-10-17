@@ -8,6 +8,12 @@ account = os.environ.get("JUPITERONE_ACCOUNT")
 token = os.environ.get("JUPITERONE_TOKEN")
 url = "https://graphql.us.jupiterone.io"
 
+# Check if credentials are available
+if not account or not token:
+    print("Error: JUPITERONE_ACCOUNT and JUPITERONE_TOKEN environment variables must be set")
+    print("This example script requires valid JupiterOne credentials to run")
+    exit(1)
+
 j1 = JupiterOneClient(account=account, token=token, url=url)
 
 # query_v1
@@ -31,8 +37,7 @@ create_r = j1.create_entity(
     entity_key='jupiterone-api-client-python:{}'.format(num1),
     entity_type='python_client_create_entity',
     entity_class='Record',
-    properties=properties,
-    timestamp=int(time.time()) * 1000  # Optional, defaults to current datetime
+    properties=properties
 )
 print("create_entity()")
 print(create_r)
@@ -63,8 +68,7 @@ create_r_2 = j1.create_entity(
     entity_key='jupiterone-api-client-python:{}'.format(num2),
     entity_type='python_client_create_entity',
     entity_class='Record',
-    properties=properties,
-    timestamp=int(time.time()) * 1000  # Optional, defaults to current datetime
+    properties=properties
 )
 print("create_entity()")
 print(create_r_2)

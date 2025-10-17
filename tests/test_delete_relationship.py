@@ -41,7 +41,7 @@ def test_tree_query_v1():
         content_type='application/json',
     )
 
-    j1 = JupiterOneClient(account='testAccount', token='testToken')
+    j1 = JupiterOneClient(account='testAccount', token='testToken1234567890')
     response = j1.delete_relationship('1')
 
     assert type(response) == dict

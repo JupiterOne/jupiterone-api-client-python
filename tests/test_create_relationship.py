@@ -41,13 +41,13 @@ def test_tree_query_v1():
         content_type='application/json',
     )
 
-    j1 = JupiterOneClient(account='testAccount', token='testToken')
+    j1 = JupiterOneClient(account='testAccount', token='testToken1234567890')
     response = j1.create_relationship(
         relationship_key='relationship1',
         relationship_type='test_relationship',
         relationship_class='TestRelationship',
-        from_entity_id='2',
-        to_entity_id='1'
+        from_entity_id='entity-id-12345',
+        to_entity_id='entity-id-67890'
     )
 
     assert type(response) == dict

@@ -20,7 +20,11 @@ import os
 import sys
 
 # Add the parent directory to the path so we can import the jupiterone client
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+try:
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+except NameError:
+    # Handle case when __file__ is not available (e.g., when exec'd)
+    sys.path.append('..')
 
 from jupiterone.client import JupiterOneClient
 
