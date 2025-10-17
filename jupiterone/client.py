@@ -304,7 +304,7 @@ class JupiterOneClient:
             if "vertices" in data and "edges" in data:
                 return data
 
-            if len(data) < J1QL_SKIP_COUNT:
+            if len(data) < skip:
                 results.extend(data)
                 break
 

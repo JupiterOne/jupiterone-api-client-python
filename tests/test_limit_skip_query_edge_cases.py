@@ -79,7 +79,9 @@ class TestLimitAndSkipQueryEdgeCases:
                 "queryV1": {
                     "data": [
                         {"id": "1", "name": "entity1"},
-                        {"id": "2", "name": "entity2"}
+                        {"id": "2", "name": "entity2"},
+                        {"id": "3", "name": "entity3"},
+                        {"id": "4", "name": "entity4"}
                     ]
                 }
             }
@@ -98,7 +100,7 @@ class TestLimitAndSkipQueryEdgeCases:
 
         mock_execute_query.side_effect = [mock_response1, mock_response2]
 
-        result = self.client._limit_and_skip_query("FIND * LIMIT 10")
+        result = self.client._limit_and_skip_query("FIND * LIMIT 10", skip=3)
 
         # Should call twice, but break on second page
         assert mock_execute_query.call_count == 2
@@ -107,6 +109,8 @@ class TestLimitAndSkipQueryEdgeCases:
         assert result == {"data": [
             {"id": "1", "name": "entity1"},
             {"id": "2", "name": "entity2"},
+            {"id": "3", "name": "entity3"},
+            {"id": "4", "name": "entity4"},
             {"id": "3", "name": "entity3"}
         ]}
 
@@ -134,8 +138,8 @@ class TestLimitAndSkipQueryEdgeCases:
         # Verify the query was called with custom skip/limit
         mock_execute_query.assert_called_once()
         call_args = mock_execute_query.call_args
-        query = call_args[0][0]
-        assert "SKIP 0 LIMIT 25" in query  # First page starts at 0
+        variables = call_args[1]["variables"]
+        assert "SKIP 0 LIMIT 25" in variables["query"]  # First page starts at 0
 
         # Verify the result
         assert result == {"data": [
@@ -151,7 +155,9 @@ class TestLimitAndSkipQueryEdgeCases:
                 "queryV1": {
                     "data": [
                         {"id": "1", "name": "entity1"},
-                        {"id": "2", "name": "entity2"}
+                        {"id": "2", "name": "entity2"},
+                        {"id": "3", "name": "entity3"},
+                        {"id": "4", "name": "entity4"}
                     ]
                 }
             }
@@ -172,7 +178,7 @@ class TestLimitAndSkipQueryEdgeCases:
 
         result = self.client._limit_and_skip_query(
             "FIND * LIMIT 10",
-            skip=10,
+            skip=3,
             limit=10
         )
 
@@ -181,13 +187,15 @@ class TestLimitAndSkipQueryEdgeCases:
         
         # Verify the queries were called with correct skip values
         call_args_list = mock_execute_query.call_args_list
-        assert "SKIP 0 LIMIT 10" in call_args_list[0][0][0]  # First page
-        assert "SKIP 10 LIMIT 10" in call_args_list[1][0][0]  # Second page
+        assert "SKIP 0 LIMIT 10" in call_args_list[0][1]["variables"]["query"]  # First page
+        assert "SKIP 3 LIMIT 10" in call_args_list[1][1]["variables"]["query"]  # Second page
 
         # Verify the result
         assert result == {"data": [
             {"id": "1", "name": "entity1"},
             {"id": "2", "name": "entity2"},
+            {"id": "3", "name": "entity3"},
+            {"id": "4", "name": "entity4"},
             {"id": "3", "name": "entity3"}
         ]}
 
@@ -215,7 +223,7 @@ class TestLimitAndSkipQueryEdgeCases:
         # Verify the query was called with includeDeleted=True
         mock_execute_query.assert_called_once()
         call_args = mock_execute_query.call_args
-        variables = call_args[0][1]
+        variables = call_args[1]["variables"]
         assert variables["includeDeleted"] is True
 
         # Verify the result
@@ -248,7 +256,7 @@ class TestLimitAndSkipQueryEdgeCases:
         # Verify the query was called with includeDeleted=False
         mock_execute_query.assert_called_once()
         call_args = mock_execute_query.call_args
-        variables = call_args[0][1]
+        variables = call_args[1]["variables"]
         assert variables["includeDeleted"] is False
 
         # Verify the result
@@ -305,11 +313,11 @@ class TestLimitAndSkipQueryEdgeCases:
         # Verify the query was called with the complex query
         mock_execute_query.assert_called_once()
         call_args = mock_execute_query.call_args
-        query = call_args[0][0]
-        assert "FIND aws_instance" in query
-        assert "THAT RELATES TO aws_vpc" in query
-        assert "WITH tag.Environment = 'production'" in query
-        assert "SKIP 0 LIMIT" in query  # Should have skip/limit added
+        variables = call_args[1]["variables"]
+        assert "FIND aws_instance" in variables["query"]
+        assert "THAT RELATES TO aws_vpc" in variables["query"]
+        assert "WITH tag.Environment = 'production'" in variables["query"]
+        assert "SKIP 0 LIMIT" in variables["query"]  # Should have skip/limit added
 
         # Verify the result
         assert result == {"data": [
@@ -325,7 +333,9 @@ class TestLimitAndSkipQueryEdgeCases:
                 "queryV1": {
                     "data": [
                         {"id": "1", "name": "entity1"},
-                        {"id": "2", "name": "entity2"}
+                        {"id": "2", "name": "entity2"},
+                        {"id": "3", "name": "entity3"},
+                        {"id": "4", "name": "entity4"}
                     ]
                 }
             }
@@ -337,7 +347,9 @@ class TestLimitAndSkipQueryEdgeCases:
                 "queryV1": {
                     "data": [
                         {"id": "3", "name": "entity3"},
-                        {"id": "4", "name": "entity4"}
+                        {"id": "4", "name": "entity4"},
+                        {"id": "5", "name": "entity5"},
+                        {"id": "6", "name": "entity6"}
                     ]
                 }
             }
@@ -356,16 +368,16 @@ class TestLimitAndSkipQueryEdgeCases:
 
         mock_execute_query.side_effect = [mock_response1, mock_response2, mock_response3]
 
-        result = self.client._limit_and_skip_query("FIND * LIMIT 10")
+        result = self.client._limit_and_skip_query("FIND * LIMIT 10", skip=3)
 
         # Should call three times
         assert mock_execute_query.call_count == 3
         
         # Verify the pagination math
         call_args_list = mock_execute_query.call_args_list
-        assert "SKIP 0 LIMIT" in call_args_list[0][0][0]  # Page 0: SKIP 0
-        assert "SKIP 100 LIMIT" in call_args_list[1][0][0]  # Page 1: SKIP 100
-        assert "SKIP 200 LIMIT" in call_args_list[2][0][0]  # Page 2: SKIP 200
+        assert "SKIP 0 LIMIT" in call_args_list[0][1]["variables"]["query"]  # Page 0: SKIP 0
+        assert "SKIP 3 LIMIT" in call_args_list[1][1]["variables"]["query"]  # Page 1: SKIP 3
+        assert "SKIP 6 LIMIT" in call_args_list[2][1]["variables"]["query"]  # Page 2: SKIP 6
 
         # Verify the result
         assert result == {"data": [
@@ -373,6 +385,10 @@ class TestLimitAndSkipQueryEdgeCases:
             {"id": "2", "name": "entity2"},
             {"id": "3", "name": "entity3"},
             {"id": "4", "name": "entity4"},
+            {"id": "3", "name": "entity3"},
+            {"id": "4", "name": "entity4"},
+            {"id": "5", "name": "entity5"},
+            {"id": "6", "name": "entity6"},
             {"id": "5", "name": "entity5"}
         ]}
 
@@ -396,8 +412,8 @@ class TestLimitAndSkipQueryEdgeCases:
         # Verify the query was called with default constants
         mock_execute_query.assert_called_once()
         call_args = mock_execute_query.call_args
-        query = call_args[0][0]
-        assert f"SKIP 0 LIMIT {J1QL_LIMIT_COUNT}" in query
+        variables = call_args[1]["variables"]
+        assert f"SKIP 0 LIMIT {J1QL_LIMIT_COUNT}" in variables["query"]
 
         # Verify the result
         assert result == {"data": [

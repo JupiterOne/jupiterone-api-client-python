@@ -211,7 +211,7 @@ class TestCursorQueryEdgeCases:
         # Verify the query was called with includeDeleted=True
         mock_execute_query.assert_called_once()
         call_args = mock_execute_query.call_args
-        variables = call_args[0][1]
+        variables = call_args[1]["variables"]
         assert variables["includeDeleted"] is True
 
         # Verify the result
@@ -241,7 +241,7 @@ class TestCursorQueryEdgeCases:
         # Verify the query was called with includeDeleted=False
         mock_execute_query.assert_called_once()
         call_args = mock_execute_query.call_args
-        variables = call_args[0][1]
+        variables = call_args[1]["variables"]
         assert variables["includeDeleted"] is False
 
         # Verify the result
@@ -271,7 +271,7 @@ class TestCursorQueryEdgeCases:
         # Verify the query was called with the initial cursor
         mock_execute_query.assert_called_once()
         call_args = mock_execute_query.call_args
-        variables = call_args[0][1]
+        variables = call_args[1]["variables"]
         assert variables["cursor"] == "initial_cursor"
 
         # Verify the result
