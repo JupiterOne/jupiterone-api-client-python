@@ -5,6 +5,12 @@ account = os.environ.get("JUPITERONE_ACCOUNT")
 token = os.environ.get("JUPITERONE_TOKEN")
 url = "https://graphql.us.jupiterone.io"
 
+# Check if credentials are available
+if not account or not token:
+    print("Error: JUPITERONE_ACCOUNT and JUPITERONE_TOKEN environment variables must be set")
+    print("This example script requires valid JupiterOne credentials to run")
+    exit(1)
+
 j1 = JupiterOneClient(account=account, token=token, url=url)
 
 instance_id = "<Integration Instance ID>"
