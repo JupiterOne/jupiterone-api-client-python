@@ -37,8 +37,7 @@ create_r = j1.create_entity(
     entity_key='jupiterone-api-client-python:{}'.format(num1),
     entity_type='python_client_create_entity',
     entity_class='Record',
-    properties=properties,
-    timestamp=int(time.time()) * 1000  # Optional, defaults to current datetime
+    properties=properties
 )
 print("create_entity()")
 print(create_r)
@@ -69,8 +68,7 @@ create_r_2 = j1.create_entity(
     entity_key='jupiterone-api-client-python:{}'.format(num2),
     entity_type='python_client_create_entity',
     entity_class='Record',
-    properties=properties,
-    timestamp=int(time.time()) * 1000  # Optional, defaults to current datetime
+    properties=properties
 )
 print("create_entity()")
 print(create_r_2)

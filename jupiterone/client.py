@@ -596,7 +596,6 @@ class JupiterOneClient:
             entity_key (str): Unique key for the entity
             entity_type (str): Value for _type of entity
             entity_class (str): Value for _class of entity
-            timestamp (int): Specify createdOn timestamp
             properties (dict): Dictionary of key/value entity properties
         """
         # Validate required parameters
@@ -623,21 +622,14 @@ class JupiterOneClient:
         if "properties" in kwargs and kwargs["properties"] is not None:
             self._validate_properties(kwargs["properties"])
         
-        # Validate timestamp if provided
-        if "timestamp" in kwargs and kwargs["timestamp"] is not None:
-            if not isinstance(kwargs["timestamp"], int) or kwargs["timestamp"] <= 0:
-                raise JupiterOneClientError("timestamp must be a positive integer")
         variables = {
             "entityKey": kwargs.pop("entity_key"),
             "entityType": kwargs.pop("entity_type"),
             "entityClass": kwargs.pop("entity_class"),
         }
 
-        timestamp: int = kwargs.pop("timestamp", None)
         properties: Dict = kwargs.pop("properties", None)
 
-        if timestamp:
-            variables.update(timestamp=timestamp)
         if properties:
             variables.update(properties=properties)
 

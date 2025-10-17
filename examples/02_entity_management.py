@@ -79,8 +79,7 @@ def create_entity_examples(j1):
             'createdBy': 'terraform',
             'lastBackup': '2024-01-01T00:00:00Z',
             'maintenanceWindow': 'sun:03:00-sun:04:00'
-        },
-        timestamp=int(time.time()) * 1000
+        }
     )
     print(f"Created complex entity: {complex_entity['entity']['_id']}\n")
     
