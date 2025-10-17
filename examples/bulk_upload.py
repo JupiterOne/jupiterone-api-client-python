@@ -7,7 +7,7 @@ url = "https://graphql.us.jupiterone.io"
 
 j1 = JupiterOneClient(account=account, token=token, url=url)
 
-instance_id = "e7113c37-1ea8-4d00-9b82-c24952e70916"
+instance_id = "<Integration Instance ID>"
 
 sync_job = j1.start_sync_job(
             instance_id=instance_id,
