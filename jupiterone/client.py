@@ -168,8 +168,8 @@ class JupiterOneClient:
         
         # Basic J1QL validation
         query_upper = query.upper().strip()
-        if not query_upper.startswith(('FIND', 'MATCH', 'RETURN')):
-            raise JupiterOneClientError(f"{param_name} must be a valid J1QL query starting with FIND, MATCH, or RETURN")
+        if not query_upper.startswith('FIND'):
+            raise JupiterOneClientError(f"{param_name} must be a valid J1QL query starting with FIND (case-insensitive)")
 
     def _validate_properties(self, properties: Dict[str, Any], param_name: str = "properties") -> None:
         """Validate entity/relationship properties"""
@@ -216,6 +216,11 @@ class JupiterOneClient:
     # pylint: disable=R1710
     def _execute_query(self, query: str, variables: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Executes query against graphql endpoint"""
+        # Validate credentials before making API calls
+        if not self.account:
+            raise JupiterOneClientError("Account is required. Please set the account property.")
+        if not self.token:
+            raise JupiterOneClientError("Token is required. Please set the token property.")
 
         data: Dict[str, Any] = {"query": query}
         if variables:
@@ -483,6 +488,11 @@ class JupiterOneClient:
 
     def _execute_syncapi_request(self, endpoint: str, payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Executes POST request to SyncAPI endpoints"""
+        # Validate credentials before making API calls
+        if not self.account:
+            raise JupiterOneClientError("Account is required. Please set the account property.")
+        if not self.token:
+            raise JupiterOneClientError("Token is required. Please set the token property.")
 
         # initiate requests session and implement retry logic of 5 request retries with 1 second between retries
         response = self.session.post(
@@ -589,6 +599,34 @@ class JupiterOneClient:
             timestamp (int): Specify createdOn timestamp
             properties (dict): Dictionary of key/value entity properties
         """
+        # Validate required parameters
+        entity_key = kwargs.get("entity_key")
+        entity_type = kwargs.get("entity_type")
+        entity_class = kwargs.get("entity_class")
+        
+        if not entity_key:
+            raise JupiterOneClientError("entity_key is required")
+        if not isinstance(entity_key, str) or not entity_key.strip():
+            raise JupiterOneClientError("entity_key must be a non-empty string")
+        
+        if not entity_type:
+            raise JupiterOneClientError("entity_type is required")
+        if not isinstance(entity_type, str) or not entity_type.strip():
+            raise JupiterOneClientError("entity_type must be a non-empty string")
+        
+        if not entity_class:
+            raise JupiterOneClientError("entity_class is required")
+        if not isinstance(entity_class, str) or not entity_class.strip():
+            raise JupiterOneClientError("entity_class must be a non-empty string")
+        
+        # Validate properties if provided
+        if "properties" in kwargs and kwargs["properties"] is not None:
+            self._validate_properties(kwargs["properties"])
+        
+        # Validate timestamp if provided
+        if "timestamp" in kwargs and kwargs["timestamp"] is not None:
+            if not isinstance(kwargs["timestamp"], int) or kwargs["timestamp"] <= 0:
+                raise JupiterOneClientError("timestamp must be a positive integer")
         variables = {
             "entityKey": kwargs.pop("entity_key"),
             "entityType": kwargs.pop("entity_type"),
@@ -614,6 +652,19 @@ class JupiterOneClient:
             timestamp (int, optional): Timestamp for the deletion. Defaults to None.
             hard_delete (bool): Whether to perform a hard delete. Defaults to True.
         """
+        # Validate required parameters
+        if not entity_id:
+            raise JupiterOneClientError("entity_id is required")
+        self._validate_entity_id(entity_id)
+        
+        # Validate timestamp if provided
+        if timestamp is not None:
+            if not isinstance(timestamp, int) or timestamp <= 0:
+                raise JupiterOneClientError("timestamp must be a positive integer")
+        
+        # Validate hard_delete
+        if not isinstance(hard_delete, bool):
+            raise JupiterOneClientError("hard_delete must be a boolean")
         variables: Dict[str, Any] = {"entityId": entity_id, "hardDelete": hard_delete}
         if timestamp:
             variables["timestamp"] = timestamp
@@ -628,6 +679,14 @@ class JupiterOneClient:
             entity_id (str): The _id of the entity to update
             properties (dict): Dictionary of key/value entity properties
         """
+        # Validate required parameters
+        if not entity_id:
+            raise JupiterOneClientError("entity_id is required")
+        self._validate_entity_id(entity_id)
+        
+        if not properties:
+            raise JupiterOneClientError("properties is required")
+        self._validate_properties(properties)
         variables = {"entityId": entity_id, "properties": properties}
         response = self._execute_query(UPDATE_ENTITY, variables=variables)
         return response["data"]["updateEntity"]
@@ -643,6 +702,39 @@ class JupiterOneClient:
             from_entity_id (str): Entity ID of the source vertex
             to_entity_id (str): Entity ID of the destination vertex
         """
+        # Validate required parameters
+        relationship_key = kwargs.get("relationship_key")
+        relationship_type = kwargs.get("relationship_type")
+        relationship_class = kwargs.get("relationship_class")
+        from_entity_id = kwargs.get("from_entity_id")
+        to_entity_id = kwargs.get("to_entity_id")
+        
+        if not relationship_key:
+            raise JupiterOneClientError("relationship_key is required")
+        if not isinstance(relationship_key, str) or not relationship_key.strip():
+            raise JupiterOneClientError("relationship_key must be a non-empty string")
+        
+        if not relationship_type:
+            raise JupiterOneClientError("relationship_type is required")
+        if not isinstance(relationship_type, str) or not relationship_type.strip():
+            raise JupiterOneClientError("relationship_type must be a non-empty string")
+        
+        if not relationship_class:
+            raise JupiterOneClientError("relationship_class is required")
+        if not isinstance(relationship_class, str) or not relationship_class.strip():
+            raise JupiterOneClientError("relationship_class must be a non-empty string")
+        
+        if not from_entity_id:
+            raise JupiterOneClientError("from_entity_id is required")
+        self._validate_entity_id(from_entity_id, "from_entity_id")
+        
+        if not to_entity_id:
+            raise JupiterOneClientError("to_entity_id is required")
+        self._validate_entity_id(to_entity_id, "to_entity_id")
+        
+        # Validate properties if provided
+        if "properties" in kwargs and kwargs["properties"] is not None:
+            self._validate_properties(kwargs["properties"])
         variables = {
             "relationshipKey": kwargs.pop("relationship_key"),
             "relationshipType": kwargs.pop("relationship_type"),

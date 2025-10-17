@@ -83,7 +83,7 @@ def test_execute_query():
         content_type='application/json',
     )
 
-    j1 = JupiterOneClient(account='testAccount', token='testToken')
+    j1 = JupiterOneClient(account='testAccount', token='testToken1234567890')
     query = "find Host with _id='1'"
     variables = {
         'query': query,
@@ -110,7 +110,7 @@ def test_limit_skip_query_v1():
         content_type='application/json',
     )
 
-    j1 = JupiterOneClient(account='testAccount', token='testToken')
+    j1 = JupiterOneClient(account='testAccount', token='testToken1234567890')
     query = "find Host with _id='1'"
     response = j1.query_v1(
         query=query,
@@ -139,7 +139,7 @@ def test_cursor_query_v1():
         content_type='application/json',
     )
 
-    j1 = JupiterOneClient(account='testAccount', token='testToken')
+    j1 = JupiterOneClient(account='testAccount', token='testToken1234567890')
     query = "find Host with _id='1'"
 
     response = j1.query_v1(
@@ -186,7 +186,7 @@ def test_limit_skip_tree_query_v1():
         content_type='application/json',
     )
 
-    j1 = JupiterOneClient(account='testAccount', token='testToken')
+    j1 = JupiterOneClient(account='testAccount', token='testToken1234567890')
     query = "find Host with _id='1' return tree"
     response = j1.query_v1(
         query=query,
@@ -236,7 +236,7 @@ def test_cursor_tree_query_v1():
         content_type='application/json',
     )
 
-    j1 = JupiterOneClient(account='testAccount', token='testToken')
+    j1 = JupiterOneClient(account='testAccount', token='testToken1234567890')
     query = "find Host with _id='1' return tree"
     response = j1.query_v1(query)
 
@@ -268,7 +268,7 @@ def test_retry_on_limit_skip_query():
         content_type='application/json',
     )
 
-    j1 = JupiterOneClient(account='testAccount', token='testToken')
+    j1 = JupiterOneClient(account='testAccount', token='testToken1234567890')
     query = "find Host with _id='1'"
     response = j1.query_v1(
         query=query,
@@ -302,7 +302,7 @@ def test_retry_on_cursor_query():
         content_type='application/json',
     )
 
-    j1 = JupiterOneClient(account='testAccount', token='testToken')
+    j1 = JupiterOneClient(account='testAccount', token='testToken1234567890')
     query = "find Host with _id='1'"
     response = j1.query_v1(
         query=query
@@ -322,7 +322,7 @@ def test_avoid_retry_on_limit_skip_query():
         content_type='application/json',
     )
 
-    j1 = JupiterOneClient(account='testAccount', token='testToken')
+    j1 = JupiterOneClient(account='testAccount', token='testToken1234567890')
     query = "find Host with _id='1'"
     with pytest.raises(JupiterOneApiError):
         j1.query_v1(
@@ -340,7 +340,7 @@ def test_avoid_retry_on_cursor_query():
         content_type='application/json',
     )
 
-    j1 = JupiterOneClient(account='testAccount', token='testToken')
+    j1 = JupiterOneClient(account='testAccount', token='testToken1234567890')
     query = "find Host with _id='1'"
     with pytest.raises(JupiterOneApiError):
         j1.query_v1(
@@ -356,7 +356,7 @@ def test_warn_limit_and_skip_deprecated():
         content_type='application/json',
     )
 
-    j1 = JupiterOneClient(account='testAccount', token='testToken')
+    j1 = JupiterOneClient(account='testAccount', token='testToken1234567890')
     query = "find Host with _id='1'"
 
     with pytest.warns(DeprecationWarning):

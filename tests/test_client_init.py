@@ -45,12 +45,12 @@ class TestClientInit:
 
     def test_client_init_empty_account(self):
         """Test client initialization with empty account"""
-        with pytest.raises(JupiterOneClientError, match="account is required"):
+        with pytest.raises(JupiterOneClientError, match="Account cannot be empty"):
             JupiterOneClient(account="", token="test-token")
 
     def test_client_init_empty_token(self):
         """Test client initialization with empty token"""
-        with pytest.raises(JupiterOneClientError, match="token is required"):
+        with pytest.raises(JupiterOneClientError, match="Token cannot be empty"):
             JupiterOneClient(account="test-account", token="")
 
     def test_client_init_none_account(self):

@@ -37,7 +37,7 @@ def test_tree_query_v1():
         content_type='application/json',
     )
 
-    j1 = JupiterOneClient(account='testAccount', token='testToken')
+    j1 = JupiterOneClient(account='testAccount', token='testToken1234567890')
     response = j1.create_entity(
         entity_key='host1',
         entity_type='test_host',
