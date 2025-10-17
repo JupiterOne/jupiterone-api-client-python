@@ -128,8 +128,7 @@ entity = j1.create_entity(
    entity_key='my-unique-key',
    entity_type='my_type',
    entity_class='MyClass',
-   properties=properties,
-   timestamp=int(time.time()) * 1000 # Optional, defaults to current datetime
+   properties=properties
 )
 print(entity['entity'])
 
