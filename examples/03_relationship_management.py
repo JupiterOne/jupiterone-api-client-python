@@ -100,11 +100,9 @@ def create_relationship_examples(j1, from_entity_id, to_entity_id):
             'version': '2.1.0',
             'installPath': '/usr/local/bin/software',
             'permissions': ['read', 'execute'],
-            'metadata': {
-                'installer': 'package_manager',
-                'verified': True,
-                'checksum': 'sha256:abc123...'
-            },
+            'installer': 'package_manager',
+            'verified': True,
+            'checksum': 'sha256:abc123...',
             'tag.InstallationType': 'automated',
             'tag.Verified': 'true'
         }
@@ -142,11 +140,9 @@ def update_relationship_examples(j1, relationship_id, from_entity_id, to_entity_
             'lastModified': int(time.time()) * 1000,
             'modifiedBy': 'security_team',
             'expiresOn': int(time.time() + 86400) * 1000,  # 24 hours from now
-            'auditLog': {
-                'previousLevel': 'write',
-                'reason': 'promotion_requested',
-                'approvedBy': 'security_manager'
-            }
+            'previousLevel': 'write',
+            'promotionReason': 'promotion_requested',
+            'approvedBy': 'security_manager'
         }
     )
     print(f"Updated with complex properties\n")
