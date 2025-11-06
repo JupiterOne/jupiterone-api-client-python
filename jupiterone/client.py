@@ -951,12 +951,26 @@ class JupiterOneClient:
         return response
 
     def finalize_sync_job(self, instance_job_id: Optional[str] = None) -> Dict[str, Any]:
-        """Start a synchronization job.
+        """Finalize a synchronization job.
 
         args:
             instance_job_id (str): The "Job ID" for the Custom Integration job
         """
         endpoint = f"/persister/synchronization/jobs/{instance_job_id}/finalize"
+
+        data = {}
+
+        response = self._execute_syncapi_request(endpoint=endpoint, payload=data)
+
+        return response
+
+    def abort_sync_job(self, instance_job_id: Optional[str] = None) -> Dict[str, Any]:
+        """Abort a synchronization job.
+
+        args:
+            instance_job_id (str): The "Job ID" for the Custom Integration job to abort
+        """
+        endpoint = f"/persister/synchronization/jobs/{instance_job_id}/abort"
 
         data = {}
 
