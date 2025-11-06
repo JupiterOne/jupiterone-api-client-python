@@ -531,6 +531,17 @@ result = j1.upload_combined_batch_json(
 print(f"Uploaded {len(combined_payload['entities'])} entities and {len(combined_payload['relationships'])} relationships")
 ```
 
+##### Abort Synchronization Job
+```python
+# Abort the sync job
+result = j1.abort_sync_job(instance_job_id='<id-of-integration-sync-job>')
+print(f"Abort sync job: {result['status'].get('id')}")
+
+# Check job status
+if result['job']['status'] == 'ABORTED':
+    print("Sync job Abort successfully")
+```
+
 ##### Finalize Synchronization Job
 
 ```python
