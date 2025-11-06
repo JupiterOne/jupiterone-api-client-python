@@ -964,13 +964,13 @@ class JupiterOneClient:
 
         return response
 
-    def abort_sync_job(self, instance_job_id: Optional[str] = None) -> Dict[str, Any]:
+    def abort_sync_job(self, sync_job_id: Optional[str] = None) -> Dict[str, Any]:
         """Abort a synchronization job.
 
         args:
-            instance_job_id (str): The "Job ID" for the Custom Integration job to abort
+            sync_job_id (str): The "Job ID" for the Custom Integration job to abort
         """
-        endpoint = f"/persister/synchronization/jobs/{instance_job_id}/abort"
+        endpoint = f"/persister/synchronization/jobs/{sync_job_id}/abort"
 
         data = {}
 
