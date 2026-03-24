@@ -292,12 +292,18 @@ j1.update_relationship(
 ##### Delete a relationship
 
 ```python
-# Delete by relationship ID
-j1.delete_relationship(relationship_id='<id-of-relationship-to-delete>')
+# Delete a relationship (requires relationship ID, source entity ID, and target entity ID)
+j1.delete_relationship(
+    relationship_id='<id-of-relationship-to-delete>',
+    from_entity_id='<id-of-source-entity>',
+    to_entity_id='<id-of-destination-entity>'
+)
 
 # Delete with timestamp
 j1.delete_relationship(
     relationship_id='<id-of-relationship-to-delete>',
+    from_entity_id='<id-of-source-entity>',
+    to_entity_id='<id-of-destination-entity>',
     timestamp=int(time.time()) * 1000
 )
 ```

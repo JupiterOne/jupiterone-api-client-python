@@ -112,7 +112,11 @@ def bulk_operations_examples(j1):
         for rel_data in relationships_to_create:
             try:
                 relationship = j1.create_relationship(**rel_data)
-                created_relationships.append(relationship['relationship']['_id'])
+                created_relationships.append({
+                    'id': relationship['relationship']['_id'],
+                    'from': rel_data['from_entity_id'],
+                    'to': rel_data['to_entity_id']
+                })
                 print(f"Created relationship: {relationship['relationship']['_id']}")
             except Exception as e:
                 print(f"Error creating relationship: {e}")
@@ -137,29 +141,35 @@ def bulk_operations_examples(j1):
         
         # 4. Bulk relationship updates
         print("4. Bulk relationship updates:")
-        for rel_id in created_relationships:
+        for rel in created_relationships:
             try:
                 j1.update_relationship(
-                    relationship_id=rel_id,
+                    relationship_id=rel['id'],
+                    from_entity_id=rel['from'],
+                    to_entity_id=rel['to'],
                     properties={
                         "lastUpdated": int(time.time()) * 1000,
                         "tag.BulkUpdated": "true"
                     }
                 )
-                print(f"Updated relationship: {rel_id}")
+                print(f"Updated relationship: {rel['id']}")
             except Exception as e:
-                print(f"Error updating relationship {rel_id}: {e}")
+                print(f"Error updating relationship {rel['id']}: {e}")
         print()
         
         # 5. Bulk deletion
         print("5. Bulk deletion:")
         # Delete relationships first
-        for rel_id in created_relationships:
+        for rel in created_relationships:
             try:
-                j1.delete_relationship(relationship_id=rel_id)
-                print(f"Deleted relationship: {rel_id}")
+                j1.delete_relationship(
+                    relationship_id=rel['id'],
+                    from_entity_id=rel['from'],
+                    to_entity_id=rel['to']
+                )
+                print(f"Deleted relationship: {rel['id']}")
             except Exception as e:
-                print(f"Error deleting relationship {rel_id}: {e}")
+                print(f"Error deleting relationship {rel['id']}: {e}")
         
         # Then delete entities
         for entity_id in created_entities:

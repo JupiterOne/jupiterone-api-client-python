@@ -85,7 +85,11 @@ print("create_relationship()")
 print(create_relationship_r)
 
 # delete_relationship
-delete_relationship_r = j1.delete_relationship(relationship_id=create_relationship_r['relationship']['_id'])
+delete_relationship_r = j1.delete_relationship(
+    relationship_id=create_relationship_r['relationship']['_id'],
+    from_entity_id=create_r['entity']['_id'],
+    to_entity_id=create_r_2['entity']['_id']
+)
 print("delete_relationship()")
 print(delete_relationship_r)
 

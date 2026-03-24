@@ -42,7 +42,11 @@ def test_tree_query_v1():
     )
 
     j1 = JupiterOneClient(account='testAccount', token='testToken1234567890')
-    response = j1.delete_relationship('1')
+    response = j1.delete_relationship(
+        relationship_id='1',
+        from_entity_id='2222222222',
+        to_entity_id='3333333333'
+    )
 
     assert type(response) == dict
     assert type(response['relationship']) == dict

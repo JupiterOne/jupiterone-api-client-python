@@ -117,8 +117,18 @@ mutation UpdateRelationship(
 }
 """
 DELETE_RELATIONSHIP = """
-  mutation DeleteRelationship($relationshipId: String! $timestamp: Long) {
-    deleteRelationship (relationshipId: $relationshipId, timestamp: $timestamp) {
+  mutation DeleteRelationship(
+    $relationshipId: String!
+    $fromEntityId: String!
+    $toEntityId: String!
+    $timestamp: Long
+  ) {
+    deleteRelationship(
+      relationshipId: $relationshipId
+      fromEntityId: $fromEntityId
+      toEntityId: $toEntityId
+      timestamp: $timestamp
+    ) {
       relationship {
         _id
       }
