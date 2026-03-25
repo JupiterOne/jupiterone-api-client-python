@@ -298,14 +298,6 @@ j1.delete_relationship(
     from_entity_id='<id-of-source-entity>',
     to_entity_id='<id-of-destination-entity>'
 )
-
-# Delete with timestamp
-j1.delete_relationship(
-    relationship_id='<id-of-relationship-to-delete>',
-    from_entity_id='<id-of-source-entity>',
-    to_entity_id='<id-of-destination-entity>',
-    timestamp=int(time.time()) * 1000
-)
 ```
 
 ##### Fetch Graph Entity Properties

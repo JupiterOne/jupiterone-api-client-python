@@ -769,7 +769,6 @@ class JupiterOneClient:
         relationship_id: Optional[str] = None,
         from_entity_id: Optional[str] = None,
         to_entity_id: Optional[str] = None,
-        timestamp: Optional[int] = None,
     ) -> Dict[str, Any]:
         """Deletes a relationship between two entities.
 
@@ -777,7 +776,6 @@ class JupiterOneClient:
             relationship_id (str): The _id of the relationship to delete
             from_entity_id (str): The _id of the source entity
             to_entity_id (str): The _id of the target entity
-            timestamp (int, optional): Timestamp for the deletion
         """
         if not relationship_id:
             raise JupiterOneClientError("relationship_id is required")
@@ -792,17 +790,11 @@ class JupiterOneClient:
             raise JupiterOneClientError("to_entity_id is required")
         self._validate_entity_id(to_entity_id, "to_entity_id")
 
-        if timestamp is not None:
-            if not isinstance(timestamp, int) or timestamp <= 0:
-                raise JupiterOneClientError("timestamp must be a positive integer")
-
         variables: Dict[str, Any] = {
             "relationshipId": relationship_id,
             "fromEntityId": from_entity_id,
             "toEntityId": to_entity_id,
         }
-        if timestamp is not None:
-            variables["timestamp"] = timestamp
 
         response = self._execute_query(DELETE_RELATIONSHIP, variables=variables)
         return response["data"]["deleteRelationship"]

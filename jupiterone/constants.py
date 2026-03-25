@@ -121,13 +121,11 @@ DELETE_RELATIONSHIP = """
     $relationshipId: String!
     $fromEntityId: String!
     $toEntityId: String!
-    $timestamp: Long
   ) {
     deleteRelationship(
       relationshipId: $relationshipId
       fromEntityId: $fromEntityId
       toEntityId: $toEntityId
-      timestamp: $timestamp
     ) {
       relationship {
         _id

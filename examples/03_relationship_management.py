@@ -180,7 +180,6 @@ def delete_relationship_examples(j1, relationship_id, from_entity_id, to_entity_
     
     print("=== Relationship Deletion Examples ===\n")
     
-    # 1. Basic deletion
     print("1. Deleting a relationship:")
     delete_result = j1.delete_relationship(
         relationship_id=relationship_id,
@@ -188,16 +187,6 @@ def delete_relationship_examples(j1, relationship_id, from_entity_id, to_entity_
         to_entity_id=to_entity_id
     )
     print(f"Deleted relationship: {delete_result['relationship']['_id']}\n")
-    
-    # 2. Deletion with timestamp
-    print("2. Deleting with specific timestamp:")
-    j1.delete_relationship(
-        relationship_id=relationship_id,
-        from_entity_id=from_entity_id,
-        to_entity_id=to_entity_id,
-        timestamp=int(time.time()) * 1000
-    )
-    print(f"Deleted with timestamp\n")
 
 def relationship_lifecycle_example(j1, from_entity_id, to_entity_id):
     """Demonstrate complete relationship lifecycle."""
