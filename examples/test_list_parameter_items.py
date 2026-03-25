@@ -12,9 +12,9 @@ Prerequisites (environment variables):
 - (optional) JUPITERONE_SYNC_URL
 
 Usage:
-  python test_list_parameter_21_items.py <number_of_items>
-  python test_list_parameter_21_items.py 21
-  python test_list_parameter_21_items.py 50
+  python test_list_parameter_items.py <number_of_items>
+  python test_list_parameter_items.py 21
+  python test_list_parameter_items.py 50
 """
 
 import os
