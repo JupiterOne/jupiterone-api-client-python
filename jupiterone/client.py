@@ -764,13 +764,37 @@ class JupiterOneClient:
         response = self._execute_query(query=UPDATE_RELATIONSHIP, variables=variables)
         return response["data"]["updateRelationship"]
 
-    def delete_relationship(self, relationship_id: Optional[str] = None) -> Dict[str, Any]:
+    def delete_relationship(
+        self,
+        relationship_id: Optional[str] = None,
+        from_entity_id: Optional[str] = None,
+        to_entity_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """Deletes a relationship between two entities.
 
         args:
-            relationship_id (str): The ID of the relationship
+            relationship_id (str): The _id of the relationship to delete
+            from_entity_id (str): The _id of the source entity
+            to_entity_id (str): The _id of the target entity
         """
-        variables = {"relationshipId": relationship_id}
+        if not relationship_id:
+            raise JupiterOneClientError("relationship_id is required")
+        if not isinstance(relationship_id, str) or not relationship_id.strip():
+            raise JupiterOneClientError("relationship_id must be a non-empty string")
+
+        if not from_entity_id:
+            raise JupiterOneClientError("from_entity_id is required")
+        self._validate_entity_id(from_entity_id, "from_entity_id")
+
+        if not to_entity_id:
+            raise JupiterOneClientError("to_entity_id is required")
+        self._validate_entity_id(to_entity_id, "to_entity_id")
+
+        variables: Dict[str, Any] = {
+            "relationshipId": relationship_id,
+            "fromEntityId": from_entity_id,
+            "toEntityId": to_entity_id,
+        }
 
         response = self._execute_query(DELETE_RELATIONSHIP, variables=variables)
         return response["data"]["deleteRelationship"]

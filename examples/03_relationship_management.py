@@ -175,23 +175,18 @@ def update_relationship_examples(j1, relationship_id, from_entity_id, to_entity_
     )
     print(f"Updated with custom timestamp\n")
 
-def delete_relationship_examples(j1, relationship_id):
+def delete_relationship_examples(j1, relationship_id, from_entity_id, to_entity_id):
     """Demonstrate relationship deletion."""
     
     print("=== Relationship Deletion Examples ===\n")
     
-    # 1. Basic deletion
     print("1. Deleting a relationship:")
-    delete_result = j1.delete_relationship(relationship_id=relationship_id)
-    print(f"Deleted relationship: {delete_result['relationship']['_id']}\n")
-    
-    # 2. Deletion with timestamp
-    print("2. Deleting with specific timestamp:")
-    j1.delete_relationship(
+    delete_result = j1.delete_relationship(
         relationship_id=relationship_id,
-        timestamp=int(time.time()) * 1000
+        from_entity_id=from_entity_id,
+        to_entity_id=to_entity_id
     )
-    print(f"Deleted with timestamp\n")
+    print(f"Deleted relationship: {delete_result['relationship']['_id']}\n")
 
 def relationship_lifecycle_example(j1, from_entity_id, to_entity_id):
     """Demonstrate complete relationship lifecycle."""
@@ -234,7 +229,11 @@ def relationship_lifecycle_example(j1, from_entity_id, to_entity_id):
     
     # 4. Delete relationship
     print("4. Deleting relationship:")
-    j1.delete_relationship(relationship_id=relationship_id)
+    j1.delete_relationship(
+        relationship_id=relationship_id,
+        from_entity_id=from_entity_id,
+        to_entity_id=to_entity_id
+    )
     print("Deleted successfully")
     
     # 5. Verify deletion
@@ -281,14 +280,22 @@ def network_relationship_example(j1):
                 'bandwidth': '100Mbps'
             }
         )
-        relationships.append(relationship['relationship']['_id'])
+        relationships.append({
+            'id': relationship['relationship']['_id'],
+            'from': entities[i],
+            'to': entities[i+1]
+        })
         print(f"Created connection {i}: {relationship['relationship']['_id']}")
     
     print(f"Created {len(entities)} nodes with {len(relationships)} connections")
     
     # Clean up
-    for relationship_id in relationships:
-        j1.delete_relationship(relationship_id=relationship_id)
+    for rel in relationships:
+        j1.delete_relationship(
+            relationship_id=rel['id'],
+            from_entity_id=rel['from'],
+            to_entity_id=rel['to']
+        )
     for entity_id in entities:
         j1.delete_entity(entity_id=entity_id)
     
@@ -356,7 +363,11 @@ def access_control_relationship_example(j1):
     print("Updated access level to write")
     
     # Clean up
-    j1.delete_relationship(relationship_id=access_relationship['relationship']['_id'])
+    j1.delete_relationship(
+        relationship_id=access_relationship['relationship']['_id'],
+        from_entity_id=user_entity['entity']['_id'],
+        to_entity_id=resource_entity['entity']['_id']
+    )
     j1.delete_entity(entity_id=user_entity['entity']['_id'])
     j1.delete_entity(entity_id=resource_entity['entity']['_id'])
     
@@ -397,7 +408,11 @@ def main():
         relationships_to_clean = [basic_rel, props_rel, complex_rel]
         for rel in relationships_to_clean:
             try:
-                j1.delete_relationship(relationship_id=rel['relationship']['_id'])
+                j1.delete_relationship(
+                    relationship_id=rel['relationship']['_id'],
+                    from_entity_id=from_entity_id,
+                    to_entity_id=to_entity_id
+                )
                 print(f"Cleaned up relationship: {rel['relationship']['_id']}")
             except Exception:
                 # Relationship may already be deleted or not exist
