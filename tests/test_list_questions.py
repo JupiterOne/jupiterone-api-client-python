@@ -15,7 +15,7 @@ class TestListQuestions:
         """Set up test fixtures"""
         self.client = JupiterOneClient(account="test-account", token="test-token")
 
-    @patch('jupiterone.client.requests.post')
+    @patch('requests.Session.post')
     def test_list_questions_basic(self, mock_post):
         """Test basic questions listing with single page"""
         # Mock response for single page
@@ -101,7 +101,7 @@ class TestListQuestions:
         assert call_args[1]['json']['query'] == QUESTIONS
         assert call_args[1]['json']['flags']['variableResultSize'] is True
 
-    @patch('jupiterone.client.requests.post')
+    @patch('requests.Session.post')
     def test_list_questions_with_pagination(self, mock_post):
         """Test questions listing with multiple pages"""
         # Mock first page response
@@ -198,7 +198,7 @@ class TestListQuestions:
         assert second_call[1]['json']['variables']['cursor'] == "cursor-1"
         assert second_call[1]['json']['flags']['variableResultSize'] is True
 
-    @patch('jupiterone.client.requests.post')
+    @patch('requests.Session.post')
     def test_list_questions_empty_response(self, mock_post):
         """Test questions listing with empty response"""
         # Mock empty response
@@ -227,7 +227,7 @@ class TestListQuestions:
         # Verify API call
         mock_post.assert_called_once()
 
-    @patch('jupiterone.client.requests.post')
+    @patch('requests.Session.post')
     def test_list_questions_with_compliance_data(self, mock_post):
         """Test questions listing with compliance metadata"""
         # Mock response with compliance data
@@ -279,7 +279,7 @@ class TestListQuestions:
         assert compliance['requirements'] == ["2.1", "2.2", "2.3"]
         assert compliance['controls'] == ["Data Protection", "Network Security"]
 
-    @patch('jupiterone.client.requests.post')
+    @patch('requests.Session.post')
     def test_list_questions_with_variables(self, mock_post):
         """Test questions listing with variable definitions"""
         # Mock response with variables
@@ -341,7 +341,7 @@ class TestListQuestions:
         assert variables[1]['required'] is False
         assert variables[1]['default'] == "us-east-1"
 
-    @patch('jupiterone.client.requests.post')
+    @patch('requests.Session.post')
     def test_list_questions_with_polling_intervals(self, mock_post):
         """Test questions listing with different polling intervals"""
         # Mock response with various polling intervals
@@ -413,7 +413,7 @@ class TestListQuestions:
         assert result[1]['showTrend'] is True
         assert result[2]['showTrend'] is False
 
-    @patch('jupiterone.client.requests.post')
+    @patch('requests.Session.post')
     def test_list_questions_error_handling(self, mock_post):
         """Test questions listing with error handling"""
         # Mock error response
@@ -433,7 +433,7 @@ class TestListQuestions:
         with pytest.raises(Exception):
             self.client.list_questions()
 
-    @patch('jupiterone.client.requests.post')
+    @patch('requests.Session.post')
     def test_list_questions_malformed_response(self, mock_post):
         """Test questions listing with malformed response"""
         # Mock malformed response
@@ -466,7 +466,7 @@ class TestListQuestions:
         # Missing fields should be None or not present
         assert 'title' not in question or question['title'] is None
 
-    @patch('jupiterone.client.requests.post')
+    @patch('requests.Session.post')
     def test_list_questions_with_search_query(self, mock_post):
         """Test questions listing with search query parameter"""
         # Mock response for search query
@@ -512,7 +512,7 @@ class TestListQuestions:
         call_args = mock_post.call_args
         assert call_args[1]['json']['variables']['searchQuery'] == "security"
 
-    @patch('jupiterone.client.requests.post')
+    @patch('requests.Session.post')
     def test_list_questions_with_tags_filter(self, mock_post):
         """Test questions listing with tags filter parameter"""
         # Mock response for tags filter
@@ -563,7 +563,7 @@ class TestListQuestions:
         call_args = mock_post.call_args
         assert call_args[1]['json']['variables']['tags'] == ["cis", "aws"]
 
-    @patch('jupiterone.client.requests.post')
+    @patch('requests.Session.post')
     def test_list_questions_with_search_and_tags(self, mock_post):
         """Test questions listing with both search query and tags filter"""
         # Mock response for combined search and tags
@@ -620,7 +620,7 @@ class TestListQuestions:
         assert variables['searchQuery'] == "encryption"
         assert variables['tags'] == ["security", "compliance"]
 
-    @patch('jupiterone.client.requests.post')
+    @patch('requests.Session.post')
     def test_list_questions_with_pagination_and_filters(self, mock_post):
         """Test questions listing with filters and pagination"""
         # Mock first page response with filters
@@ -709,7 +709,7 @@ class TestListQuestions:
         assert second_variables['tags'] == ["security"]
         assert second_variables['cursor'] == "cursor-1"
 
-    @patch('jupiterone.client.requests.post')
+    @patch('requests.Session.post')
     def test_list_questions_no_parameters(self, mock_post):
         """Test questions listing with no parameters (default behavior)"""
         # Mock response for no parameters
@@ -753,7 +753,7 @@ class TestListQuestions:
         call_args = mock_post.call_args
         assert call_args[1]['json']['variables'] == {}
 
-    @patch('jupiterone.client.requests.post')
+    @patch('requests.Session.post')
     def test_list_questions_empty_search_results(self, mock_post):
         """Test questions listing with search that returns no results"""
         # Mock empty response for search
@@ -784,7 +784,7 @@ class TestListQuestions:
         call_args = mock_post.call_args
         assert call_args[1]['json']['variables']['searchQuery'] == "nonexistent"
 
-    @patch('jupiterone.client.requests.post')
+    @patch('requests.Session.post')
     def test_list_questions_empty_tags_results(self, mock_post):
         """Test questions listing with tags filter that returns no results"""
         # Mock empty response for tags filter

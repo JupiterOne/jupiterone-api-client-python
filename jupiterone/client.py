@@ -68,6 +68,7 @@ class JupiterOneClient:
 
     # pylint: disable=too-many-instance-attributes
 
+    SDK_VERSION: str = "2.3.0"
     DEFAULT_URL: str = "https://graphql.us.jupiterone.io"
     SYNC_API_URL: str = "https://api.us.jupiterone.io"
 
@@ -77,6 +78,7 @@ class JupiterOneClient:
         token: Optional[str] = None,
         url: str = DEFAULT_URL,
         sync_url: str = SYNC_API_URL,
+        user_agent: Optional[str] = None,
     ) -> None:
         # Validate inputs
         self._validate_constructor_inputs(account, token, url, sync_url)
@@ -84,14 +86,20 @@ class JupiterOneClient:
         self.token: Optional[str] = token
         self.graphql_url: str = url
         self.sync_url: str = sync_url
+
+        base_ua = f"jupiterone-client-python/{self.SDK_VERSION}"
+        full_ua = f"{base_ua} {user_agent}" if user_agent else base_ua
+
         self.headers: Dict[str, str] = {
             "Authorization": "Bearer {}".format(self.token or ""),
             "JupiterOne-Account": self.account or "",
             "Content-Type": "application/json",
+            "User-Agent": full_ua,
         }
 
         # Initialize session with retry logic
         self.session: requests.Session = requests.Session()
+        self.session.headers["User-Agent"] = full_ua
         retries = Retry(
             total=5,
             backoff_factor=1,
@@ -1204,8 +1212,8 @@ class JupiterOneClient:
 
         data = {"query": LIST_RULE_INSTANCES, "flags": {"variableResultSize": True}}
 
-        r = requests.post(
-            url=self.graphql_url, headers=self.headers, json=data, verify=True
+        r = self.session.post(
+            url=self.graphql_url, headers=self.headers, json=data, timeout=60
         ).json()
         results.extend(r["data"]["listRuleInstances"]["questionInstances"])
 
@@ -1220,8 +1228,8 @@ class JupiterOneClient:
                 "flags": {"variableResultSize": True},
             }
 
-            r = requests.post(
-                url=self.graphql_url, headers=self.headers, json=data, verify=True
+            r = self.session.post(
+                url=self.graphql_url, headers=self.headers, json=data, timeout=60
             ).json()
             results.extend(r["data"]["listRuleInstances"]["questionInstances"])
 
@@ -1233,8 +1241,8 @@ class JupiterOneClient:
 
         data = {"query": LIST_RULE_INSTANCES, "flags": {"variableResultSize": True}}
 
-        r = requests.post(
-            url=self.graphql_url, headers=self.headers, json=data, verify=True
+        r = self.session.post(
+            url=self.graphql_url, headers=self.headers, json=data, timeout=60
         ).json()
         results.extend(r["data"]["listRuleInstances"]["questionInstances"])
 
@@ -1249,8 +1257,8 @@ class JupiterOneClient:
                 "flags": {"variableResultSize": True},
             }
 
-            r = requests.post(
-                url=self.graphql_url, headers=self.headers, json=data, verify=True
+            r = self.session.post(
+                url=self.graphql_url, headers=self.headers, json=data, timeout=60
             ).json()
             results.extend(r["data"]["listRuleInstances"]["questionInstances"])
 
@@ -1597,8 +1605,8 @@ class JupiterOneClient:
             }
         }
 
-        r = requests.post(
-            url=self.graphql_url, headers=self.headers, json=data, verify=True
+        r = self.session.post(
+            url=self.graphql_url, headers=self.headers, json=data, timeout=60
         ).json()
         results.extend(r["data"]["questions"]["questions"])
 
@@ -1619,8 +1627,8 @@ class JupiterOneClient:
                 },
             }
 
-            r = requests.post(
-                url=self.graphql_url, headers=self.headers, json=data, verify=True
+            r = self.session.post(
+                url=self.graphql_url, headers=self.headers, json=data, timeout=60
             ).json()
             results.extend(r["data"]["questions"]["questions"])
 
@@ -1925,8 +1933,8 @@ class JupiterOneClient:
 
         data = {"query": PARAMETER_LIST, "flags": {"variableResultSize": True}}
 
-        r = requests.post(
-            url=self.graphql_url, headers=self.headers, json=data, verify=True
+        r = self.session.post(
+            url=self.graphql_url, headers=self.headers, json=data, timeout=60
         ).json()
         results.extend(r["data"]["parameterList"]["items"])
 
@@ -1940,8 +1948,8 @@ class JupiterOneClient:
                 "flags": {"variableResultSize": True},
             }
 
-            r = requests.post(
-                url=self.graphql_url, headers=self.headers, json=data, verify=True
+            r = self.session.post(
+                url=self.graphql_url, headers=self.headers, json=data, timeout=60
             ).json()
             results.extend(r["data"]["parameterList"]["items"])
 
