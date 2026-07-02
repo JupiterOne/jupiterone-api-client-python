@@ -14,7 +14,7 @@ class TestMiscMethods:
         """Set up test fixtures"""
         self.client = JupiterOneClient(account="test-account", token="test-token")
 
-    @patch('jupiterone.client.requests.post')
+    @patch('requests.Session.post')
     def test_list_questions(self, mock_post):
         """Test list_questions method"""
         # Mock first page response
@@ -91,7 +91,7 @@ class TestMiscMethods:
         assert result == mock_response
         mock_execute_query.assert_called_once()
 
-    @patch('jupiterone.client.requests.post')
+    @patch('requests.Session.post')
     def test_list_account_parameters(self, mock_post):
         """Test list_account_parameters method"""
         # Mock first page response

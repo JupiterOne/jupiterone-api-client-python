@@ -15,7 +15,7 @@ class TestAlertRuleMethods:
         """Set up test fixtures"""
         self.client = JupiterOneClient(account="test-account", token="test-token")
 
-    @patch('jupiterone.client.requests.post')
+    @patch('requests.Session.post')
     def test_list_alert_rules(self, mock_post):
         """Test list_alert_rules method"""
         # Mock first page response
@@ -55,7 +55,7 @@ class TestAlertRuleMethods:
         assert result[1]["id"] == "rule-2"
         assert mock_post.call_count == 2
 
-    @patch('jupiterone.client.requests.post')
+    @patch('requests.Session.post')
     def test_get_alert_rule_details_found(self, mock_post):
         """Test get_alert_rule_details method - rule found"""
         # Mock response with the target rule
@@ -81,7 +81,7 @@ class TestAlertRuleMethods:
         assert result["id"] == "rule-1"
         assert result["name"] == "Test Rule"
 
-    @patch('jupiterone.client.requests.post')
+    @patch('requests.Session.post')
     def test_get_alert_rule_details_not_found(self, mock_post):
         """Test get_alert_rule_details method - rule not found"""
         # Mock response without the target rule
