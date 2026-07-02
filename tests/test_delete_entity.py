@@ -1,5 +1,4 @@
 import json
-import pytest
 import responses
 
 from jupiterone.client import JupiterOneClient
