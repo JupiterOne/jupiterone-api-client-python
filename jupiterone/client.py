@@ -34,6 +34,7 @@ from jupiterone.constants import (
     INTEGRATION_INSTANCE_EVENT_VALUES,
     ALL_PROPERTIES,
     GET_ENTITY_RAW_DATA,
+    GET_ENTITY_RAW_DATA_V2,
     CREATE_SMARTCLASS,
     CREATE_SMARTCLASS_QUERY,
     EVALUATE_SMARTCLASS,
@@ -872,9 +873,168 @@ class JupiterOneClient:
 
         return return_list
 
+    def _resolve_entity_raw_data_address(self, entity_id: str) -> Dict[str, str]:
+        """Look up the ingestion address of an entity via J1QL.
+
+        Returns a dict with any of the keys "source", "integrationInstanceId",
+        "entityKey" and "entityType" that the entity has. The result is empty if the
+        entity does not exist. Non-integration entities (e.g. unified entities) have
+        no "integrationInstanceId".
+        """
+        escaped_id = entity_id.replace("\\", "\\\\").replace("'", "\\'")
+        query = (
+            f"FIND * WITH _id = '{escaped_id}' AS e "
+            "RETURN e._source AS source, "
+            "e._integrationInstanceId AS integrationInstanceId, "
+            "e._key AS entityKey, "
+            "e._type AS entityType "
+            "LIMIT 1"
+        )
+        rows = self.query_v1(query).get("data") or []
+        if not rows:
+            return {}
+        return {k: v for k, v in rows[0].items() if v}
+
+    @staticmethod
+    def _raw_data_not_available(entity_id: str, message: str) -> Dict[str, Any]:
+        """Build a NOT_AVAILABLE_OR_EXPIRED result without calling the API."""
+        return {
+            "entityId": entity_id,
+            "status": "NOT_AVAILABLE_OR_EXPIRED",
+            "message": message,
+            "collectedAt": None,
+            "payload": [],
+        }
+
+    def _entity_raw_data_variables(
+        self,
+        entity_id: str,
+        source: Optional[str] = None,
+        integration_instance_id: Optional[str] = None,
+        entity_key: Optional[str] = None,
+        entity_type: Optional[str] = None,
+    ) -> Union[Dict[str, Any], Dict[str, str]]:
+        """Build GraphQL variables for entityRawDataV2.
+
+        Any address field not supplied is resolved from the entity itself via J1QL.
+        Returns {"entityId", "address"} on success, or {"notAvailable": message} if
+        the address cannot be determined (entity not found, or not an
+        integration-ingested entity).
+        """
+        if not isinstance(entity_id, str) or not entity_id.strip():
+            raise JupiterOneClientError("entity_id must be a non-empty string")
+
+        address: Dict[str, Any] = {
+            "source": source,
+            "integrationInstanceId": integration_instance_id,
+            "entityKey": entity_key,
+            "entityType": entity_type,
+        }
+
+        if not all(address.values()):
+            resolved = self._resolve_entity_raw_data_address(entity_id)
+            if not resolved:
+                return {
+                    "notAvailable": (
+                        f"No entity with _id '{entity_id}' was found. entity_id must be "
+                        "the entity's '_id' metadata property, not an 'id' property."
+                    )
+                }
+            address = {k: v or resolved.get(k) for k, v in address.items()}
+
+        missing = [k for k, v in address.items() if not v]
+        if missing:
+            return {
+                "notAvailable": (
+                    "Raw data is not available for this entity; it has no ingestion "
+                    f"address ({', '.join(missing)} missing)."
+                )
+            }
+
+        return {"entityId": entity_id, "address": address}
+
+    def fetch_entity_raw_data_v2(
+        self,
+        entity_id: str,
+        source: Optional[str] = None,
+        integration_instance_id: Optional[str] = None,
+        entity_key: Optional[str] = None,
+        entity_type: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Fetch the raw data for an entity using the entityRawDataV2 query.
+
+        Raw data is served from the ingestion pipeline and is retained for 7 days. For
+        the fastest lookup, pass the entity's ingestion address (the entity properties
+        "_source", "_integrationInstanceId", "_key" and "_type"). Any address field
+        that is not supplied is resolved with an extra J1QL query for the entity.
+
+        args:
+            entity_id (str): The entity's "_id" metadata property. Always use "_id";
+                do not use an entity "id" property (or "_key"), which will not match.
+            source (str): The entity's "_source" property
+            integration_instance_id (str): The entity's "_integrationInstanceId" property
+            entity_key (str): The entity's "_key" property
+            entity_type (str): The entity's "_type" property
+
+        Returns:
+            dict: With the keys "entityId", "status" ("AVAILABLE" or
+            "NOT_AVAILABLE_OR_EXPIRED"), "message" (set when not available),
+            "collectedAt" (ISO 8601 sync job start, set when available) and
+            "payload" (a list of {"name", "contentType", "data"}).
+
+        Note:
+            Missing or expired raw data, entities that are not integration-ingested,
+            and unknown entity ids do not raise; they return status
+            "NOT_AVAILABLE_OR_EXPIRED" with an empty payload.
+        """
+        variables = self._entity_raw_data_variables(
+            entity_id,
+            source=source,
+            integration_instance_id=integration_instance_id,
+            entity_key=entity_key,
+            entity_type=entity_type,
+        )
+        if "notAvailable" in variables:
+            return self._raw_data_not_available(entity_id, variables["notAvailable"])
+
+        response = self._execute_query(
+            query=GET_ENTITY_RAW_DATA_V2, variables=variables
+        )
+
+        return response["data"]["entityRawDataV2"]
+
     def fetch_entity_raw_data(self, entity_id: Optional[str] = None) -> Dict[str, Any]:
-        """Fetch the contents of raw data for a given entity in a J1 Account."""
-        variables = {"entityId": entity_id, "source": "integration-managed"}
+        """Fetch the contents of raw data for a given entity in a J1 Account.
+
+        .. deprecated:: 2.4.0
+            Use :meth:`fetch_entity_raw_data_v2`, which returns "status", "message" and
+            "collectedAt" directly and accepts the entity's ingestion address to avoid
+            an extra lookup.
+
+        args:
+            entity_id (str): The entity's "_id" metadata property. Always use "_id";
+                do not use an entity "id" property (or "_key"), which will not match.
+
+        The return value is unchanged: the full GraphQL response with the result under
+        ``["data"]["entityRawDataLegacy"]``. It is now served by ``entityRawDataV2`` and
+        additionally includes "status", "message" and "collectedAt".
+        """
+        warn(
+            "fetch_entity_raw_data() is deprecated and will be removed in a future "
+            "release. Use fetch_entity_raw_data_v2() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
+        variables = self._entity_raw_data_variables(entity_id)
+        if "notAvailable" in variables:
+            return {
+                "data": {
+                    "entityRawDataLegacy": self._raw_data_not_available(
+                        entity_id, variables["notAvailable"]
+                    )
+                }
+            }
 
         response = self._execute_query(query=GET_ENTITY_RAW_DATA, variables=variables)
 

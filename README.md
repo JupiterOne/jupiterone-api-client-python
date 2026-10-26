@@ -327,19 +327,39 @@ for tag in tags:
 ##### Fetch Entity Raw Data
 
 ```python
-# Fetch raw data for a specific entity
-raw_data = j1.fetch_entity_raw_data(entity_id='<id-of-entity>')
-print(f"Raw data keys: {list(raw_data.keys())}")
+# Fetch raw data for a specific entity. The entity's ingestion address
+# (_source, _integrationInstanceId, _key, _type) is looked up automatically.
+raw_data = j1.fetch_entity_raw_data_v2(entity_id='<id-of-entity>')
 
-# Access specific raw data sections
-if 'aws' in raw_data:
-    aws_data = raw_data['aws']
-    print(f"AWS data: {aws_data}")
+if raw_data['status'] == 'AVAILABLE':
+    print(f"Collected at: {raw_data['collectedAt']}")
+    for item in raw_data['payload']:
+        print(item['name'], item['contentType'], item['data'])
+else:
+    # NOT_AVAILABLE_OR_EXPIRED: no raw data, expired (7-day retention), or not an
+    # integration-ingested entity. This does not raise.
+    print(raw_data['message'])
 
-if 'azure' in raw_data:
-    azure_data = raw_data['azure']
-    print(f"Azure data: {azure_data}")
+# For the fastest lookup, pass the entity's ingestion address to skip the extra lookup
+raw_data = j1.fetch_entity_raw_data_v2(
+    entity_id='<id-of-entity>',
+    source='<_source>',
+    integration_instance_id='<_integrationInstanceId>',
+    entity_key='<_key>',
+    entity_type='<_type>',
+)
 ```
+
+> **Always pass the entity's `_id` metadata property as `entity_id`.** Do not use an entity
+> property named `id` (or `_key`); those are different values and will not match the entity,
+> so the call returns `NOT_AVAILABLE_OR_EXPIRED`. To get it in a query, return `_id`:
+> `FIND Host AS h RETURN h._id AS id`.
+
+The result contains `entityId`, `status`, `message`, `collectedAt` and `payload` (a list of `{name, contentType, data}`).
+
+> **Deprecated:** `fetch_entity_raw_data(entity_id=...)` still works and returns the same
+> response shape as before (`['data']['entityRawDataLegacy']`, now with `status`, `message`
+> and `collectedAt` added), but emits a `DeprecationWarning`. Use `fetch_entity_raw_data_v2()`.
 
 ##### Create Integration Instance
 

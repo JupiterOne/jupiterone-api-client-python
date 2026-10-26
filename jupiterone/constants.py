@@ -149,18 +149,37 @@ ALL_PROPERTIES = """
       getAllAssetProperties
     }
 """
-GET_ENTITY_RAW_DATA = """
-    query GetEntityRawData ($entityId: String!, $source: String!,
-        )   {
-        entityRawDataLegacy(entityId: $entityId, , source: $source) {
+GET_ENTITY_RAW_DATA_V2 = """
+    query EntityRawData($entityId: ID!, $address: EntityIngestionAddress!) {
+        entityRawDataV2(entityId: $entityId, address: $address) {
             entityId
+            status
+            message
+            collectedAt
             payload {
-                ... on RawDataJSONEntityLegacy {
-                    contentType
-                    name
-                    data
-                }
-            }    
+                name
+                contentType
+                data
+            }
+        }
+    }
+"""
+# Backwards-compatible query used by the deprecated fetch_entity_raw_data().
+# It is served by entityRawDataV2, but the field is aliased to "entityRawDataLegacy"
+# so the response envelope (data.entityRawDataLegacy.payload[...]) is unchanged for
+# existing callers. status / message / collectedAt are additive fields.
+GET_ENTITY_RAW_DATA = """
+    query GetEntityRawData($entityId: ID!, $address: EntityIngestionAddress!) {
+        entityRawDataLegacy: entityRawDataV2(entityId: $entityId, address: $address) {
+            entityId
+            status
+            message
+            collectedAt
+            payload {
+                name
+                contentType
+                data
+            }
         }
     }
 """

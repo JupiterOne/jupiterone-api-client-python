@@ -36,7 +36,7 @@ This directory contains comprehensive examples demonstrating how to use the Jupi
 - `delete_entity()` - Entity deletion
 - `fetch_all_entity_properties()` - Fetch all properties
 - `fetch_all_entity_tags()` - Fetch all tags
-- `fetch_entity_raw_data()` - Fetch raw entity data
+- `fetch_entity_raw_data_v2()` - Fetch raw entity data (`fetch_entity_raw_data()` is deprecated)
 
 ### 3. **03_relationship_management.py**
 **Purpose**: Relationship creation and management
