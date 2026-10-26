@@ -213,6 +213,7 @@ def data_fetching_examples(j1):
             query='FIND Host AS h RETURN h._id AS id LIMIT 1'
         )['data']
         if entities:
+            # entity_id must be the entity's "_id" metadata property, not an "id" property.
             # The ingestion address is resolved automatically from the entity id
             raw_data = j1.fetch_entity_raw_data_v2(entity_id=entities[0]['id'])
             print(f"Status: {raw_data['status']}")

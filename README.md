@@ -350,6 +350,11 @@ raw_data = j1.fetch_entity_raw_data_v2(
 )
 ```
 
+> **Always pass the entity's `_id` metadata property as `entity_id`.** Do not use an entity
+> property named `id` (or `_key`); those are different values and will not match the entity,
+> so the call returns `NOT_AVAILABLE_OR_EXPIRED`. To get it in a query, return `_id`:
+> `FIND Host AS h RETURN h._id AS id`.
+
 The result contains `entityId`, `status`, `message`, `collectedAt` and `payload` (a list of `{name, contentType, data}`).
 
 > **Deprecated:** `fetch_entity_raw_data(entity_id=...)` still works and returns the same

@@ -120,6 +120,7 @@ print(fetch_all_entity_tags_r)
 
 # fetch_entity_raw_data_v2
 # (fetch_entity_raw_data() is deprecated; use fetch_entity_raw_data_v2())
+# entity_id must be the entity's "_id" metadata property, not an "id" property.
 fetch_entity_raw_data_r = j1.fetch_entity_raw_data_v2(entity_id="<GUID>")
 print("fetch_entity_raw_data_v2()")
 print(json.dumps(fetch_entity_raw_data_r, indent=1))

@@ -934,7 +934,12 @@ class JupiterOneClient:
         if not all(address.values()):
             resolved = self._resolve_entity_raw_data_address(entity_id)
             if not resolved:
-                return {"notAvailable": f"Entity {entity_id} was not found."}
+                return {
+                    "notAvailable": (
+                        f"No entity with _id '{entity_id}' was found. entity_id must be "
+                        "the entity's '_id' metadata property, not an 'id' property."
+                    )
+                }
             address = {k: v or resolved.get(k) for k, v in address.items()}
 
         missing = [k for k, v in address.items() if not v]
@@ -964,7 +969,8 @@ class JupiterOneClient:
         that is not supplied is resolved with an extra J1QL query for the entity.
 
         args:
-            entity_id (str): The "_id" of the entity
+            entity_id (str): The entity's "_id" metadata property. Always use "_id";
+                do not use an entity "id" property (or "_key"), which will not match.
             source (str): The entity's "_source" property
             integration_instance_id (str): The entity's "_integrationInstanceId" property
             entity_key (str): The entity's "_key" property
@@ -1004,6 +1010,10 @@ class JupiterOneClient:
             Use :meth:`fetch_entity_raw_data_v2`, which returns "status", "message" and
             "collectedAt" directly and accepts the entity's ingestion address to avoid
             an extra lookup.
+
+        args:
+            entity_id (str): The entity's "_id" metadata property. Always use "_id";
+                do not use an entity "id" property (or "_key"), which will not match.
 
         The return value is unchanged: the full GraphQL response with the result under
         ``["data"]["entityRawDataLegacy"]``. It is now served by ``entityRawDataV2`` and

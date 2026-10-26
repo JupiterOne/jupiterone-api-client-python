@@ -135,6 +135,8 @@ class TestFetchEntityRawDataV2:
         assert result["status"] == "NOT_AVAILABLE_OR_EXPIRED"
         assert result["entityId"] == ENTITY_ID
         assert result["payload"] == []
+        # points callers at the _id metadata property (not an "id" property)
+        assert "_id" in result["message"]
         mock_execute.assert_not_called()
 
     @patch("jupiterone.client.JupiterOneClient.query_v1")

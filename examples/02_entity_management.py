@@ -177,6 +177,8 @@ def fetch_entity_data_examples(j1):
         )['data']
         if entities:
             entity = entities[0]
+            # entity_id must be the entity's "_id" metadata property (returned here as
+            # "id" via the RETURN alias), not an "id" property on the entity.
             # Passing the entity's ingestion address avoids an extra lookup.
             # If omitted, it is resolved automatically from the entity id.
             raw_data = j1.fetch_entity_raw_data_v2(
