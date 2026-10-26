@@ -118,9 +118,10 @@ fetch_all_entity_tags_r = j1.fetch_all_entity_tags()
 print("fetch_all_entity_tags()")
 print(fetch_all_entity_tags_r)
 
-# fetch_entity_raw_data
-fetch_entity_raw_data_r = j1.fetch_entity_raw_data(entity_id="<GUID>")
-print("fetch_entity_raw_data()")
+# fetch_entity_raw_data_v2
+# (fetch_entity_raw_data() is deprecated; use fetch_entity_raw_data_v2())
+fetch_entity_raw_data_r = j1.fetch_entity_raw_data_v2(entity_id="<GUID>")
+print("fetch_entity_raw_data_v2()")
 print(json.dumps(fetch_entity_raw_data_r, indent=1))
 
 # create_custom_integration_instance

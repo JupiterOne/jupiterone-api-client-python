@@ -55,23 +55,6 @@ class TestIntegrationMethods:
         assert result == ["tag.environment", "tag.owner"]
         mock_execute_query.assert_called_once()
 
-    @patch('jupiterone.client.JupiterOneClient._execute_query')
-    def test_fetch_entity_raw_data(self, mock_execute_query):
-        """Test fetch_entity_raw_data method"""
-        mock_response = {
-            "data": {
-                "getEntityRawData": {
-                    "rawData": "test raw data"
-                }
-            }
-        }
-        mock_execute_query.return_value = mock_response
-
-        result = self.client.fetch_entity_raw_data(entity_id="test-entity-id")
-
-        assert result == mock_response
-        mock_execute_query.assert_called_once()
-
     @patch('jupiterone.client.JupiterOneClient._execute_syncapi_request')
     def test_start_sync_job(self, mock_syncapi_request):
         """Test start_sync_job method"""

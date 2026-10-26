@@ -170,17 +170,29 @@ def fetch_entity_data_examples(j1):
     print("3. Fetching entity raw data:")
     try:
         # First, find an entity to get its ID
-        entities = j1.query_v1(query='FIND Host LIMIT 1')
+        entities = j1.query_v1(
+            query='FIND Host AS h RETURN h._id AS id, h._source AS source, '
+                  'h._integrationInstanceId AS integrationInstanceId, '
+                  'h._key AS entityKey, h._type AS entityType LIMIT 1'
+        )['data']
         if entities:
-            entity_id = entities[0]['_id']
-            raw_data = j1.fetch_entity_raw_data(entity_id=entity_id)
-            print(f"Raw data keys: {list(raw_data.keys())}")
-            
-            # Access specific raw data sections
-            if 'aws' in raw_data:
-                print("AWS data available")
-            if 'azure' in raw_data:
-                print("Azure data available")
+            entity = entities[0]
+            # Passing the entity's ingestion address avoids an extra lookup.
+            # If omitted, it is resolved automatically from the entity id.
+            raw_data = j1.fetch_entity_raw_data_v2(
+                entity_id=entity['id'],
+                source=entity.get('source'),
+                integration_instance_id=entity.get('integrationInstanceId'),
+                entity_key=entity.get('entityKey'),
+                entity_type=entity.get('entityType'),
+            )
+            print(f"Status: {raw_data['status']}")  # AVAILABLE or NOT_AVAILABLE_OR_EXPIRED
+            if raw_data['status'] == 'AVAILABLE':
+                print(f"Collected at: {raw_data['collectedAt']}")
+                for item in raw_data['payload']:
+                    print(f"  {item['name']} ({item['contentType']})")
+            else:
+                print(f"No raw data: {raw_data['message']}")
         else:
             print("No entities found to fetch raw data")
     except Exception as e:

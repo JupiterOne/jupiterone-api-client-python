@@ -209,18 +209,16 @@ def data_fetching_examples(j1):
     print("3. Fetching entity raw data:")
     try:
         # First, find an entity to get its ID
-        entities = j1.query_v1(query='FIND Host LIMIT 1')
+        entities = j1.query_v1(
+            query='FIND Host AS h RETURN h._id AS id LIMIT 1'
+        )['data']
         if entities:
-            entity_id = entities[0]['_id']
-            raw_data = j1.fetch_entity_raw_data(entity_id=entity_id)
-            print(f"Raw data keys: {list(raw_data.keys())}")
-            
-            # Access specific raw data sections
-            for key in raw_data.keys():
-                if isinstance(raw_data[key], dict):
-                    print(f"  {key}: {len(raw_data[key])} items")
-                else:
-                    print(f"  {key}: {type(raw_data[key])}")
+            # The ingestion address is resolved automatically from the entity id
+            raw_data = j1.fetch_entity_raw_data_v2(entity_id=entities[0]['id'])
+            print(f"Status: {raw_data['status']}")
+            print(f"Payload entries: {len(raw_data['payload'])}")
+            for item in raw_data['payload']:
+                print(f"  {item['name']} ({item['contentType']})")
         else:
             print("No entities found to fetch raw data")
     except Exception as e:
