@@ -576,15 +576,22 @@ elif result['job']['status'] == 'FAILED':
 
 ##### Custom File Transfer (CFT) Integration Methods
 
+`dataset_id` is the **Dataset Name** set on the CFT instance (the "Dataset name" field in the web app, e.g. `EuropaUsers`). It must match exactly, including case and spaces. To list the valid names:
+
+```python
+instance = j1.get_integration_instance_details('<id-of-integration-instance>')
+print([e['id'] for e in instance['data']['integrationInstance']['config']['entities']])
+```
+
 ```python
 # Get a pre-signed URL for file upload
 upload_info = j1.get_cft_upload_url(
     integration_instance_id='<id-of-integration-instance>',
     filename='data.csv',
-    dataset_id='<id-of-dataset>'
+    dataset_id='EuropaUsers'
 )
 print(f"Upload URL: {upload_info['uploadUrl']}")
-print(f"Expires at: {upload_info['expiresAt']}")
+print(f"Expires in: {upload_info['expiresIn']} seconds")
 
 # Upload a CSV file to the CFT integration
 upload_result = j1.upload_cft_file(
@@ -628,7 +635,7 @@ def upload_and_process_data(j1, instance_id, dataset_id, file_path):
         print(f"Error in CFT workflow: {e}")
 
 # Usage
-upload_and_process_data(j1, 'instance-123', 'dataset-456', '/path/to/data.csv')
+upload_and_process_data(j1, 'instance-123', 'EuropaUsers', '/path/to/data.csv')
 ```
 
 ##### Fetch Integration Instance Jobs

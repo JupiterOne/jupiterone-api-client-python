@@ -59,7 +59,7 @@ def get_cft_upload_url_example(client, integration_instance_id, filename, datase
         client: JupiterOne client instance
         integration_instance_id: ID of the CFT integration instance
         filename: Name of the file to upload
-        dataset_id: Dataset ID for the upload
+        dataset_id: Dataset Name for the upload (exact match, e.g. "EuropaUsers")
     """
     print("\n" + "="*60)
     print("1. GETTING CFT UPLOAD URL")
@@ -69,7 +69,7 @@ def get_cft_upload_url_example(client, integration_instance_id, filename, datase
         print(f"Requesting upload URL for:")
         print(f"  - Integration Instance ID: {integration_instance_id}")
         print(f"  - Filename: {filename}")
-        print(f"  - Dataset ID: {dataset_id}")
+        print(f"  - Dataset Name: {dataset_id}")
         
         upload_info = client.get_cft_upload_url(
             integration_instance_id=integration_instance_id,
@@ -186,7 +186,7 @@ def complete_workflow_example(client, integration_instance_id, file_path, datase
         client: JupiterOne client instance
         integration_instance_id: ID of the CFT integration instance
         file_path: Local path to the CSV file
-        dataset_id: Dataset ID for the upload
+        dataset_id: Dataset Name for the upload (exact match, e.g. "EuropaUsers")
     """
     print("\n" + "="*60)
     print("COMPLETE CFT WORKFLOW")
@@ -236,7 +236,7 @@ def main():
     
     # Configuration - Replace these with your actual values
     INTEGRATION_INSTANCE_ID = os.getenv('J1_CFT_INSTANCE_ID', 'your-integration-instance-id')
-    DATASET_ID = os.getenv('J1_CFT_DATASET_ID', 'your-dataset-id')
+    DATASET_ID = os.getenv('J1_CFT_DATASET_ID', 'your-dataset-name')
     CSV_FILE_PATH = os.getenv('J1_CSV_FILE_PATH', 'examples/scanned_hosts.csv')
     
     # Check if we have the required configuration
@@ -244,11 +244,11 @@ def main():
         print("⚠️  Configuration required:")
         print("Set the following environment variables:")
         print("  - J1_CFT_INSTANCE_ID: Your CFT integration instance ID")
-        print("  - J1_CFT_DATASET_ID: Your dataset ID")
+        print("  - J1_CFT_DATASET_ID: The Dataset Name set on your CFT instance (exact match, e.g. EuropaUsers)")
         print("  - J1_CSV_FILE_PATH: Path to your CSV file (optional, defaults to examples/scanned_hosts.csv)")
         print("\nExample:")
         print("export J1_CFT_INSTANCE_ID='123e4567-e89b-12d3-a456-426614174000'")
-        print("export J1_CFT_DATASET_ID='dataset-123'")
+        print("export J1_CFT_DATASET_ID='EuropaUsers'")
         print("export J1_CSV_FILE_PATH='/path/to/your/file.csv'")
         print("\nOr update the variables in this script directly.")
         return

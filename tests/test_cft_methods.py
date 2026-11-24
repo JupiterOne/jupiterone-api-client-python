@@ -26,7 +26,7 @@ class TestCFTMethods:
             "data": {
                 "integrationFileTransferUploadUrl": {
                     "uploadUrl": "https://s3.amazonaws.com/test-bucket/test-file.csv",
-                    "expiresAt": "2024-01-01T12:00:00Z"
+                    "expiresIn": 900
                 }
             }
         }
