@@ -2155,16 +2155,20 @@ class JupiterOneClient:
         args:
             integration_instance_id (str): The integration instance ID
             filename (str): The filename to upload
-            dataset_id (str): The dataset ID for the upload
+            dataset_id (str): The Dataset Name of the CFT instance's dataset, matched exactly
+                (case and spaces count), e.g. "EuropaUsers". This is the "Dataset name" set when the
+                instance was configured, not an opaque ID.
+                To list the valid names, call get_integration_instance_details(integration_instance_id)
+                and read ["data"]["integrationInstance"]["config"]["entities"]; each entry's "id" is a Dataset Name.
             
         Returns:
-            Dict: Response containing uploadUrl and expiresIn
+            Dict: Response containing uploadUrl and expiresIn (seconds until the URL expires)
             
         Example:
             upload_info = j1_client.get_cft_upload_url(
                 integration_instance_id="123e4567-e89b-12d3-a456-426614174000",
                 filename="data.csv",
-                dataset_id="dataset-123"
+                dataset_id="EuropaUsers"
             )
             upload_url = upload_info['uploadUrl']
         """
@@ -2218,7 +2222,7 @@ class JupiterOneClient:
             upload_info = j1_client.get_cft_upload_url(
                 integration_instance_id="123e4567-e89b-12d3-a456-426614174000",
                 filename="data.csv",
-                dataset_id="dataset-123"
+                dataset_id="EuropaUsers"
             )
             
             # Then upload the CSV file
